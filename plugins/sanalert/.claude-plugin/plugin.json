@@ -1,0 +1,13 @@
+{
+  "name": "sanalert",
+  "version": "1.0.0",
+  "description": "SanAlert's unofficial threat level from the air for Poland, in Claude Code: the level for a place, worked out on your own computer, and the state of the whole country from SanAlert's API.",
+  "author": {
+    "name": "Paweł Rojek",
+    "url": "https://pawelrojek.dev"
+  },
+  "homepage": "https://sanalert.pl/en/",
+  "repository": "https://github.com/plrojek/sanalert-mcp",
+  "license": "MIT",
+  "keywords": ["sanalert", "poland", "air-raid", "drones", "mcp"]
+}
