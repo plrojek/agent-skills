@@ -1,0 +1,15 @@
+{
+  "name": "plrojek",
+  "description": "Claude Code skills by Paweł Rojek",
+  "owner": {
+    "name": "Paweł Rojek",
+    "url": "https://pawelrojek.dev"
+  },
+  "plugins": [
+    {
+      "name": "garden-3d-viewer",
+      "source": "./plugins/garden-3d-viewer",
+      "description": "Turn a planting plan into an interactive 3D garden in the browser: seasons, growth, real sun and shade, walk-through, shopping list. Static files, three.js, no build step."
+    }
+  ]
+}
