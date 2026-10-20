@@ -29,12 +29,12 @@ def clean_env(**extra):
     return env
 
 
-def run_hook(script, payload, env=None):
+def run_hook(script, payload, env=None, cwd=None):
     """Feed `payload` (a dict, or a raw string) to a hook on stdin."""
     data = payload if isinstance(payload, str) else json.dumps(payload)
     proc = subprocess.run(
         [sys.executable, script], input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, env=env or clean_env(), timeout=30,
+        universal_newlines=True, env=env or clean_env(), cwd=cwd, timeout=30,
     )
     return proc.returncode, proc.stdout, proc.stderr
 

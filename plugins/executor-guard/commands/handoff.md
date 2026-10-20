@@ -7,7 +7,9 @@ allowed-tools: Read, Write, Glob, Grep, Bash(git status *), Bash(git log *), Bas
 
 Write a handoff note for whoever picks this work up next: another session, maybe on a cheaper model, that has none of this conversation.
 
-Save it to `$ARGUMENTS` if that's a path. Otherwise save it to `HANDOFF.md` at the top of the repository you're working in (`git rev-parse --show-toplevel`), or in the current directory if you're not in a repository.
+Where to save it: $ARGUMENTS
+
+If no path is given there, save it to `HANDOFF.md` at the top of the repository you're working in (`git rev-parse --show-toplevel`), or in the current directory if you're not in a repository.
 
 Collect the facts before writing; don't write from memory alone.
 

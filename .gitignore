@@ -1,4 +1,4 @@
 .DS_Store
 vendor/
 __pycache__/
-evals/results/
+**/evals/results/

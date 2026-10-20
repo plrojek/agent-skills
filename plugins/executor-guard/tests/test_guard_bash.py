@@ -252,8 +252,9 @@ class InputTest(GuardCase):
             self.assertEqual(err, "", raw)
 
     def test_missing_cwd_falls_back_to_process_cwd(self):
-        code, _, _ = run_hook(GUARD, {"tool_name": "Bash", "tool_input": {"command": "git stash"}})
-        self.assertEqual(code, 2)
+        payload = {"tool_name": "Bash", "tool_input": {"command": "git commit -m x"}}
+        self.assertEqual(run_hook(GUARD, payload, cwd=self.main)[0], 2)
+        self.assertEqual(run_hook(GUARD, payload, cwd=self.feature)[0], 0)
 
 
 if __name__ == "__main__":

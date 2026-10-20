@@ -23,9 +23,9 @@ def tool(name, tool_input, tool_id, sidechain=False):
     }}
 
 
-def result(tool_id, is_error=False):
+def result(tool_id, is_error=False, output="done"):
     return {"type": "user", "isSidechain": False, "message": {"role": "user", "content": [
-        {"type": "tool_result", "tool_use_id": tool_id, "content": "done", "is_error": is_error},
+        {"type": "tool_result", "tool_use_id": tool_id, "content": output, "is_error": is_error},
     ]}}
 
 
@@ -118,6 +118,24 @@ class BlockTest(StopCase):
     def test_meta_lines_and_tool_results_do_not_start_a_turn(self):
         lines = self.turn(self.edit("a.py"), prompt("<system-reminder>x</system-reminder>", isMeta=True))
         self.assertBlocks(lines)
+
+    def test_a_test_runner_that_never_started_does_not_count(self):
+        for command, output in (
+            ("python3 -m pytest -q 2>&1 | tail -3", "/usr/bin/python3: No module named pytest"),
+            ("npx vitest run", "sh: vitest: command not found"),
+            ("pytest", [{"type": "text", "text": "bash: pytest: command not found"}]),
+        ):
+            tid, line = self.bash(command)
+            lines = self.turn(self.edit("a.py")) + [line, result(tid, output=output), say("Tests pass.")]
+            reason = self.assertBlocks(lines)
+            self.assertIn("didn't start", reason)
+            self.assertIn(command[:20], reason)
+
+    def test_a_failing_import_in_the_code_still_counts_as_a_run(self):
+        tid, line = self.bash("python3 -m unittest")
+        output = "ModuleNotFoundError: No module named 'requests'\nFAILED (errors=1)"
+        lines = self.turn(self.edit("a.py")) + [line, result(tid, is_error=True, output=output)]
+        self.assertLetsStop(lines)
 
     def test_config_test_commands_listed(self):
         self.write_config(self.project, {"test_commands": ["./scripts/check.sh"]})

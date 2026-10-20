@@ -8,7 +8,8 @@ tool calls after the last message that started it (a prompt, a queued
 message, a task notification). Edits are Edit, Write, MultiEdit and
 NotebookEdit calls that didn't fail; tests are Bash calls whose command
 matches a test or build command (see DEFAULT_TEST_COMMANDS, extended
-by "test_commands" in .claude/executor-guard.json).
+by "test_commands" in .claude/executor-guard.json) and whose output
+doesn't show that the runner never started.
 
 It never traps a session: when stop_hook_active is set (Claude is
 already continuing because of a stop hook), when the transcript is
@@ -60,6 +61,14 @@ DEFAULT_TEST_COMMANDS = [
 DEFAULT_IGNORE = ["*.md", "*.mdx", "*.markdown", "*.txt", "*.rst", "*.adoc"]
 
 _PYTHON = re.compile(r"^python[0-9.]*$")
+
+# Output that means the test runner itself never started. Such a run
+# doesn't count: "pytest | tail -3" exits 0 even when pytest isn't installed.
+_NOT_STARTED = re.compile(
+    r"command not found"
+    r"|No module named '?(?:pytest|unittest|tox|nox|hatch)\b"
+    r"|is not recognized as an internal or external command"
+)
 
 
 def _norm(word):
@@ -161,12 +170,24 @@ def _starts_turn(entry):
     return False
 
 
+def _result_text(block):
+    content = block.get("content")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(b.get("text", "") for b in content
+                         if isinstance(b, dict) and isinstance(b.get("text"), str))
+    return ""
+
+
 def scan(transcript_path, patterns):
     """Walk the transcript. Returns a list of events for the current turn,
-    each ("edit", path, tool_use_id) or ("test", command, tool_use_id),
-    or None when the file can't be read."""
+    each ("edit", path, tool_use_id), ("test", command, tool_use_id) or
+    ("not-started", command, tool_use_id) for a test command whose runner
+    never started, or None when the file can't be read."""
     events = []
     failed = set()
+    not_started = set()
     try:
         fh = open(transcript_path, "r", encoding="utf-8", errors="replace")
     except OSError:
@@ -190,12 +211,16 @@ def scan(transcript_path, patterns):
                 if _starts_turn(entry):
                     events = []
                     failed = set()
+                    not_started = set()
                     continue
                 if isinstance(content, list):
                     for block in content:
-                        if (isinstance(block, dict) and block.get("type") == "tool_result"
-                                and block.get("is_error")):
+                        if not isinstance(block, dict) or block.get("type") != "tool_result":
+                            continue
+                        if block.get("is_error"):
                             failed.add(block.get("tool_use_id"))
+                        if _NOT_STARTED.search(_result_text(block)):
+                            not_started.add(block.get("tool_use_id"))
                 continue
             if kind != "assistant" or not isinstance(content, list):
                 continue
@@ -211,19 +236,31 @@ def scan(transcript_path, patterns):
                     command = tool_input.get("command")
                     if isinstance(command, str) and is_test_command(command, patterns):
                         events.append(("test", command, block.get("id")))
-    return [e for e in events if not (e[0] == "edit" and e[2] in failed)]
+    out = []
+    for kind, value, tool_id in events:
+        if kind == "edit" and tool_id in failed:
+            continue
+        if kind == "test" and tool_id in not_started:
+            kind = "not-started"
+        out.append((kind, value, tool_id))
+    return out
 
 
 def untested_edit(events, cwd, ignore, scratchpad):
-    """The path of the last counted edit with no test after it, or None."""
+    """Return (path, command): the last counted edit with no test run after
+    it, and a test command after it that never started, if any. The path is
+    None when there's nothing to ask for."""
     roots = _roots(cwd)
     last = None
+    tried = None
     for kind, value, _ in events:
         if kind == "edit" and value and not _ignored(value, roots, ignore, scratchpad):
-            last = value
+            last, tried = value, None
         elif kind == "test":
-            last = None
-    return last
+            last, tried = None, None
+        elif kind == "not-started" and last is not None:
+            tried = value
+    return last, tried
 
 
 def _display(path, cwd):
@@ -234,16 +271,20 @@ def _display(path, cwd):
     return path
 
 
-def reason(path, cwd, cfg):
+def reason(path, cwd, cfg, tried=None):
     examples = "pytest, python -m unittest, npm test, go test, cargo test, gradle, xcodebuild test, make test"
     if cfg.test_commands:
         examples += ", and from your config: " + ", ".join(cfg.test_commands)
+    started = ""
+    if tried:
+        started = (" A test command was tried but its runner didn't start (`%s`)."
+                   % (tried if len(tried) <= 120 else tried[:117] + "..."))
     return (
         "executor-guard: files changed in this turn (last: %s) and no test or build command has "
-        "run since. Before you finish, run the project's tests or build and include the real "
+        "run since.%s Before you finish, run the project's tests or build and include the real "
         "output in your reply. If you can't run them, say so plainly and tell the user what to "
         "run; don't describe the work as tested or verified. Commands that count include %s."
-        % (_display(path, cwd), examples)
+        % (_display(path, cwd), started, examples)
     )
 
 
@@ -263,19 +304,19 @@ def main():
     cfg = guard_config.load(cwd)
     patterns = _compile(DEFAULT_TEST_COMMANDS + cfg.test_commands)
 
-    path = None
+    path = tried = None
     for attempt in range(2):
         events = scan(transcript, patterns)
         if events is None:
             return 0
-        path = untested_edit(events, cwd, cfg.ignore_paths, scratchpad)
+        path, tried = untested_edit(events, cwd, cfg.ignore_paths, scratchpad)
         if path is None:
             return 0
         if attempt == 0:
             # The transcript is written asynchronously; give a test run
             # that just finished a moment to land before blocking.
             time.sleep(float(os.environ.get("EXECUTOR_GUARD_STOP_RECHECK", "1.0")))
-    sys.stdout.write(json.dumps({"decision": "block", "reason": reason(path, cwd, cfg)}))
+    sys.stdout.write(json.dumps({"decision": "block", "reason": reason(path, cwd, cfg, tried)}))
     return 0
 
 

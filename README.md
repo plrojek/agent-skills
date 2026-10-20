@@ -40,18 +40,18 @@ It is not an official warning system and doesn't replace sirens, Alert RCB or in
 
 ## executor-guard
 
-For bigger pieces of work I split the job in two: one session investigates and writes a plan, another session, often on a cheaper model, carries out one slice of it under a page of hard rules. Some of those rules can be checked by a script instead of trusted to the model. This plugin is those, as hooks.
+For bigger pieces of work I split the job in two: one session investigates and writes a plan, another session, often on a cheaper model, carries out one slice of it under a page of hard rules. Some of those rules can be checked by a script instead of trusted to the model, and this plugin turns them into hooks.
 
-Before every Bash command it blocks:
+A hook that runs before every Bash command blocks:
 
 - `git commit`, `git merge` and `git push` while the current branch is `main` or `master`, and a push straight to either of them from another branch;
 - force pushes to `main` or `master`, and deleting them on the remote;
 - `git stash`, apart from `list` and `show`. All worktrees of a repository share one stash stack, so with agents working in parallel one of them can pop another's changes;
 - `helm upgrade`, `install`, `uninstall` and `rollback`; `kubectl apply`, `delete`, `rollout restart`, `scale`, `edit` and `patch`; `terraform` or `tofu` `apply` and `destroy`. Dry runs go through.
 
-Claude gets the reason as the command's error and goes on from there: it makes a branch, or stops and asks.
+Claude gets the reason as the command's error, so it can make a branch, or stop and ask.
 
-When Claude is about to finish, a second hook looks at the turn. If files were changed and no test or build command ran after the last change, it sends Claude back once, to run the tests and paste the output or to say plainly that it didn't. Changes to Markdown and text files don't count, and neither do files under `~/.claude` or temp directories outside the project. pytest, `go test`, `npm test`, `cargo test`, gradle, `xcodebuild test`, `make test` and a few dozen others count as tests; the list is at the top of `hooks/require_tests.py`.
+When Claude is about to finish, a second hook looks at the turn. If files were changed and no test or build command ran after the last change, it sends Claude back once, to run the tests and paste the output or to say plainly that it didn't. Changes to Markdown and text files don't count, and neither do files under `~/.claude` or temp directories outside the project. pytest, `go test`, `npm test`, `cargo test`, gradle, `xcodebuild test`, `make test` and a few dozen others count as tests; the list is at the top of `hooks/require_tests.py`. A run whose output says the runner never started (`command not found`, `No module named pytest`) doesn't count.
 
 `/executor-guard:handoff [path]` writes a note for the next session, `HANDOFF.md` by default: what was planned, what's done with the evidence, what's not, open questions and the next step.
 
@@ -75,9 +75,10 @@ It catches mistakes; it isn't a security boundary. Things to know:
 - After `git checkout <branch>` in the same command line, the branch counts as unknown, and an unknown branch isn't checked.
 - `git pull`, `rebase`, `cherry-pick`, `revert` and `am` on `main` aren't checked, and neither are `kubectl create`, `replace`, `set` or `rollout undo`, `gh pr merge`, or anything run over ssh.
 - Claude can still write the config file itself, or edit files through Bash (`sed -i`, a heredoc into a file). The test check doesn't see edits made through Bash or by subagents, and it only looks at the current turn.
+- Only the Bash tool is checked, not PowerShell on Windows.
 - It needs `python3` (3.9 or later) on PATH. If a hook can't start, Claude Code carries on without it.
 
-The tests are plain unittest, `python3 -m unittest discover -s plugins/executor-guard/tests`, and `plugins/executor-guard/evals/` has five cases for `claude plugin eval`.
+The tests are plain unittest, `python3 -m unittest discover -s plugins/executor-guard/tests`, and `plugins/executor-guard/evals/` has six cases for `claude plugin eval`. The git cases need a git that works inside Claude Code's sandbox. On a Mac where the only git is Apple's `/usr/bin/git` it doesn't (xcrun can't write its cache there), so those cases pass without the hook ever being reached.
 
 ## License
 
