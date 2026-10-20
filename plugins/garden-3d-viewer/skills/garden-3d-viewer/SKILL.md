@@ -2,7 +2,7 @@
 name: garden-3d-viewer
 description: "Build an interactive 3D web view of a garden with its house on a real plot: terrain, house with roof and openings, paving, fences, every planting position as a low-poly plant, seasons (leaf, flower, fruit, autumn colour, bare branches), growth over the years, real sun and shadows by month and hour, species highlight, eye-level walk, tape measure, PNG export of the plan, a shopping list with costs and CSV, an hours-of-sun map, planting stages by year and an irrigation plan layer. Static files only (three.js, no build step), generated from one plan data source through a scene JSON. Use when the user has (or wants) a planting plan and asks to see it in 3D in the browser, walk through it, check shade on the terrace, show it to family or a contractor, or publish it. Trigger phrases: 'wizualizacja ogrodu', 'ogród w 3D', 'ogród w przeglądarce', 'interaktywny plan ogrodu', 'pokaż cienie na działce', 'spacer po ogrodzie', 'garden 3D viewer', 'interactive garden plan', 'visualise my garden', 'three.js garden'."
 metadata:
-  version: 1.1.0
+  version: 1.1.1
 ---
 
 # Garden 3D viewer — from a planting plan to an interactive web page
@@ -154,7 +154,8 @@ Any static host works. Three things matter:
   file names carry a version. With a day-long `max-age` a redeploy is invisible to everyone who
   visited that day — the browser serves the old viewer against the new scene.
 - **Privacy**: the scene contains the plot outline, the house plan, prices and coordinates good to
-  about a kilometre. If that should not be public, put the whole folder (HTML, modules, vendor,
+  about a kilometre. The outline alone can be matched against public cadastral maps, so a plan view of a real
+  plot gives its location away even with no address on it. If that should not be public, put the whole folder (HTML, modules, vendor,
   JSON, photo) behind the same access control, and check that a request without credentials gets
   nothing for *each* of those files, not only for the page.
 - **No third-party requests**: three.js is vendored on purpose; keep it that way.
