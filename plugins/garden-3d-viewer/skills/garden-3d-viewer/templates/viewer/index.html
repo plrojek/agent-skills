@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F6F1E6">
+<meta name="robots" content="noindex, nofollow">
+<title>Ogród</title>
+<style>
+:root{
+  --paper:#F6F1E6;--paper-high:#FCF9F2;--paper-dim:#EDE6D5;
+  --ink:#211B14;--ink-soft:#52483A;--ink-faint:#8A7D6A;
+  --rubric:#A02C17;--rubric-deep:#7C200E;--moss:#47632F;
+  --rule:rgba(33,27,20,.28);--rule-soft:rgba(33,27,20,.13);
+  --display:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --text:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--text);font-optical-sizing:auto;font-size:15px;line-height:1.55;
+  color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;
+  overflow:hidden;overscroll-behavior:none;
+}
+::selection{background:var(--rubric);color:var(--paper)}
+canvas{display:block;touch-action:none}
+#stage{position:fixed;inset:0}
+
+/* ---------- masthead ---------- */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap;
+  padding:.7rem 1rem;background:linear-gradient(var(--paper) 55%,rgba(246,241,230,0));
+  pointer-events:none;
+}
+header *{pointer-events:auto}
+#views{flex-wrap:nowrap;margin-left:.6rem}
+#views .btn{white-space:nowrap;background:var(--paper-high)}
+#views .btn.on{background:var(--rubric);border-color:var(--rubric);color:var(--paper-high)}
+h1{font-family:var(--display);font-weight:600;font-size:1.15rem;letter-spacing:-.01em;white-space:nowrap}
+.sub{font-size:.82rem;color:var(--ink-faint)}
+header .back{margin-left:auto;font-size:.82rem;color:var(--ink-faint);text-underline-offset:3px}
+header .back:hover{color:var(--rubric)}
+
+/* ---------- controls ---------- */
+#panel{
+  position:fixed;z-index:20;top:var(--headh,3.2rem);left:1rem;width:15.5rem;
+  background:var(--paper-high);border:1px solid var(--rule);border-radius:3px;
+  box-shadow:0 6px 20px rgba(33,27,20,.08);
+  max-height:calc(100vh - var(--headh,3.2rem) - 1.4rem);overflow-y:auto;
+}
+#panel section{padding:.75rem .9rem;border-bottom:1px solid var(--rule-soft)}
+#panel section:last-child{border-bottom:0}
+.lbl{font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--rubric);margin-bottom:.5rem}
+.row{display:flex;align-items:center;gap:.5rem;padding:.13rem 0;font-size:.88rem;cursor:pointer;user-select:none}
+.row input{accent-color:var(--rubric);margin:0;cursor:pointer}
+.row .sw{width:.75rem;height:.75rem;border-radius:2px;border:1px solid var(--rule-soft);flex:none}
+.row.zone{font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--rubric);margin:.15rem 0 0}
+.yr{display:flex;justify-content:space-between;font-size:.74rem;color:var(--ink-faint);margin-top:.1rem}
+.yrval{font-family:var(--display);font-size:1rem;color:var(--ink)}
+.btn{
+  font-family:var(--text);font-size:.82rem;color:var(--ink-soft);
+  background:var(--paper);border:1px solid var(--rule);border-radius:2px;
+  padding:.3rem .55rem;cursor:pointer;
+}
+.btn:hover{border-color:var(--rubric);color:var(--rubric)}
+.btns{display:flex;gap:.35rem;flex-wrap:wrap}
+.stat{font-size:.8rem;color:var(--ink-soft);display:flex;justify-content:space-between;gap:.5rem}
+.stat b{font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---------- info card ---------- */
+#info{
+  position:fixed;z-index:21;right:1rem;top:var(--headh,3.2rem);width:20rem;
+  background:var(--paper-high);border:1px solid var(--rule);border-left:2px solid var(--rubric);
+  border-radius:3px;box-shadow:0 6px 20px rgba(33,27,20,.1);
+  max-height:calc(100vh - var(--headh,3.2rem) - 1.4rem);overflow-y:auto;padding:.9rem 1rem 1rem;
+}
+#info[hidden]{display:none}
+#info .code{font-size:.68rem;font-weight:600;letter-spacing:.14em;color:var(--rubric)}
+#info h2{font-family:var(--display);font-weight:600;font-size:1.08rem;line-height:1.25;margin:.2rem 0 .1rem}
+#info .lat{font-style:italic;color:var(--ink-soft);font-size:.9rem;margin-bottom:.6rem}
+#info dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem .6rem;font-size:.85rem;margin-bottom:.6rem}
+#info dt{color:var(--ink-faint)}
+#info dd{text-align:right;font-variant-numeric:tabular-nums}
+#info p{font-size:.85rem;color:var(--ink-soft);margin-bottom:.5rem}
+#info .close{position:absolute;top:.45rem;right:.6rem;background:none;border:0;font-size:1.1rem;color:var(--ink-faint);cursor:pointer;line-height:1}
+#info .close:hover{color:var(--rubric)}
+
+/* ---------- hint / loading ---------- */
+#load{
+  position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
+  background:var(--paper);font-size:.9rem;color:var(--ink-faint);flex-direction:column;gap:.4rem;
+}
+#load[hidden]{display:none}
+#load .t{font-family:var(--display);font-size:1.3rem;color:var(--ink)}
+#hint{
+  position:fixed;z-index:19;bottom:calc(var(--dockh,7rem) + 1.3rem);left:calc(17.5rem + (100% - 17.5rem) / 2);transform:translateX(-50%);
+  font-size:.78rem;color:var(--ink-faint);background:rgba(252,249,242,.82);
+  padding:.25rem .7rem;border-radius:999px;border:1px solid var(--rule-soft);white-space:nowrap;
+}
+#tip{
+  position:fixed;z-index:22;pointer-events:none;background:var(--ink);color:var(--paper-high);
+  font-size:.78rem;padding:.2rem .45rem;border-radius:2px;white-space:nowrap;transform:translate(-50%,-160%);
+}
+#tip[hidden]{display:none}
+
+/* ---------- v2: season bar, calendar, plan overlay ---------- */
+#dock{
+  position:fixed;z-index:19;bottom:.8rem;left:calc(17.5rem + (100% - 17.5rem) / 2);transform:translateX(-50%);
+  width:min(41rem,calc(100% - 19.5rem));
+  background:rgba(252,249,242,.95);border:1px solid var(--rule);border-radius:12px;
+  padding:.45rem .9rem .4rem .8rem;box-shadow:0 6px 20px rgba(33,27,20,.1);
+}
+#dock .tabs{display:none}
+.drow{display:grid;grid-template-columns:3.9rem 1.6rem 1fr 6.9rem;align-items:center;gap:.6rem;padding:.12rem 0}
+.drow+.drow{border-top:1px solid var(--rule-soft)}
+.drow .dl{font-size:.66rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rubric)}
+.drow .track{min-width:0}
+.drow input[type=range]{margin:.2rem 0 0}
+.drow .ticks{display:flex;justify-content:space-between;font-size:.62rem;color:var(--ink-faint);letter-spacing:.03em;margin-top:-.1rem;padding:0 .15rem;white-space:nowrap}
+.drow .dv{font-family:var(--display);font-size:1rem;text-align:right;white-space:nowrap;display:flex;justify-content:flex-end;align-items:center;gap:.4rem}
+.mini.ghost{visibility:hidden}
+.suntog{cursor:pointer;line-height:1}
+.suntog input{position:absolute;opacity:0;pointer-events:none}
+.suntog i{font-style:normal;font-size:.95rem;color:var(--ink-faint);border:1px solid var(--rule);border-radius:50%;width:1.5rem;height:1.5rem;display:grid;place-items:center;background:var(--paper)}
+.suntog input:checked+i{color:#c98a12;border-color:#c98a12}
+.suntog input:focus-visible+i{outline:2px solid var(--rubric)}
+#cal-title{font-family:var(--display);font-size:1rem;margin:-.1rem 0 .35rem}
+#calendar{display:flex;flex-direction:column;gap:.18rem}
+#calendar .cal-h{font-size:.66rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:.35rem 0 .1rem}
+#calendar .cal-h:first-child{margin-top:0}
+.chip{
+  display:flex;align-items:center;gap:.4rem;text-align:left;width:100%;
+  font-family:var(--text);font-size:.8rem;color:var(--ink);background:none;border:0;padding:.08rem 0;cursor:pointer;line-height:1.3;
+}
+.chip:hover{color:var(--rubric)}
+.chip em{font-style:normal;color:var(--ink-faint);font-size:.72rem;margin-left:auto;padding-left:.4rem;white-space:nowrap}
+.swatch{display:inline-block;width:.72rem;height:.72rem;border-radius:50%;border:1px solid rgba(33,27,20,.2);flex:none;vertical-align:-1px;margin-right:.3rem}
+.chip .swatch{margin-right:0}
+.quiet{font-size:.82rem;color:var(--ink-faint)}
+.credit{font-size:.7rem;color:var(--ink-faint);margin-top:.45rem;line-height:1.35}
+.btn.on{border-color:var(--rubric);color:var(--rubric)}
+details.sec summary{cursor:pointer;list-style:none}
+details.sec summary::-webkit-details-marker{display:none}
+details.sec summary .lbl::after{content:' +';color:var(--ink-faint)}
+details.sec[open] summary .lbl::after{content:' −'}
+#labels{position:fixed;inset:0;z-index:15;pointer-events:none;overflow:hidden}
+#labels[hidden]{display:none}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lb.zone{
+  width:1.55rem;height:1.55rem;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--display);font-weight:600;font-size:.86rem;color:var(--paper-high);
+  background:var(--rubric);box-shadow:0 1px 4px rgba(33,27,20,.35);
+}
+.lb.plant{font-size:.64rem;font-weight:600;color:var(--ink);background:rgba(252,249,242,.82);padding:0 .22rem;border-radius:2px;border:1px solid var(--rule-soft)}
+#compass{position:fixed;z-index:18;right:1rem;bottom:1rem;width:2.6rem;height:2.6rem;border-radius:50%;
+  background:rgba(252,249,242,.9);border:1px solid var(--rule);display:grid;place-items:center}
+#compass svg{width:1.7rem;height:1.7rem;transition:transform .08s linear}
+#scalebar{position:fixed;z-index:18;right:4.4rem;bottom:1.45rem;font-size:.72rem;color:var(--ink-soft);display:flex;align-items:center;gap:.4rem}
+#scalebar[hidden]{display:none}
+#scalebar i{display:block;height:.45rem;border:1.5px solid var(--ink-soft);border-top:0;background:linear-gradient(90deg,var(--ink-soft) 50%,transparent 50%)}
+
+/* ---------- v3: sun, tools, costs, highlight, walk ---------- */
+[hidden]{display:none!important}
+.sunrow{display:flex;align-items:center;gap:.45rem}
+.sunrow input{flex:1;min-width:0;margin:0}
+.sunrow .yrval{min-width:2.9rem;text-align:right}
+.mini{flex:none;width:1.6rem;height:1.6rem;border-radius:50%;border:1px solid var(--rule);background:var(--paper);color:var(--rubric);font-size:.6rem;cursor:pointer;line-height:1}
+.mini:hover{border-color:var(--rubric)}
+.mini:disabled,input:disabled{opacity:.4;cursor:default}
+#sunmeta{line-height:1.35}
+#costs table{width:100%;border-collapse:collapse;font-size:.78rem;font-variant-numeric:tabular-nums}
+#costs td{padding:.16rem 0;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+#costs td:first-child{max-width:6.6rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#costs td+td{text-align:right;padding-left:.4rem;white-space:nowrap}
+#costs tr[data-g]{cursor:pointer}
+#costs tr[data-g]:hover td,#costs tr.on td{color:var(--rubric)}
+#costs tr.sum td{font-weight:600}
+#costs tr.extra td{color:var(--ink-soft);font-size:.74rem}
+#irr table{width:100%;border-collapse:collapse;font-size:.76rem;font-variant-numeric:tabular-nums;margin-bottom:.45rem}
+#irr td{padding:.16rem 0;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+#irr td:first-child{max-width:7.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#irr td+td{text-align:right;padding-left:.35rem;white-space:nowrap}
+#irr tr[data-s]{cursor:pointer}
+#irr tr[data-s]:hover td,#irr tr.on td{color:var(--rubric)}
+#sunlegend{margin-top:.5rem}
+#sunramp{height:.55rem;border-radius:2px;border:1px solid var(--rule-soft)}
+#sunlegend .ticks{display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-faint);margin-top:.1rem}
+#msvg{position:fixed;inset:0;width:100%;height:100%;z-index:16;pointer-events:none}
+#msvg line{stroke:var(--rubric);stroke-width:2;stroke-linecap:round}
+#msvg circle{fill:var(--paper-high);stroke:var(--rubric);stroke-width:2}
+#msvg text{font-family:var(--text);font-size:12px;font-weight:600;fill:var(--rubric-deep);text-anchor:middle;paint-order:stroke;stroke:var(--paper-high);stroke-width:3px}
+#mread,#hl{
+  position:fixed;z-index:19;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.6rem;
+  background:rgba(252,249,242,.95);border:1px solid var(--rule);border-radius:999px;
+  padding:.25rem .5rem .25rem .9rem;font-size:.84rem;box-shadow:0 6px 20px rgba(33,27,20,.1);white-space:nowrap;max-width:calc(100% - 2rem);
+}
+#mread{bottom:calc(var(--dockh,7rem) + 3.6rem);font-variant-numeric:tabular-nums}
+#hl{top:var(--headh,3.2rem);border-color:var(--rubric)}
+#hltext{overflow:hidden;text-overflow:ellipsis}
+#hlclose{background:none;border:0;font-size:1.05rem;color:var(--ink-faint);cursor:pointer;line-height:1;padding:0 .3rem}
+#hlclose:hover{color:var(--rubric)}
+#stick{
+  position:fixed;z-index:19;left:17.6rem;bottom:calc(var(--dockh,7rem) + 1.5rem);width:5.4rem;height:5.4rem;border-radius:50%;
+  background:rgba(252,249,242,.72);border:1px solid var(--rule);display:grid;place-items:center;touch-action:none;cursor:grab;
+}
+#stick i{display:block;width:2.1rem;height:2.1rem;border-radius:50%;background:var(--rubric);opacity:.85;pointer-events:none}
+
+/* ---------- mobile ---------- */
+#menubtn{display:none}
+@media (max-width:820px){
+  header{padding:.55rem .8rem}
+  h1{font-size:1rem}
+  .sub{display:none}
+  #menubtn{display:inline-block}
+  #panel{
+    top:auto;bottom:0;left:0;right:0;width:auto;max-height:62vh;border-radius:3px 3px 0 0;
+    border-left:0;border-right:0;border-bottom:0;transform:translateY(100%);transition:transform .2s ease;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  #panel.open{transform:none}
+  #info{left:.6rem;right:.6rem;width:auto;top:auto;bottom:0;max-height:62vh;border-radius:3px 3px 0 0;z-index:25}
+  #hint{display:none}
+  header{row-gap:.4rem}
+  #views{order:5;flex:0 0 100%;margin:0;overflow-x:auto;scrollbar-width:none;padding-bottom:.15rem}
+  #views::-webkit-scrollbar{display:none}
+  #dock{left:50%;bottom:.6rem;width:calc(100% - 1.2rem);padding:.35rem .6rem .35rem}
+  #dock .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;margin-bottom:.3rem}
+  #dock .tabs button{font-family:var(--text);background:var(--paper);border:1px solid var(--rule-soft);border-radius:8px;padding:.2rem .3rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2;color:var(--ink-soft)}
+  #dock .tabs small{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase}
+  #dock .tabs b{font-family:var(--display);font-weight:500;font-size:.86rem;white-space:nowrap}
+  #dock[data-tab=month] .tabs [data-tab=month],#dock[data-tab=hour] .tabs [data-tab=hour],#dock[data-tab=growth] .tabs [data-tab=growth]{border-color:var(--rubric);color:var(--rubric)}
+  .drow{display:none;grid-template-columns:1.6rem 1fr auto;border:0!important}
+  #dock[data-tab=month] [data-row=month],#dock[data-tab=hour] [data-row=hour],#dock[data-tab=growth] [data-row=growth]{display:grid}
+  .drow .dl,.drow #monthval,.drow #yearval,.drow #sunval{display:none}
+  .drow .dv{min-width:0}
+  .drow .mini.ghost{display:none}
+  [data-row=growth]{grid-template-columns:1fr!important}
+  #compass{top:calc(var(--headh,5.4rem) + .2rem);bottom:auto;right:.7rem;width:2.3rem;height:2.3rem}
+  #scalebar{top:calc(var(--headh,5.4rem) + .9rem);bottom:auto;right:3.6rem}
+  #stick{left:.8rem;bottom:calc(var(--dockh,6rem) + 1.2rem)}
+  #mread{bottom:calc(var(--dockh,6rem) + 1.2rem)}
+  #hl{top:var(--headh,5.4rem)}
+}
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<header>
+  <h1>Ogród</h1>
+  <span class="sub" id="sub">plan zagospodarowania działki</span>
+  <nav class="btns" id="views" aria-label="Widok"></nav>
+  <button class="btn" id="menubtn" type="button">Warstwy</button>
+</header>
+
+<div id="panel">
+  <section>
+    <div class="lbl">Narzędzia</div>
+    <div class="btns">
+      <button class="btn" id="b-measure" type="button">Miarka</button>
+      <button class="btn" id="b-png" type="button">Zapisz PNG</button>
+      <button class="btn" id="b-csv" type="button">Lista zakupów CSV</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="lbl">Pora roku</div>
+    <div id="cal-title"></div>
+    <div id="calendar"></div>
+  </section>
+
+  <section>
+    <div class="lbl">Warstwy</div>
+    <div id="layers"></div>
+    <div id="sunlegend" hidden>
+      <div id="sunramp"></div>
+      <div class="ticks" id="sunticks"></div>
+      <p class="credit" id="sunlegend-note"></p>
+    </div>
+  </section>
+
+  <section id="phasebox">
+    <div class="lbl">Etapy sadzenia</div>
+    <input type="range" id="phase" min="0" max="4" step="1" value="4" aria-label="Etap sadzenia">
+    <div class="yr" id="phaseticks"></div>
+    <div class="yr"><span>pokazane nasadzenia:</span><span class="yrval" id="phaseval">całość</span></div>
+  </section>
+
+  <details class="sec" id="irrbox">
+    <summary><section style="padding-bottom:.4rem;border:0"><div class="lbl" style="margin:0">Nawadnianie</div></section></summary>
+    <section style="padding-top:0"><div id="irr"></div><p class="credit">Propozycja do sprawdzenia przez instalatora. Litry i minuty na tydzień w lipcu.</p></section>
+  </details>
+
+  <details class="sec">
+    <summary><section style="padding-bottom:.4rem;border:0"><div class="lbl" style="margin:0">Strefy</div></section></summary>
+    <section style="padding-top:0"><div id="zones"></div></section>
+  </details>
+
+  <details class="sec">
+    <summary><section style="padding-bottom:.4rem;border:0"><div class="lbl" style="margin:0">Zakupy i koszty</div></section></summary>
+    <section style="padding-top:0">
+      <div class="btns" style="margin-bottom:.45rem">
+        <button class="btn" data-cost="zone" type="button">wg stref</button>
+        <button class="btn" data-cost="year" type="button">wg roku</button>
+      </div>
+      <div id="costs"></div>
+    </section>
+  </details>
+
+  <section id="stats"></section>
+</div>
+
+<div id="info" hidden>
+  <button class="close" id="infoclose" type="button" aria-label="Zamknij">×</button>
+  <div class="code" id="i-code"></div>
+  <h2 id="i-name"></h2>
+  <div class="lat" id="i-lat"></div>
+  <dl id="i-dl"></dl>
+  <p id="i-where"></p>
+  <p id="i-notes"></p>
+</div>
+
+<div id="labels" hidden></div>
+<svg id="msvg" hidden aria-hidden="true"></svg>
+<div id="mread" hidden><span id="mtext"></span><button class="btn" id="mclear" type="button">Wyczyść</button></div>
+<div id="hl" hidden><span id="hltext"></span><button id="hlclose" type="button" aria-label="Wyłącz podświetlenie">×</button></div>
+<div id="stick" hidden aria-label="Chodzenie"><i></i></div>
+<div id="tip" hidden></div>
+<div id="hint">Przeciągnij, żeby obrócić · kółko = zoom · kliknij roślinę · ← → zmienia miesiąc</div>
+
+<div id="dock" data-tab="month">
+  <div class="tabs" role="tablist">
+    <button type="button" data-tab="month"><small>Miesiąc</small><b id="t-month"></b></button>
+    <button type="button" data-tab="hour"><small>Godzina</small><b id="t-hour"></b></button>
+    <button type="button" data-tab="growth"><small>Wzrost</small><b id="t-growth"></b></button>
+  </div>
+  <div class="drow" data-row="month">
+    <span class="dl">Miesiąc</span>
+    <button id="play" class="mini" type="button" aria-label="Odtwórz rok">▶</button>
+    <div class="track">
+      <input type="range" id="month" min="1" max="12" step="1" value="5" aria-label="Miesiąc">
+      <div class="ticks"><span>I</span><span>II</span><span>III</span><span>IV</span><span>V</span><span>VI</span><span>VII</span><span>VIII</span><span>IX</span><span>X</span><span>XI</span><span>XII</span></div>
+    </div>
+    <span class="dv" id="monthval">maj</span>
+  </div>
+  <div class="drow" data-row="hour">
+    <span class="dl">Godzina</span>
+    <button id="dayplay" class="mini" type="button" aria-label="Odtwórz dzień">▶</button>
+    <div class="track">
+      <input type="range" id="hour" min="3" max="22" step="0.25" value="13" aria-label="Godzina">
+      <div class="ticks"><span id="sunmeta"></span></div>
+    </div>
+    <span class="dv"><span id="sunval">13:00</span><label class="suntog" title="Słońce wg daty i godziny (wyłącz = światło stałe)"><input type="checkbox" id="sunon" checked><i>☀</i></label></span>
+  </div>
+  <div class="drow" data-row="growth">
+    <span class="dl">Wzrost</span>
+    <span class="mini ghost" aria-hidden="true"></span>
+    <div class="track">
+      <input type="range" id="year" min="0" max="4" step="1" value="2" aria-label="Wzrost roślin">
+      <div class="ticks"><span>po posadzeniu</span><span>rok 1</span><span>rok 5</span><span>rok 10</span><span>docelowo</span></div>
+    </div>
+    <span class="dv" id="yearval">rok 5</span>
+  </div>
+</div>
+
+<div id="compass" title="Północ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L16.5 13 L12 11 L7.5 13 Z" fill="#a02c17"/><path d="M12 22 L16.5 13 L12 15 L7.5 13 Z" fill="#b7ab97"/><text x="12" y="9.6" text-anchor="middle" font-size="5" font-family="Georgia,serif" fill="#fcf9f2" font-weight="700">N</text></svg></div>
+<div id="scalebar" hidden><i></i><span></span></div>
+
+<div id="load"><div class="t">Ogród</div><div id="loadmsg">wczytywanie sceny…</div></div>
+
+<script>
+/* Anything that stops the scene — a module that fails to load, a script error, a lost WebGL
+   context — ends up here as a readable line on the loading card, instead of a silent blank page
+   (Safari and phones show no console). A classic script, so it runs even if the modules can't. */
+(function () {
+  var shown = false;
+  window.__gardenFail = function (msg) {
+    if (shown) return; shown = true;
+    var load = document.getElementById('load'), m = document.getElementById('loadmsg');
+    if (!load || !m) return;
+    load.hidden = false;
+    m.innerHTML = 'Nie udało się pokazać sceny.<br><small style="font-size:.78rem">' +
+      String(msg).replace(/[<>&]/g, '') + '</small><br><small style="font-size:.78rem">' +
+      navigator.userAgent.replace(/[<>&]/g, '') + '</small>';
+  };
+  window.addEventListener('error', function (e) {
+    if (window.__gardenReady) return;
+    window.__gardenFail((e.message || 'błąd skryptu') + (e.filename ? ' — ' + e.filename.split('/').pop() + ':' + e.lineno : ''));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    if (!window.__gardenReady) window.__gardenFail((e.reason && e.reason.message) || String(e.reason));
+  });
+  setTimeout(function () {
+    if (!window.__gardenReady) window.__gardenFail('scena nie wczytała się w 25 s');
+  }, 25000);
+})();
+</script>
+<script type="module" src="garden.js"></script>
+</body>
+</html>
