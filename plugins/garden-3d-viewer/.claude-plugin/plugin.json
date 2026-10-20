@@ -1,6 +1,6 @@
 {
   "name": "garden-3d-viewer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Turn a planting plan into an interactive 3D garden in the browser: seasons, growth, real sun and shade, walk-through, shopping list. Static files, three.js, no build step.",
   "author": {
     "name": "Paweł Rojek",
