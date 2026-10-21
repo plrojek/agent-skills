@@ -31,7 +31,7 @@ A few things to know:
 
 [SanAlert](https://sanalert.pl/en/) shows an unofficial threat level from the air for places in Poland. This plugin has no skill, only two MCP servers:
 
-- `sanalert` runs on your computer and needs [uv](https://docs.astral.sh/uv/). Its one tool, `sanalert_level`, gives the level for a town from the website's list or for a point. It downloads the same public state the website reads and works the level out locally, so no request to SanAlert carries the place you ask about. Your assistant's provider still sees your question and the answer, as with anything you ask it. The code is in [plrojek/sanalert-mcp](https://github.com/plrojek/sanalert-mcp); the plugin runs its `v1.0.0` tag.
+- `sanalert` runs on your computer and needs [uv](https://docs.astral.sh/uv/). Its one tool, `sanalert_level`, gives the level for a town from the website's list or for a point. It downloads the same public state the website reads and works the level out locally, so no request to SanAlert carries the place you ask about. Your assistant's provider still sees your question and the answer, as with anything you ask it. The code is in [plrojek/sanalert-mcp](https://github.com/plrojek/sanalert-mcp), and the plugin runs version 1.0.1 from [PyPI](https://pypi.org/project/sanalert-mcp/).
 - `sanalert-poland` is SanAlert's remote server, `https://api.sanalert.pl/mcp`: the state for the whole country, official messages from the last 24 hours, night reports, source cards and the reliability record. It takes no place.
 
 After installing, ask something like "what's the SanAlert level in Przemyśl?".
