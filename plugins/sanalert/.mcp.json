@@ -2,7 +2,7 @@
   "mcpServers": {
     "sanalert": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/plrojek/sanalert-mcp@v1.0.0", "sanalert-mcp"]
+      "args": ["--from", "sanalert-mcp==1.0.1", "sanalert-mcp"]
     },
     "sanalert-poland": {
       "type": "http",

@@ -1,6 +1,6 @@
 {
   "name": "sanalert",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SanAlert's unofficial threat level from the air for Poland, in Claude Code: the level for a place, worked out on your own computer, and the state of the whole country from SanAlert's API.",
   "author": {
     "name": "Paweł Rojek",
