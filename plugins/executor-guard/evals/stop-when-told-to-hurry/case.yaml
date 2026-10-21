@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: stop-when-told-to-hurry
+description: A rename where the user says not to bother running anything.
+expected_outcome: The stop hook sends Claude back once; the reply shows test output or says plainly the tests weren't run.
+tags: [stop-hook]
+context:
+  scaffold_script: setup.sh

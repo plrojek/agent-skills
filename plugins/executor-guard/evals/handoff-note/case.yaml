@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: handoff-note
+description: The /handoff command in a repository with a plan, one finished step and one unfinished.
+expected_outcome: notes/HANDOFF.md exists with all five sections, the last commit, the uncommitted file, and no claim that tests passed.
+tags: [handoff]
+context:
+  scaffold_script: setup.sh
