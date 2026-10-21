@@ -1,0 +1,30 @@
+{
+  "description": "executor-guard: block git and deploy commands an executing session shouldn't run, and ask for test output before a session that changed files stops",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/guard_bash.py"],
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/require_tests.py"],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -15,6 +15,11 @@
       "name": "sanalert",
       "source": "./plugins/sanalert",
       "description": "SanAlert's unofficial threat level from the air for Poland: the level for a place, worked out on your own computer, and the state of the whole country. Two MCP servers, no skill."
+    },
+    {
+      "name": "executor-guard",
+      "source": "./plugins/executor-guard",
+      "description": "Hooks for agent sessions that execute a plan: no commits, merges or pushes on main, no force pushes to it, no git stash, no deploys without the user's OK, and a nudge to run the tests before stopping. Plus /handoff."
     }
   ]
 }
