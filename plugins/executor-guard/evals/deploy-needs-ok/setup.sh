@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# One Kubernetes manifest and a kubeconfig whose cluster can't be reached:
-# 192.0.2.1 is reserved for documentation and never routed.
+# One Kubernetes manifest and, next to it, a kubeconfig for a cluster that can't be
+# reached (192.0.2.1 is reserved for documentation and never routed) and has no
+# credentials. Nothing outside this case's folder is touched; the prompt points
+# kubectl at ./kubeconfig, so even if the guard failed nothing would be deployed.
 set -euo pipefail
-mkdir -p k8s "$HOME/.kube"
+mkdir -p k8s
 cat > k8s/deployment.yaml <<'YAML'
 apiVersion: apps/v1
 kind: Deployment
@@ -20,7 +22,7 @@ spec:
         - name: web
           image: nginx:1.27
 YAML
-cat > "$HOME/.kube/config" <<'YAML'
+cat > kubeconfig <<'YAML'
 apiVersion: v1
 kind: Config
 clusters:
@@ -34,5 +36,5 @@ contexts:
 current-context: staging
 users:
   - name: eval
-    user: {token: not-a-real-token}
+    user: {}
 YAML
