@@ -6,8 +6,20 @@
     "name": "Paweł Rojek",
     "url": "https://pawelrojek.dev"
   },
-  "homepage": "https://github.com/plrojek/agent-skills",
+  "homepage": "https://pawelrojek.dev/writing/exact-words-from-a-noisy-recording",
   "repository": "https://github.com/plrojek/agent-skills",
   "license": "MIT",
-  "keywords": ["transcription", "speech-to-text", "whisper", "parakeet", "diarization", "speakers", "polish", "local"]
+  "keywords": [
+    "transcription",
+    "speech-to-text",
+    "whisper",
+    "parakeet",
+    "diarization",
+    "speakers",
+    "polish",
+    "local"
+  ],
+  "documentationUrl": "https://github.com/plrojek/agent-skills/tree/main/plugins/transcript-review#readme",
+  "supportUrl": "https://github.com/plrojek/agent-skills/issues",
+  "privacyPolicyUrl": "https://github.com/plrojek/agent-skills/tree/main/plugins/transcript-review#what-it-runs-downloads-and-sends"
 }
