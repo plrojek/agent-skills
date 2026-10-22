@@ -1,6 +1,6 @@
 {
   "name": "transcript-review",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An accurate transcript with named speakers from a noisy recording with several people: local models only, a review page on localhost where you correct a few passages by ear, a measurement of which model is best on that recording, voices matched from your corrections, doubtful words in italics.",
   "author": {
     "name": "Paweł Rojek",
