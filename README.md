@@ -71,7 +71,7 @@ or start Claude with `EXECUTOR_GUARD_ALLOW="helm upgrade,kubectl apply"`. An ent
 
 It catches mistakes; it isn't a security boundary. Things to know:
 
-- It splits the command with Python's `shlex` and follows `&&`, `;`, `|`, subshells, `$( )`, `cd`, `env`, `sudo`, `bash -c` and heredocs. It doesn't expand variables or aliases, doesn't read scripts the command runs, and misses `$( )` and backticks inside double quotes. A command it can't parse, such as one with an unterminated quote, goes through.
+- It splits the command with Python's `shlex` and follows `&&` and `;`, pipes, subshells, `$( )`, `cd`, `env`, `sudo`, a shell started with `-c`, and heredocs. It doesn't expand variables or aliases, doesn't read scripts the command runs, and misses `$( )` and backticks inside double quotes. A command it can't parse, such as one with an unterminated quote, goes through.
 - A quoted argument that is exactly an operator, like `echo "&&"`, is read as an operator.
 - After `git checkout <branch>` in the same command line, the branch counts as unknown, and an unknown branch isn't checked.
 - `git pull`, `rebase`, `cherry-pick`, `revert` and `am` on `main` aren't checked, and neither are `kubectl create`, `replace`, `set` or `rollout undo`, `gh pr merge`, or anything run over ssh.

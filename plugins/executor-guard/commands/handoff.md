@@ -2,7 +2,7 @@
 description: Write a short handoff note for the next session - what was planned, what's done (with evidence), what's not, open questions
 argument-hint: "[path, default HANDOFF.md]"
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, Bash(git status *), Bash(git log *), Bash(git diff *), Bash(git branch *), Bash(git rev-parse *)
+allowed-tools: Read, Write(**/HANDOFF.md), Glob, Grep, Bash(git status *), Bash(git log *), Bash(git diff *), Bash(git branch *), Bash(git rev-parse *)
 ---
 
 Write a handoff note for whoever picks this work up next: another session, maybe on a cheaper model, that has none of this conversation.
