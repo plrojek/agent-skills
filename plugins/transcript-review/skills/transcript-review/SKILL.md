@@ -2,7 +2,7 @@
 name: transcript-review
 description: "Make the most accurate possible transcript, with named speakers, of a noisy multi-speaker recording (meeting, interview, conversation outdoors, phone call on speaker): local models only (free, the audio never leaves the Mac), a local review page where the user corrects a few test passages by ear, measurement of which model is really best on THIS recording, speaker matching from the user's corrections, words the machine is unsure of marked in italics, checked lines marked ✓. Use when the user has a recording (m4a/mp3/wav, any language Whisper supports, tuned on Polish) and says the transcript has made-up words, wrong speakers, wants who-said-what, wants to fix a transcript by listening, or needs exact quotes for a dispute. Trigger phrases: 'popraw transkrypcję', 'transkrypcja z podziałem na osoby', 'kto co powiedział', 'wymyślone słowa w transkrypcji', 'strona do poprawiania transkrypcji', 'fix the transcript', 'speaker labels', 'transcript review page', 'diarization', 'nagranie ze spotkania'."
 metadata:
-  version: 1.0.0
+  version: 1.0.1
 ---
 
 # Transcript review — noisy recording → checked transcript with speakers
@@ -25,7 +25,7 @@ by guessing from context — in a dispute that is inventing evidence.
 | Role | Model / tool | Why |
 |---|---|---|
 | **Text** | Whisper **large-v3** (`ggml-large-v3.bin`, whisper.cpp ≥ 1.9.5, `brew install whisper-cpp`) on **lightly filtered** audio, chunks ≤ 28 s, beam 5, `--suppress-nst`, vocabulary `--prompt` | best of 16 combinations: 11.1% WER vs 15–48% for the rest |
-| **Word timings** | NVIDIA **Parakeet-TDT-0.6B-v3**, MLX build (`uv … --with parakeet-mlx`, `mlx-community/parakeet-tdt-0.6b-v3`) | Whisper's word times drift (10% off by > 1 s); Parakeet agrees with an independent timer within ±0.14 s |
+| **Word timings** | NVIDIA **Parakeet-TDT-0.6B-v3**, MLX build (`parakeet-mlx==0.5.3`, `mlx-community/parakeet-tdt-0.6b-v3`) | Whisper's word times drift (10% off by > 1 s); Parakeet agrees with an independent timer within ±0.14 s |
 | **Unsure-word flags** | Whisper large-v3 on raw audio, Whisper **large-v3-turbo** (raw), Parakeet (raw) | a word fewer than half of them heard is italic: flags 10% of words, catches ~61% of errors (Whisper's own confidence catches 32%) |
 | **Speech regions** | pyannote **segmentation 3.0** via sherpa-onnx | finds where speech is; chunks are cut only there |
 | **Voices** | 3D-Speaker **CAM++**, **ERes2NetV2** or **ERes2Net** via sherpa-onnx (the `voices` step tests all three on the checked lines and picks the best), averaged over the user's checked lines | 96–98% correct on held-out checked lines (49 lines: CAM++ 98%; 141 lines: all three 96.5–97.2%); WeSpeaker ResNet34 only 88% |
@@ -43,7 +43,7 @@ by guessing from context — in a dispute that is inventing evidence.
 
 ## Workflow
 
-Run each step from `scripts/`: `uv run --python 3.13 --with num2words python tr.py <step> <workdir>`.
+Run each step from `scripts/`: `uv run --python 3.13 --with num2words==0.5.14 python tr.py <step> <workdir>`.
 Use a **bash script file** for several steps in a row (zsh does not word-split `$CMD` variables).
 Keep the workdir **outside any synced folder or git repository** (audio is ~100 MB per 45 min), e.g.
 `~/asr-work/<name>/`.

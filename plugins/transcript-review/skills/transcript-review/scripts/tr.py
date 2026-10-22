@@ -2,7 +2,7 @@
 """Accurate transcript of a noisy, multi-speaker recording: local models + a human review page.
 
 Run every step from the skill's scripts/ folder:
-    uv run --python 3.13 --with num2words python tr.py <step> <workdir> [options]
+    uv run --python 3.13 --with num2words==0.5.14 python tr.py <step> <workdir> [options]
 
 Steps, in order:
     init      <workdir> --audio FILE      create workdir + project.json (edit it: language, prompt, speakers)
@@ -47,7 +47,7 @@ def project(w):
     if not pj: sys.exit(f"no project.json in {w} - run: tr.py init {w} --audio FILE")
     return pj
 def ffmpeg(*args): run(["ffmpeg", "-loglevel", "error", "-y", *args])
-def uvpy(script, *args, deps=("sherpa-onnx", "numpy>=2.3"), py="3.13"):
+def uvpy(script, *args, deps=("sherpa-onnx==1.13.8", "numpy==2.5.4"), py="3.13"):   # exact versions, tested 2026-10-22
     cmd = ["uv", "run", "-q", "--python", py]
     for d in deps: cmd += ["--with", d]
     run(cmd + ["python", "-I", P(HERE, script), *map(str, args)])
@@ -187,7 +187,7 @@ def cmd_asr(a):
     systems = list(SYSTEMS)
     for model, var in systems:
         if model.startswith("whisper"): run_whisper(w, pj, model, var)
-        elif model == "parakeet": uvpy("parakeet_asr.py", w, var, deps=("parakeet-mlx",))
+        elif model == "parakeet": uvpy("parakeet_asr.py", w, var, deps=("parakeet-mlx==0.5.3",))
 
 
 # ---------------------------------------------------------------- shared: flags, timing, lines
