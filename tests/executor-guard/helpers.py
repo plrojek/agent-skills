@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 TESTS = os.path.dirname(os.path.abspath(__file__))
-HOOKS = os.path.join(os.path.dirname(TESTS), "hooks")
+HOOKS = os.path.join(os.path.dirname(os.path.dirname(TESTS)), "plugins", "executor-guard", "hooks")
 if HOOKS not in sys.path:
     sys.path.insert(0, HOOKS)
 

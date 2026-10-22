@@ -1,6 +1,6 @@
 {
   "name": "executor-guard",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Hooks for agent sessions that execute a plan: no commits, merges or pushes on main, no force pushes to it, no git stash, no deploys without the user's OK, and no stopping after edits without running the tests. Plus /handoff for the next session.",
   "author": {
     "name": "Paweł Rojek",

@@ -45,7 +45,7 @@ It catches mistakes; it isn't a security boundary. Things to know:
 - Only the Bash tool is checked, not PowerShell on Windows.
 - It needs `python3` (3.9 or later) on PATH. If a hook can't start, Claude Code carries on without it.
 
-The tests are plain unittest, `python3 -m unittest discover -s plugins/executor-guard/tests`, and `plugins/executor-guard/evals/` has six cases for `claude plugin eval`. The git cases need a git that works inside Claude Code's sandbox. On a Mac where the only git is Apple's `/usr/bin/git` it doesn't (xcrun can't write its cache there), so those cases pass without the hook ever being reached.
+The tests are plain unittest and live outside the plugin, so they aren't installed: `python3 -m unittest discover -s tests/executor-guard` from the repository root. `plugins/executor-guard/evals/` has six cases for `claude plugin eval`; their setup scripts only write inside each case's own folder. The git cases need a git that works inside Claude Code's sandbox. On a Mac where the only git is Apple's `/usr/bin/git` it doesn't (xcrun can't write its cache there), so those cases pass without the hook ever being reached.
 
 ## What it runs and sends
 
