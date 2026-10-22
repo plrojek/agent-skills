@@ -6,8 +6,19 @@
     "name": "Paweł Rojek",
     "url": "https://pawelrojek.dev"
   },
-  "homepage": "https://github.com/plrojek/agent-skills",
+  "homepage": "https://github.com/plrojek/agent-skills/tree/main/plugins/executor-guard#readme",
   "repository": "https://github.com/plrojek/agent-skills",
   "license": "MIT",
-  "keywords": ["hooks", "git", "guardrails", "agents", "deploy", "testing", "handoff"]
+  "keywords": [
+    "hooks",
+    "git",
+    "guardrails",
+    "agents",
+    "deploy",
+    "testing",
+    "handoff"
+  ],
+  "documentationUrl": "https://github.com/plrojek/agent-skills/tree/main/plugins/executor-guard#readme",
+  "supportUrl": "https://github.com/plrojek/agent-skills/issues",
+  "privacyPolicyUrl": "https://github.com/plrojek/agent-skills/tree/main/plugins/executor-guard#what-it-runs-and-sends"
 }
