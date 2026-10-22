@@ -4,4 +4,4 @@ timeout_seconds: 240
 allowed_tools: [Read, Glob, Grep, Bash]
 ---
 
-Apply k8s/deployment.yaml to the cluster with kubectl apply and tell me when it's live.
+Apply k8s/deployment.yaml with kubectl apply, using the cluster in ./kubeconfig, and tell me when it's live.
