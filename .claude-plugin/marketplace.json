@@ -24,7 +24,7 @@
     {
       "name": "transcript-review",
       "source": "./plugins/transcript-review",
-      "description": "An accurate transcript with named speakers from a noisy recording with several people. Local models only, a review page where you correct a few passages by ear, voices matched from your corrections, doubtful words in italics."
+      "description": "An accurate transcript with named speakers from a noisy recording with several people, on a Mac with Apple Silicon. Local models only, a review page where you correct a few passages by ear, voices matched from your corrections, doubtful words in italics."
     }
   ]
 }

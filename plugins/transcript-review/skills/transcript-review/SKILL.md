@@ -2,7 +2,7 @@
 name: transcript-review
 description: "Make the most accurate possible transcript, with named speakers, of a noisy multi-speaker recording (meeting, interview, conversation outdoors, phone call on speaker): local models only (free, the audio never leaves the Mac), a local review page where the user corrects a few test passages by ear, measurement of which model is really best on THIS recording, speaker matching from the user's corrections, words the machine is unsure of marked in italics, checked lines marked ✓. Use when the user has a recording (m4a/mp3/wav, any language Whisper supports, tuned on Polish) and says the transcript has made-up words, wrong speakers, wants who-said-what, wants to fix a transcript by listening, or needs exact quotes for a dispute. Trigger phrases: 'popraw transkrypcję', 'transkrypcja z podziałem na osoby', 'kto co powiedział', 'wymyślone słowa w transkrypcji', 'strona do poprawiania transkrypcji', 'fix the transcript', 'speaker labels', 'transcript review page', 'diarization', 'nagranie ze spotkania'."
 metadata:
-  version: 1.0.1
+  version: 1.0.2
 ---
 
 # Transcript review — noisy recording → checked transcript with speakers
@@ -42,6 +42,10 @@ by guessing from context — in a dispute that is inventing evidence.
 - Unsupervised diarization clusters as speakers (k = number of people merged two voices) — speakers come from the user's checked lines instead.
 
 ## Workflow
+
+0. **Check where you are running first.** This only works in Claude Code on a Mac with Apple Silicon
+   (`uname -sm` = `Darwin arm64`) with a shell you can run commands in. In claude.ai chat, Cowork, on Linux,
+   Windows or an Intel Mac, tell the user that in one sentence and stop; don't start downloads.
 
 Run each step from `scripts/`: `uv run --python 3.13 --with num2words==0.5.14 python tr.py <step> <workdir>`.
 Use a **bash script file** for several steps in a row (zsh does not word-split `$CMD` variables).
