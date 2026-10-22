@@ -20,6 +20,11 @@
       "name": "executor-guard",
       "source": "./plugins/executor-guard",
       "description": "Hooks for agent sessions that execute a plan: no commits, merges or pushes on main, no force pushes to it, no git stash, no deploys without the user's OK, and a nudge to run the tests before stopping. Plus /handoff."
+    },
+    {
+      "name": "transcript-review",
+      "source": "./plugins/transcript-review",
+      "description": "An accurate transcript with named speakers from a noisy recording with several people. Local models only, a review page where you correct a few passages by ear, voices matched from your corrections, doubtful words in italics."
     }
   ]
 }

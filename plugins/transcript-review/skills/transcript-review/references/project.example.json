@@ -1,0 +1,19 @@
+{
+ "title": "Example: workshop planning meeting",
+ "audio": "/Users/you/Downloads/meeting.m4a",
+ "language": "pl",
+ "prompt": "Zebranie, harmonogram, zamówienie. Jan Kowalski, Anna Nowak, Piotr Zieliński. Hala B, Łódź. Paleta, wózek widłowy, dostawa.",
+ "speakers": [
+  {"key": "host", "name": "Jan Kowalski"},
+  {"key": "client", "name": "Anna Nowak"},
+  {"key": "engineer", "name": "Piotr Zieliński"},
+  {"key": "visitor", "name": "Visitor"},
+  {"key": "remote", "name": "Supplier (phone)"}
+ ],
+ "rare": ["visitor"],
+ "only_in": {"remote": [[1205, 1330]]},
+ "pins": [[2405.0, 2412.5, "visitor"]],
+ "test_passages": [[95, 170], [610, 700], [1220, 1290], [1900, 1975]],
+ "extra_passages": [{"title": "Delivery date", "s": 1500, "e": 1545}],
+ "main": "whisper-v3__flt"
+}
