@@ -1,0 +1,13 @@
+{
+  "name": "transcript-review",
+  "version": "1.0.0",
+  "description": "An accurate transcript with named speakers from a noisy recording with several people: local models only, a review page on localhost where you correct a few passages by ear, a measurement of which model is best on that recording, voices matched from your corrections, doubtful words in italics.",
+  "author": {
+    "name": "Paweł Rojek",
+    "url": "https://pawelrojek.dev"
+  },
+  "homepage": "https://github.com/plrojek/agent-skills",
+  "repository": "https://github.com/plrojek/agent-skills",
+  "license": "MIT",
+  "keywords": ["transcription", "speech-to-text", "whisper", "parakeet", "diarization", "speakers", "polish", "local"]
+}

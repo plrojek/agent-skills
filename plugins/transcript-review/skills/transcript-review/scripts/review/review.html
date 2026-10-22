@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcript review</title>
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--ink:#1c1c1e;--mute:#6e6e73;--line:#e3e3e0;--acc:#2f6fdf;--ok:#1f8a4c;--hl:#fff6d6;--play:#e8f0ff}
+@media (prefers-color-scheme:dark){:root{--bg:#151517;--card:#1f1f22;--ink:#ececee;--mute:#9a9aa2;--line:#34343a;--acc:#6b9cff;--ok:#4cc27e;--hl:#3b3313;--play:#1b2742}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;max-width:1000px;margin:0 auto}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 11px;font:inherit;font-size:14px;color:inherit;cursor:pointer}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tabs button .done{color:var(--ok);font-weight:700}
+.tabs button.on .done{color:#fff}
+.player{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;max-width:1000px;margin-left:auto;margin-right:auto}
+.player button{font:inherit;border:1px solid var(--line);background:var(--card);color:inherit;border-radius:8px;padding:6px 12px;cursor:pointer}
+.player button.big{background:var(--acc);border-color:var(--acc);color:#fff;min-width:110px;font-weight:600}
+.player select,.player label{font-size:14px}
+#clock{font-variant-numeric:tabular-nums;color:var(--mute);font-size:14px;min-width:70px}
+#scrub{flex:1;min-width:160px}
+#save{font-size:13px;color:var(--mute);margin-left:auto}
+#save.err{color:#c62828;font-weight:700}
+main{max-width:1000px;margin:0 auto;padding:12px 16px 160px}
+.howto{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:15px}
+.howto ol{margin:6px 0 4px;padding-left:22px}
+.howto li{margin:3px 0}
+.howto kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:13px;background:var(--bg)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:13px}
+.legend span{border-radius:6px;padding:1px 8px;color:#fff}
+.row{display:grid;grid-template-columns:44px 82px 180px 1fr 76px;gap:6px;align-items:start;padding:6px 8px;border-radius:8px;margin:2px 0}
+.tin{width:100%;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:7px;padding:6px 5px;background:var(--card);color:var(--ink);text-align:center}
+.tin:focus{outline:none;border-color:var(--acc)}
+.tin.bad{border-color:#c62828}
+.ops{display:flex;gap:4px}
+.ops button{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--card);color:inherit;border-radius:7px;padding:4px 0;width:34px;cursor:pointer}
+.ops button:hover{border-color:var(--acc)}
+.ops button.del:hover{border-color:#c62828;color:#c62828}
+.addnow{border-color:var(--ok)!important;color:var(--ok)!important;font-weight:600}
+.row.playing{background:var(--play)}
+.row.focus{outline:2px solid var(--acc);outline-offset:-2px}
+.t{font-variant-numeric:tabular-nums;font-size:13px;color:var(--mute);background:none;border:1px solid var(--line);border-radius:7px;padding:5px 4px;cursor:pointer;color:inherit;font:inherit;font-size:13px}
+.t:hover{border-color:var(--acc)}
+.who{position:relative}
+.who button{width:100%;text-align:left;border:0;border-radius:7px;padding:6px 10px;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu{position:absolute;top:36px;left:0;z-index:10;background:var(--card);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:4px;min-width:230px}
+.menu div{padding:6px 10px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;gap:8px;align-items:center}
+.menu div:hover{background:var(--bg)}
+.menu i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.menu small{margin-left:auto;color:var(--mute)}
+textarea{width:100%;font:17px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:5px 8px;resize:none;overflow:hidden;min-height:36px}
+textarea:focus{outline:none;border-color:var(--acc)}
+.hint{grid-column:4;font-size:12.5px;color:var(--mute);margin-top:-4px}
+.hint b{background:var(--hl);color:var(--ink);font-weight:500;border-radius:3px;padding:0 3px}
+.foot{margin-top:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.foot button{font:inherit;font-size:16px;border-radius:9px;padding:9px 18px;cursor:pointer;border:1px solid var(--ok);background:var(--ok);color:#fff;font-weight:600}
+.foot button.undo{background:var(--card);color:var(--ink);border-color:var(--line);font-weight:400}
+.foot .ok{color:var(--ok);font-weight:600}
+@media (max-width:700px){.row{grid-template-columns:64px 1fr}.row textarea,.hint{grid-column:1/3}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar"><div class="tabs" id="tabs"></div><span id="save">—</span></div>
+  <div class="player">
+    <button class="big" id="pp">▶ Play</button>
+    <button id="back">↺ 3 s back</button>
+    <button id="addnow" class="addnow" title="Pause where someone starts talking, then press this">＋ line at current time</button>
+    <span id="clock">00:00</span>
+    <input type="range" id="scrub" min="0" max="1" step="0.01" value="0">
+    <label>Speed <select id="rate"><option>0.6</option><option>0.75</option><option selected>1</option></select></label>
+    <label><input type="checkbox" id="clean"> cleaned audio</label>
+  </div>
+</header>
+<main>
+  <div class="howto">
+    <b>How to correct this passage</b>
+    <ol>
+      <li>Press <b>▶ Play</b> (or <kbd>Esc</kbd>) and listen. The line being played lights up blue. <kbd>Shift</kbd>+<kbd>Esc</kbd> = 3 s back. Click a line's time to play from there.</li>
+      <li>Fix the words so each line says <b>exactly</b> what was said. Delete words nobody said. Can't make it out? Type <b>[?]</b>. A note for the reader goes in square brackets, e.g. <b>[on the phone]</b>.</li>
+      <li><b>One line = one person.</b> Where the next person starts talking, put the cursor there and press <kbd>Enter</kbd>: the rest moves to a new line. Then set who is talking: click the coloured name, or press <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>8</kbd>.</li>
+      <li>Two lines that are really one person? Put the cursor at the start of the lower line and press <kbd>Backspace</kbd>: they join.</li>
+      <li><b>Add a line:</b> pause where someone starts talking and press <b>＋ line at current time</b> (top), or press <b>＋</b> at the end of a line. <b>Delete a line:</b> 🗑. <b>Change a line's time:</b> type it in the time box, e.g. <code>01:09.5</code> (lines re-sort by time).</li>
+      <li>When the whole passage is right, press <b>Passage finished</b> at the bottom. Everything saves by itself.</li>
+    </ol>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div id="rows"></div>
+  <div class="foot" id="foot"></div>
+</main>
+<audio id="a" preload="auto"></audio>
+<script>
+let SPK = [];   // from data.json: [{name, color}]
+const colorOf = n => (SPK.find(s => s.n === n) || {c:'#9ca3af'}).c;
+const a = document.getElementById('a');
+let D, ST, sec = null, focusRow = 0, raf = null, timer = null, dirty = false;
+const fmt = t => { t = Math.max(0, t); const m = Math.floor(t / 60), s = Math.floor(t % 60); return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0'); };
+
+async function init(){
+  D = await (await fetch('data.json')).json();
+  SPK = (D.speakers || []).map(x => typeof x === 'string' ? {n: x, c: '#9ca3af'} : {n: x.name, c: x.color});
+  document.title = 'Review · ' + (D.title || 'transcript');
+  if (!D.has_clean) document.getElementById('clean').parentElement.style.display = 'none';
+  let st = {}; try { st = await (await fetch('api/state')).json(); } catch(e){}
+  ST = (st && st.version === 2) ? st : migrate(st);
+  for (const s of D.sections) if (!ST.sections[s.id]) ST.sections[s.id] = {rows: initialRows(s, {}), done:false, shown: shownSpan(s)};
+  let fixedTimes = 0;
+  for (const s of D.sections){ const rows = ST.sections[s.id].rows; fixedTimes += retimeRows(rows, s); rows.sort((x, y) => x.s - y.s); }
+  if (fixedTimes) setTimeout(save, 300);
+  sec = D.sections[0].id;
+  try { const k = localStorage.getItem('sec'); if (k && ST.sections[k]) sec = k; } catch(e){}
+  document.getElementById('legend').innerHTML = SPK.slice(0,8).map((s,i) => `<span style="background:${s.c}">Ctrl+${i+1} ${s.n}</span>`).join('');
+  setSrc(false);
+  document.getElementById('pp').onclick = toggle;
+  document.getElementById('back').onclick = () => { a.currentTime = Math.max(0, a.currentTime - 3); };
+  document.getElementById('addnow').onclick = () => { const s = +a.currentTime.toFixed(2); a.pause();
+    insertRow({s, e: +(s + 1.5).toFixed(2), spk: '?', text: '', unsure: [], manual: true}); };
+  document.getElementById('rate').onchange = e => a.playbackRate = +e.target.value;
+  document.getElementById('clean').onchange = () => setSrc(true);
+  const sc = document.getElementById('scrub');
+  sc.oninput = () => { const s0 = secStart(), s1 = secEnd(); a.currentTime = s0 + (+sc.value) * (s1 - s0); };
+  document.addEventListener('keydown', globalKey);
+  document.addEventListener('click', e => { if (!e.target.closest('.who')) closeMenus(); });
+  a.addEventListener('play', loop); a.addEventListener('pause', () => { document.getElementById('pp').textContent = '▶ Play'; });
+  render();
+  if (!(st && st.version === 2)) save();
+}
+// first version of the page stored per-line corrections; turn them into rows
+function migrate(old){
+  const S = {version:2, sections:{}};
+  for (const s of D.sections) S.sections[s.id] = {rows: initialRows(s, old || {}), done:false, shown: shownSpan(s)};
+  return S;
+}
+// the machine words this passage starts from (in the main model's own word times): the final transcript replaces
+// exactly these with the user's lines, so nothing the user never saw is dropped
+function shownSpan(s){
+  const ls = D.lines.filter(l => l.s <= s.e && l.e >= s.s && l.w0 != null);
+  return ls.length ? [Math.min(...ls.map(l => l.w0)), Math.max(...ls.map(l => l.w1))] : null;
+}
+function initialRows(s, old){
+  const L = old.lines || {}, A = old.added || [];
+  const rows = [];
+  for (const l of D.lines){
+    if (!(l.s <= s.e && l.e >= s.s)) continue;
+    const c = L[l.id] || {};
+    if (c.status !== 'removed') rows.push({s:l.s, e:l.e, spk: c.spk || l.spk, text: c.text != null ? c.text : l.text, unsure: l.unsure || []});
+    for (const ad of A.filter(x => x.after === l.id && x.status !== 'removed'))
+      rows.push({s:ad.s, e:ad.e, spk: ad.spk || '?', text: ad.text || '', unsure: []});
+  }
+  return rows;
+}
+const curSec = () => D.sections.find(x => x.id === sec);
+const rowsOf = () => ST.sections[sec].rows;
+function setSrc(keep){
+  const t = a.currentTime, playing = !a.paused;
+  a.src = (document.getElementById('clean').checked ? 'clean' : 'orig') + '.flac';
+  a.playbackRate = +document.getElementById('rate').value;
+  a.addEventListener('loadedmetadata', () => { a.currentTime = keep ? t : secStart(); if (keep && playing) a.play(); }, {once:true});
+}
+function render(){
+  const tabs = document.getElementById('tabs'); tabs.innerHTML = '';
+  for (const s of D.sections){
+    const b = document.createElement('button');
+    b.innerHTML = `${s.title} · ${fmt(s.s)}–${fmt(s.e)} ${ST.sections[s.id].done ? '<span class="done">✓</span>' : ''}`;
+    if (s.id === sec) b.className = 'on';
+    b.onclick = () => { sec = s.id; try{localStorage.setItem('sec', sec);}catch(e){} a.pause(); a.currentTime = secStart(); focusRow = 0; render(); };
+    tabs.appendChild(b);
+  }
+  const box = document.getElementById('rows'); box.innerHTML = '';
+  rowsOf().forEach((r, i) => box.appendChild(rowEl(r, i)));
+  const foot = document.getElementById('foot'); foot.innerHTML = '';
+  const done = ST.sections[sec].done;
+  if (done){
+    foot.innerHTML = '<span class="ok">✓ Marked as finished.</span>';
+    const u = document.createElement('button'); u.className = 'undo'; u.textContent = 'Not finished after all';
+    u.onclick = () => { ST.sections[sec].done = false; save(); render(); }; foot.appendChild(u);
+  } else {
+    const b = document.createElement('button'); b.textContent = 'Passage finished ✓';
+    b.onclick = () => { ST.sections[sec].done = true; save(); const i = D.sections.findIndex(x => x.id === sec);
+      if (i + 1 < D.sections.length){ sec = D.sections[i+1].id; a.pause(); a.currentTime = secStart(); } render(); window.scrollTo(0,0); };
+    foot.appendChild(b);
+  }
+  document.getElementById('clock').textContent = fmt(a.currentTime || curSec().s);
+}
+function rowEl(r, i){
+  const d = document.createElement('div'); d.className = 'row'; d.dataset.i = i;
+  const t = document.createElement('button'); t.className = 't'; t.textContent = '▶'; t.title = 'Play from this line';
+  t.onclick = () => { a.currentTime = Math.max(0, r.s - 0.3); a.play(); };
+  const tin = document.createElement('input'); tin.className = 'tin'; tin.value = fmtT(r.s); tin.title = 'Start time (mm:ss.s) — type to change';
+  tin.onchange = () => {
+    const v = parseT(tin.value);
+    if (v == null){ tin.classList.add('bad'); return; }
+    tin.classList.remove('bad');
+    const dur = Math.max(0.5, r.e - r.s); r.s = v; r.manual = true; if (r.e <= r.s) r.e = +(r.s + dur).toFixed(2);
+    resort(r);
+  };
+  tin.onkeydown = (e) => { if (e.key === 'Enter'){ e.preventDefault(); tin.blur(); } };
+  const ops = document.createElement('div'); ops.className = 'ops';
+  const add = document.createElement('button'); add.textContent = '＋'; add.title = 'Add an empty line below';
+  add.onclick = () => { const rows = rowsOf(); const nx = rows[i + 1];
+    const s = nx ? +((r.e + Math.min(nx.s, r.e + 2)) / 2).toFixed(2) : +(r.e + 0.2).toFixed(2);
+    insertRow({s, e: +(s + 1).toFixed(2), spk: '?', text: '', unsure: []}); };
+  const del = document.createElement('button'); del.textContent = '🗑'; del.className = 'del'; del.title = 'Delete this line';
+  del.onclick = () => { rowsOf().splice(i, 1); save(); render(); };
+  ops.append(add, del);
+  const who = document.createElement('div'); who.className = 'who';
+  const wb = document.createElement('button'); wb.textContent = r.spk; wb.style.background = colorOf(r.spk);
+  wb.onclick = (e) => { e.stopPropagation(); openMenu(who, i); };
+  who.appendChild(wb);
+  const ta = document.createElement('textarea'); ta.value = r.text; ta.rows = 1; ta.spellcheck = false;
+  ta.oninput = () => { r.text = ta.value; size(ta); save(); };
+  ta.onchange = () => retimeCurrent();
+  ta.onfocus = () => { focusRow = i; document.querySelectorAll('.row.focus').forEach(x => x.classList.remove('focus')); d.classList.add('focus'); };
+  ta.onkeydown = (e) => rowKey(e, i, ta);
+  d.append(t, tin, who, ta, ops);
+  if (r.unsure && r.unsure.length){
+    const h = document.createElement('div'); h.className = 'hint';
+    h.innerHTML = 'machine was unsure about: ' + r.unsure.map(w => '<b>' + w.replace(/[<>&]/g,'') + '</b>').join(' ');
+    d.appendChild(h);
+  }
+  setTimeout(() => size(ta));
+  return d;
+}
+function size(ta){ ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+function fmtT(t){ t = Math.max(0, t); const m = Math.floor(t / 60), s = t - m * 60; return String(m).padStart(2,'0') + ':' + s.toFixed(1).padStart(4,'0'); }
+function parseT(v){
+  const m = String(v).trim().replace(',', '.').match(/^(\d{1,2}):(\d{1,2}(?:\.\d+)?)$|^(\d+(?:\.\d+)?)$/);
+  if (!m) return null;
+  return m[3] != null ? +(+m[3]).toFixed(2) : +((+m[1]) * 60 + (+m[2])).toFixed(2);
+}
+// --- precise times: align each line's words to Parakeet's (then Whisper turbo's) word timings ---
+const FILL = new Set(['yy','yyy','yyyy','ee','eee','eh','em','emm','mhm','hm','hmm','um','mm']);
+const ntok = s => String(s || '').toLowerCase().replace(/\[[^\]]*\]/g, ' ').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w && !FILL.has(w));
+function retimeRows(rows, S){
+  let changed = 0;
+  const fixed = new Set();
+  for (const src of [D.timed, D.timed2]){
+    if (!src) continue;
+    const T = [];
+    for (const [w, s, e] of src){ if (s < S.s - 6 || s > S.e + 6) continue; for (const t of ntok(w)) T.push({t, s, e}); }
+    const R = [];
+    rows.forEach((r, i) => { if (r.manual || fixed.has(i)) return; for (const t of ntok(r.text)) R.push({t, i}); });
+    const n = R.length, m = T.length; if (!n || !m) continue;
+    const dp = Array.from({length: n + 1}, () => new Int16Array(m + 1));
+    for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++)
+      dp[i][j] = R[i-1].t === T[j-1].t ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+    const hit = new Map();
+    for (let i = n, j = m; i > 0 && j > 0;){
+      if (R[i-1].t === T[j-1].t && dp[i][j] === dp[i-1][j-1] + 1){ const k = R[i-1].i; if (!hit.has(k)) hit.set(k, []); hit.get(k).push(j - 1); i--; j--; }
+      else if (dp[i-1][j] >= dp[i][j-1]) i--; else j--;
+    }
+    rows.forEach((r, i) => {
+      if (r.manual || fixed.has(i)) return;
+      const nt = ntok(r.text).length, h = (hit.get(i) || []).sort((x, y) => x - y);
+      if (!nt || h.length < Math.max(1, Math.ceil(nt * 0.34)) || (nt >= 3 && h.length < 2)) return;
+      const s = T[h[0]].s, e = Math.max(T[h[h.length - 1]].e, s + 0.3);
+      const jump = Math.abs(s - r.s);
+      if (jump > 12 || (jump > 2 && h.length < 2)) return;   // implausible jump, or big move on a single word: keep old time
+      if (Math.abs(s - r.s) > 0.05 || Math.abs(e - r.e) > 0.05){ r.s = +s.toFixed(2); r.e = +e.toFixed(2); changed++; }
+      fixed.add(i);
+    });
+  }
+  // a line's end may not run past the start of the next line
+  rows.forEach((r, i) => {
+    const n = rows[i + 1];
+    if (n && n.s > r.s && r.e > n.s){ r.e = n.s; changed++; }
+  });
+  // lines that could not be matched: keep them between their neighbours
+  rows.forEach((r, i) => {
+    if (r.manual || fixed.has(i) || i === 0) return;
+    const p = rows[i - 1];
+    if (r.s < p.s){ r.s = +Math.min(p.e, p.s + 1).toFixed(2); if (r.e <= r.s) r.e = +(r.s + 1).toFixed(2); changed++; }
+  });
+  return changed;
+}
+function retimeCurrent(){
+  const rows = rowsOf(); const n = retimeRows(rows, curSec());
+  if (n){ document.querySelectorAll('.row').forEach(el => { const r = rows[+el.dataset.i]; const tin = el.querySelector('.tin'); if (r && tin && document.activeElement !== tin) tin.value = fmtT(r.s); }); save(); }
+}
+function resort(r){ const rows = rowsOf(); rows.sort((x, y) => x.s - y.s); save(); render(); focusTA(rows.indexOf(r), null); }
+function insertRow(nr){
+  const rows = rowsOf(); rows.push(nr); rows.sort((x, y) => x.s - y.s); save(); render();
+  const k = rows.indexOf(nr); focusTA(k, 0); flashWho(k);
+}
+function openMenu(who, i){
+  closeMenus();
+  const m = document.createElement('div'); m.className = 'menu';
+  SPK.forEach((s, k) => {
+    const it = document.createElement('div');
+    it.innerHTML = `<i style="background:${s.c}"></i>${s.n}<small>${k < 8 ? 'Ctrl+' + (k+1) : ''}</small>`;
+    it.onclick = (e) => { e.stopPropagation(); setSpk(i, s.n); closeMenus(); };
+    m.appendChild(it);
+  });
+  who.appendChild(m);
+}
+function closeMenus(){ document.querySelectorAll('.menu').forEach(m => m.remove()); }
+function setSpk(i, n){ rowsOf()[i].spk = n; save(); render(); focusTA(i, null); }
+function focusTA(i, caret){
+  const ta = document.querySelector(`.row[data-i="${i}"] textarea`); if (!ta) return;
+  ta.focus({preventScroll:false}); if (caret != null) ta.setSelectionRange(caret, caret);
+}
+function rowKey(e, i, ta){
+  const rows = rowsOf(), r = rows[i];
+  if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey){
+    e.preventDefault();
+    const pos = ta.selectionStart, before = ta.value.slice(0, pos).trimEnd(), after = ta.value.slice(pos).trimStart();
+    const frac = ta.value.length ? pos / ta.value.length : 0.5;
+    const mid = r.s + (r.e - r.s) * frac;
+    const nr = {s: +mid.toFixed(2), e: r.e, spk: '?', text: after, unsure: []};
+    r.text = before; r.e = +mid.toFixed(2);
+    rows.splice(i + 1, 0, nr); retimeRows(rows, curSec()); save(); render(); focusTA(i + 1, 0);
+    flashWho(i + 1);
+  } else if (e.key === 'Backspace' && ta.selectionStart === 0 && ta.selectionEnd === 0 && i > 0){
+    e.preventDefault();
+    const p = rows[i - 1], caret = p.text.length + (p.text && r.text ? 1 : 0);
+    p.text = (p.text + ' ' + r.text).trim(); p.e = Math.max(p.e, r.e); p.unsure = (p.unsure||[]).concat(r.unsure||[]);
+    rows.splice(i, 1); save(); render(); focusTA(i - 1, caret);
+  } else if (e.ctrlKey && /^[1-8]$/.test(e.key)){
+    e.preventDefault(); setSpk(i, SPK[+e.key - 1].n);
+  }
+}
+function flashWho(i){ const w = document.querySelector(`.row[data-i="${i}"] .who button`); if (w){ w.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}], {duration:500, iterations:2}); } }
+function secStart(){ const S = curSec(); const rs = rowsOf().map(r => r.s); return Math.max(0, Math.min(S.s, ...rs) - 1); }
+function secEnd(){ const S = curSec(); return Math.max(S.e, ...rowsOf().map(r => r.e)) + 3; }
+function toggle(){ if (a.paused){ const S = curSec(); if (a.currentTime < secStart() - 0.5 || a.currentTime > secEnd()) a.currentTime = secStart(); else if (a.currentTime > 1) a.currentTime -= 0.8; a.play(); } else a.pause(); }
+function globalKey(e){
+  if (e.key === 'Escape'){ e.preventDefault(); closeMenus(); if (e.shiftKey){ a.currentTime = Math.max(0, a.currentTime - 3); if (a.paused) a.play(); } else toggle(); }
+}
+function loop(){
+  document.getElementById('pp').textContent = '❚❚ Pause';
+  cancelAnimationFrame(raf);
+  const S = curSec(); let last = -1;
+  const tick = () => {
+    const t = a.currentTime;
+    document.getElementById('clock').textContent = fmt(t);
+    { const s0 = secStart(), s1 = secEnd(); document.getElementById('scrub').value = Math.min(1, Math.max(0, (t - s0) / (s1 - s0))); }
+    const rows = rowsOf(); let k = -1;
+    for (let q = 0; q < rows.length; q++) if (rows[q].s - 0.05 <= t) k = q;     // the line that started most recently
+    if (k >= 0 && t > Math.max(rows[k].e, rows[k].s + 0.5) + 1.5) k = -1;     // long silence after it: no highlight
+    if (k !== last){
+      document.querySelectorAll('.row.playing').forEach(x => x.classList.remove('playing'));
+      if (k >= 0){ const el = document.querySelector(`.row[data-i="${k}"]`); if (el){ el.classList.add('playing');
+        const rc = el.getBoundingClientRect(); if (rc.top < 150 || rc.bottom > innerHeight - 40) el.scrollIntoView({block:'center', behavior:'smooth'}); } }
+      last = k;
+    }
+    if (t > secEnd()){ a.pause(); return; }
+    if (!a.paused) raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+}
+function save(){
+  dirty = true; clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const el = document.getElementById('save'); el.className = ''; el.textContent = 'saving…';
+    try {
+      const r = await fetch('api/save', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(ST)});
+      const j = await r.json(); if (!j.ok) throw 0; dirty = false; el.textContent = 'saved ' + j.saved_at.slice(11);
+    } catch(err){ el.className = 'err'; el.textContent = 'NOT SAVED — tell Claude'; }
+  }, 500);
+}
+window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue = ''; } });
+init();
+</script>
+</body>
+</html>
