@@ -103,17 +103,24 @@ from unrelated parishes, every filter ignored, and an empty `parishes` list. It 
 real index rows. Two causes are known:
 
 1. A defective rid for one parish while its sibling rids work.
-2. **Your network address flagged** after heavy automated use. Then every query returns it,
-   and so does a normal browser on the same network. In one case it followed weeks of
-   province-wide sweeps and lifted on its own within two months.
+2. **Your IP address blocked** after heavy automated use. The block is per public IP
+   address: every query from that connection gets the pooled answer, from a script and from a
+   normal browser alike, while the site itself loads fine. In one case it followed weeks of
+   province-wide sweeps. Connecting the computer through a phone's mobile hotspot (a
+   different public IP) gave real answers again at once, which is how the cause was
+   confirmed; a VPN or tailnet that keeps the same public exit address changes nothing. The
+   block on the home address lifted on its own within two months.
 
 `search` checks every answer (`sanity_reasons`: over 3000 rows, no parish named, the wrong
 parish, the surname in no row), refuses to cache or page through a bad one, and says so.
 To tell the causes apart, run a **control query** whose answer you already know:
 `geneteka.py check <woj> <B|S|D> <rid> <surname> <expected_total>`. If the control is also
-pooled, stop all Geneteka work for the session. Do not retry in a loop and do not try to get
-around the flag; keep later use manual and narrow. Older cached answers from a bad day can be
-poisoned too: purge the cache if in doubt.
+pooled, the address is blocked: stop all Geneteka queries on that connection and tell the
+user, including that another connection (a phone hotspot) worked before. Switching networks
+is the user's decision, not yours. Don't retry in a loop; that is what makes it worse. On any
+connection, run the control query first and keep searches narrow: a parish rid, a surname,
+a year range, not whole provinces. Cached answers from a bad day can be poisoned too: purge
+the cache if in doubt.
 
 **A zero is more often a spelling problem than a gap.** A family searched as `Kostur`
 returned nothing in all three record types in its home parish; the priest had written

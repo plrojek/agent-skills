@@ -111,7 +111,7 @@ A few things to know:
 
 For finding Polish ancestors: Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers and scanned parish books, with the tree as a GEDCOM. It lists the brick walls on the direct line, sweeps the sources you choose, matches the results against the tree, grades every finding from confirmed to rejected, and patches a copy of the GEDCOM so it still imports.
 
-Most of the skill is the traps I hit working through my own family's Galician and Kresy lines: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery register that hides married women from a maiden-name search, a book written off as "needs a letter to the archive" that was already free online. The scripts are Python with no dependencies, identify themselves to the sites and wait between requests. Details, and exactly what it contacts, are in [its README](plugins/pl-genealogy-record-search/README.md).
+Most of the skill is the traps I hit working through my own family's lines: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery register that hides married women from a maiden-name search, a book written off as "needs a letter to the archive" that was already free online. The scripts are Python with no dependencies, identify themselves to the sites and wait between requests. Details, and exactly what it contacts, are in [its README](plugins/pl-genealogy-record-search/README.md).
 
 ## License
 

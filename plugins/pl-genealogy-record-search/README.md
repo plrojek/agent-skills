@@ -7,7 +7,7 @@ Finds your Polish ancestors in parish indexes, deportation lists, cemetery regis
 /plugin install pl-genealogy-record-search@plrojek
 ```
 
-I wrote it while working through my own family's lines in Galicia, the Kresy and Mazowsze. Most of it is about what goes wrong: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery search that can't find a woman under her maiden name, a book written off as "needs a letter to the archive" that had been free online for weeks. Each of those cost me a session or more, and the skill now checks for them.
+I wrote it while working through my own family's lines. Most of it is about what goes wrong: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery search that can't find a woman under her maiden name, a book written off as "needs a letter to the archive" that had been free online for weeks. Each of those cost me a session or more, and the skill now checks for them.
 
 It works in four steps:
 
@@ -21,9 +21,9 @@ Ask Claude something like "find the parents of this ancestor of mine" or "check 
 A few things to know:
 
 - The sources are Polish sites and most of the material is Polish and Latin. Claude reads both; you don't need to.
-- It is strongest for Galicia (Małopolska, Podkarpacie, today's western Ukraine) and the Kresy, because that is where I needed it. Geneteka covers all of Poland; the cemetery scripts cover Przemyśl and Grobonet cemeteries only.
+- Geneteka covers all of Poland and many parishes now in Ukraine, Belarus and Lithuania. The cemetery scripts cover the Przemyśl municipal cemeteries and the cemeteries on Grobonet only.
 - Some important sources need a real browser or an account (szukajwarchiwach.gov.pl, Gesher Galicia, FamilySearch). The skill uses them through your browser if you have Claude in Chrome, and otherwise tells you what to open.
-- Nothing here gets around a block. If Geneteka starts returning junk for your connection, the skill stops querying it and tells you.
+- Geneteka can block an IP address that sent it too many automated searches. It doesn't return an error: every search from that address gets thousands of unrelated rows, in a script and in your browser alike. The skill spots that, stops querying and tells you. It happened to me after weeks of big sweeps: connecting the computer to the internet through my iPhone's hotspot gave real answers again at once, and the home connection was unblocked within two months. Whichever connection you use, keep the searches narrow.
 
 ## What it runs, downloads and sends
 

@@ -168,8 +168,9 @@ def warn(problems):
         print("\n  DISCARD THESE ROWS - this is not a real answer:", file=sys.stderr)
         for p in problems:
             print("   - " + p, file=sys.stderr)
-        print("  Re-run a control query (`check`). If that is also bad, your network is likely\n"
-              "  flagged: stop, try another network or another day. Do not retry in a loop.\n",
+        print("  Re-run a control query (`check`). If that is also bad, this IP address is\n"
+              "  blocked: stop querying from this connection. Another connection (e.g. a phone\n"
+              "  hotspot) has worked before; the block lifts by itself. Never retry in a loop.\n",
               file=sys.stderr)
 
 
