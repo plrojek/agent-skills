@@ -1,0 +1,59 @@
+0 HEAD
+1 SOUR test
+1 GEDC
+2 VERS 5.5.1
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Jan /Kowal/
+2 GIVN Jan
+2 SURN Kowal
+1 SEX M
+1 BIRT
+2 DATE 3 MAR 1900
+2 PLAC Wola Zielona, Galicja
+1 FAMC @F1@
+1 FAMS @F2@
+0 @I2@ INDI
+1 NAME Piotr /Kowal/
+1 SEX M
+1 BIRT
+2 DATE 1870
+2 PLAC Wola Zielona
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Anna /Kowal/
+1 SEX F
+1 BIRT
+2 DATE 1875
+1 DEAT
+2 DATE 1898
+1 FAMS @F1@
+0 @I4@ INDI
+1 NAME Maria /Lis/
+2 GIVN Maria
+2 SURN Lis
+2 _MARNM Kowal
+1 SEX F
+1 BIRT
+2 DATE ABT 1904
+2 PLAC Lipnica
+1 FAMS @F2@
+0 @I5@ INDI
+1 NAME /Kowal/
+1 SEX F
+1 NOTE First line of a note
+2 CONT second line
+2 CONC  continued
+1 FAMC @F2@
+0 @F1@ FAM
+1 HUSB @I2@
+1 WIFE @I3@
+1 CHIL @I1@
+0 @F2@ FAM
+1 HUSB @I1@
+1 WIFE @I4@
+1 CHIL @I5@
+1 MARR
+2 DATE 1925
+2 PLAC Wola Zielona
+0 TRLR

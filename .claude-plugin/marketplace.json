@@ -25,6 +25,11 @@
       "name": "transcript-review",
       "source": "./plugins/transcript-review",
       "description": "An accurate transcript with named speakers from a noisy recording with several people, on a Mac with Apple Silicon. Local models only, a review page where you correct a few passages by ear, voices matched from your corrections, doubtful words in italics."
+    },
+    {
+      "name": "pl-genealogy-record-search",
+      "source": "./plugins/pl-genealogy-record-search",
+      "description": "Polish and former-Kresy genealogy: match a family tree against Geneteka, the Soviet deportation index, cemetery registers and scanned parish books, grade each finding, and patch the GEDCOM so it still imports."
     }
   ]
 }
