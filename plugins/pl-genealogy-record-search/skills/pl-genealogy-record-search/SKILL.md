@@ -87,7 +87,7 @@ death, death before birth. Report these even when they have nothing to do with r
 `scripts/geneteka.py`; don't hand-roll the URL.
 
 ```
-python3 scripts/geneteka.py parishes 09pk --grep Jasło        # rids and indexed years
+python3 scripts/geneteka.py parishes 09pk --grep Rzeszów       # rids and indexed years
 python3 scripts/geneteka.py search 09pk B Kowal --rid 1234 --json kowal-B.json
 ```
 
@@ -117,7 +117,7 @@ poisoned too: purge the cache if in doubt.
 
 **A zero is more often a spelling problem than a gap.** A family searched as `Kostur`
 returned nothing in all three record types in its home parish; the priest had written
-`Kastur`, and that returned 25 births, 12 marriages and 22 deaths, including a marriage act
+`Kastur`, and that returned dozens of births, marriages and deaths, including a marriage act
 that had been read off the scan by hand the session before. Before writing "not indexed",
 spend one query on each obvious variant: vowel swaps, `-ski/-ska`, `-cki/-cka`, dropped
 diacritics, `ó/o/u/i`, `rz/ż`, Latin and Ruthenian forms (`Szewczyk/Szewczuk`). The fastest

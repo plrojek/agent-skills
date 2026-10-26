@@ -57,7 +57,7 @@ real browser passes. Work in a browser session the user can see.
 A unit titled like `Kopie ksiąg metrykalnych parafii X z filią Y i Z` is not one register.
 It is births, marriages, deaths, **repeated for each village**, each block restarting its
 years and opening with a handwritten title (`Copia Natorum de pago Y ab anno 1857`). In one
-160-scan unit the third village started at scan 113; miss that and you read the right years
+unit of about 150 scans the third village started two thirds of the way in; miss that and you read the right years
 in the wrong village all afternoon.
 
 1. **Year map**: `contact_sheet.py sheet` over every ~13th scan, top strip only
@@ -75,13 +75,13 @@ Exact dates from court probate files or cemetery cards land you on the right sca
 
 Numbering traps:
 
-- The handwritten page number is not the portal's scan number (cover frames shift it; one
-  unit was off by 9). An index citing "skan 116" may mean either: try both.
+- The handwritten page number is not the portal's scan number (cover frames shift it by several
+  frames). An index citing "skan 116" may mean either: try both.
 - Microfilmed units contain **duplicate frames**. Don't read the year cadence as "one page per
   year" without checking.
 - Pencil renumbering next to the ink numbers can shift acts by one.
 - **The last frame is the microfilm target card** and states the page and frame count
-  (`LICZBA STRON 144 · LICZBA KLATEK 162`). Read it before concluding "the book must continue
+  (`LICZBA STRON ... · LICZBA KLATEK ...`). Read it before concluding "the book must continue
   somewhere": it settles whether later years are hiding further in.
 - **A fond's description generalises; the unit list does not.** A Greek-Catholic parish fond
   advertised "Death book 1851-1945", which reads like the whole parish; the unit's own title
