@@ -12,7 +12,7 @@ I wrote it while working through my own family's lines. Most of it is about what
 It works in four steps:
 
 1. **Inventory.** Parse the tree, list the brick walls on the direct line, the placeholders (missing given names, a wife with her husband's surname), and which surname sits in which village.
-2. **Sweep.** Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations; searching by village returns the whole transport), the Przemyśl municipal cemeteries with birth dates from the grave cards, any Grobonet cemetery with everyone in a grave, and scans from Skanoteka, metryki.genealodzy.pl, CAAK and, through your browser, szukajwarchiwach.gov.pl.
+2. **Sweep.** Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations; searching by village returns the whole transport), the Przemyśl municipal cemeteries with birth dates from the grave cards, any Grobonet cemetery with everyone in a grave, and scans from Skanoteka, metryki.genealodzy.pl and CAAK. Through your browser: szukajwarchiwach.gov.pl, FamilySearch (records, the film catalog that says which archive holds a parish's books, and full-text search of emigrant documents) and Gesher Galicia.
 3. **Cross-match and grade.** Tree people against the saved index rows, then confirmed / probable / hypothesis / rejected, with the act that would settle each open question.
 4. **Capture.** A research note with act numbers and archive signatures, a patched copy of the GEDCOM checked for broken links and records after the trailer, and an order-of-entry list for MyHeritage, which can't merge a GEDCOM back.
 
@@ -22,7 +22,7 @@ A few things to know:
 
 - The sources are Polish sites and most of the material is Polish and Latin. Claude reads both; you don't need to.
 - Geneteka covers all of Poland and many parishes now in Ukraine, Belarus and Lithuania. The cemetery scripts cover the Przemyśl municipal cemeteries and the cemeteries on Grobonet only.
-- Some important sources need a real browser or an account (szukajwarchiwach.gov.pl, Gesher Galicia, FamilySearch). The skill uses them through your browser if you have Claude in Chrome, and otherwise tells you what to open.
+- Some important sources need a real browser or an account (szukajwarchiwach.gov.pl, Gesher Galicia, FamilySearch). The skill uses them through your browser if you have Claude in Chrome, and otherwise tells you what to open. On FamilySearch it only reads: it never saves or attaches anything to your tree.
 - Geneteka can block an IP address that sent it too many automated searches. It doesn't return an error: every search from that address gets thousands of unrelated rows, in a script and in your browser alike. The skill spots that, stops querying and tells you. It happened to me after weeks of big sweeps: connecting the computer to the internet through my iPhone's hotspot gave real answers again at once, and the home connection was unblocked within two months. Whichever connection you use, keep the searches narrow.
 
 ## What it runs, downloads and sends

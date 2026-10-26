@@ -1,6 +1,6 @@
 ---
 name: pl-genealogy-record-search
-description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK), where Galician and Kresy books physically are, reading Latin and Greek-Catholic registers, and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
+description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, reading Latin and Greek-Catholic registers, and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
 license: MIT
 metadata:
   version: 1.0.0
@@ -216,7 +216,9 @@ one project four sessions: a volume written up again and again as "needs an arch
 had been free on Skanoteka for weeks, and three pages of it closed five walls in an afternoon.
 Check, in this order: `szukajwarchiwach.gov.pl` (the unit page shows a scan count),
 `skanoteka.genealodzy.pl` (new fonds weekly; the front page lists them),
-`metryki.genealodzy.pl`, diocesan archives (`caak.upjp2.edu.pl` for Kraków), FamilySearch.
+`metryki.genealodzy.pl`, diocesan archives (`caak.upjp2.edu.pl` for Kraków), and the
+FamilySearch catalog, which also tells you in which archive the books were filmed (many
+Polish films open only at a FamilySearch Center: check before promising a scan).
 A negative from six months ago is worthless.
 
 How to download from each host, how to find a year in a 400-scan volume in minutes, and how
@@ -268,7 +270,8 @@ absence from the rite you have been searching.
 | Kresy parish before 1900 | | AGAD fond 301, CDIAL Lviv fond 618 |
 | Anders' Army soldier in no index | no complete public index exists | WBH-CAW (card with photo), Sikorski Institute, TNA `WO 315`, UdSKiOR |
 
-Addresses, endpoints and what each source needs: `references/sources.md`.
+Addresses, endpoints and what each source needs, including how to search FamilySearch and
+Gesher Galicia in the user's browser: `references/sources.md`.
 
 ---
 

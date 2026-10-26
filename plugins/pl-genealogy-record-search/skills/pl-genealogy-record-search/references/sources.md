@@ -98,15 +98,64 @@ Others, no script: `mogily.pl`, `polskie-cmentarze.pl`, `ecmentarze.pl`.
 | Source | Why | Worth it for |
 |---|---|---|
 | `szukajwarchiwach.gov.pl` | bot protection (Imperva); a real browser passes | scans of parish and civil books, PUR files, court files, every AP inventory |
-| `search.geshergalicia.org` | JavaScript app, no public API | Galician records incl. Jewish, cadastral maps, voter and town lists |
+| Gesher Galicia | JavaScript app; some content for members | Galician records incl. Jewish, record inventories, cadastral maps (see below) |
 | `genealogyindexer.org` | search needs a session | city directories, yizkor books, school yearbooks: an ancestor at an address |
-| FamilySearch | login | worldwide indexes and scans |
+| FamilySearch | login | indexes, the film catalog, emigrant documents (see below) |
 | `genbaza.pl` | login | more scans |
 
 Use these through a browser session the user can see (Claude in Chrome or a DevTools MCP),
 at a human pace. Don't move their cookies into scripts or disguise a script as a browser.
 Don't conclude "not online" before these have been tried: between them they hold the scans,
 the Jewish records and the address directories no index reproduces.
+
+## FamilySearch (familysearch.org)
+
+Needs the user's login; use their browser session and only read. Never save, edit or
+attach anything to their FamilySearch tree. Checked October 2026.
+
+**Record search**: `/search/record/results?q.surname=&q.givenName=&q.anyPlace=&q.birthLikeDate.from=&q.birthLikeDate.to=&f.collectionId=&count=20`
+- Places match loosely by default: "Przemyśl" returned births in other towns of the same
+  province. Add `q.anyPlace.exact=on` (and `q.surname.exact=on`).
+- Even an exact place matches at **any level of FamilySearch's place hierarchy**, which uses
+  historical districts: a village filed under an old district comes up for that district's
+  town. Read the event place on every row.
+- Main Polish collections: `Poland, Church Books, 1568-1990` (`f.collectionId=4135958`) and
+  `Poland, Tarnow, Roman Catholic Diocese Church Books, 1612-1900` (`1985025`).
+- The Polish index is **thin** next to Geneteka (a handful of rows where Geneteka has
+  hundreds). Use it to cross-check and for parishes Geneteka doesn't cover. A record's
+  "Residence Place" is often just the house number.
+- A record page has no direct scan, only "Check Image Availability", which leads to the catalog.
+
+**Catalog**: `/search/catalog/results?q.place=<village>`, grouped by subject (church records,
+Jewish records, Ukrainian `Метричні книги`). An entry (`/search/catalog/<id>`) gives the years
+and record types per film, the film number and image group number (DGS), and **which archive
+the books were filmed in**: a quick way to learn where a parish's books physically are.
+- Many Polish church-book films are marked "viewable with additional restrictions": the
+  images open **only at a FamilySearch Center or affiliate library**, not at home. Check
+  the icon or its tooltip in the Film/Digital Notes table before promising the user a scan.
+- Each film row has "Search the Index", which limits the record search to that film.
+
+**Full-text search**: `/search/full-text/results?q.text=<words>` searches machine-read text
+of documents. For Polish names it mostly finds **emigrants**: Polish-American newspapers,
+US naturalization papers, passenger lists. The text has no Polish letters (`Przemysl`), so
+type names without diacritics. Use it for relatives who left; it does not search parish books.
+
+## Gesher Galicia (geshergalicia.org)
+
+Galician records, strongest for Jewish families but not only them. Some content is for
+members. Checked October 2026.
+
+- **All Galicia Database**: `www.geshergalicia.org/all-galicia-database/`. A JavaScript app
+  that loads its data from `search.geshergalicia.org`; scripts get only "Loading...".
+  On 26 October 2026 that data server did not answer at all, so searches were not tested.
+  If it doesn't load, say so and move on rather than retrying.
+- **Record Inventories** (`/inventory/`): which records survive for a town and in which
+  archive (AGAD, the Przemyśl state archive, Ukrainian archives). Read it before writing to
+  an archive. Also a JavaScript search form.
+- **Map Room** (`maps.geshergalicia.org`): cadastral and town maps. Cadastral maps carry
+  house and plot numbers, which link to the `Numerus domus` column of parish registers.
+- **Knowledge base**: guides to AGAD's Jewish Galician records, the Przemyśl State Archive
+  and Ukrainian archives, and a town locator for old district names.
 
 ## Archives: where the books are
 
