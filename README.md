@@ -8,6 +8,7 @@ Claude Code skills and plugins from my own projects, cleaned up enough to share.
 /plugin install sanalert@plrojek
 /plugin install executor-guard@plrojek
 /plugin install transcript-review@plrojek
+/plugin install pl-genealogy-record-search@plrojek
 ```
 
 From a shell it's `claude plugin marketplace add plrojek/agent-skills`, then `claude plugin install garden-3d-viewer@plrojek`. If you don't want plugins, copy `plugins/garden-3d-viewer/skills/garden-3d-viewer` into `~/.claude/skills/` and it works the same way.
@@ -105,6 +106,12 @@ A few things to know:
 - Everything runs on your computer and the audio never leaves it. The review server listens on 127.0.0.1 and refuses requests from other sites.
 - On an M4 Pro the models take about 15 minutes for 45 minutes of audio. The four test passages took me 30 to 40 minutes, including learning the page.
 - It was tuned on Polish. Other languages Whisper knows should work, but I haven't measured them.
+
+## pl-genealogy-record-search
+
+For finding Polish ancestors: Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers and scanned parish books, with the tree as a GEDCOM. It lists the brick walls on the direct line, sweeps the sources you choose, matches the results against the tree, grades every finding from confirmed to rejected, and patches a copy of the GEDCOM so it still imports.
+
+Most of the skill is the traps I hit working through my own family's Galician and Kresy lines: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery register that hides married women from a maiden-name search, a book written off as "needs a letter to the archive" that was already free online. The scripts are Python with no dependencies, identify themselves to the sites and wait between requests. Details, and exactly what it contacts, are in [its README](plugins/pl-genealogy-record-search/README.md).
 
 ## License
 
