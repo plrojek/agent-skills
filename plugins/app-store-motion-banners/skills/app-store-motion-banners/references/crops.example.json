@@ -1,0 +1,9 @@
+{"base": "screens",
+ "crops": {
+  "chat_question": {"src": "en/chat.png",     "box": [342, 396, 1272, 511],  "r": 57, "r_br": 12},
+  "answer_row_1":  {"src": "en/chat.png",     "box": [100, 1751, 1222, 1962], "r": 54},
+  "chip_food":     {"src": "en/discover.png", "box": [464, 860, 856, 962],   "r": 51},
+  "food_row_1":    {"src": "en/discover.png", "box": [48, 1362, 1272, 1637], "r": 58},
+  "tile_1":        {"src": "en/services.png", "box": [48, 1420, 645, 1946],  "r": 58, "pad_bottom": 64},
+  "level_card":    {"src": "en/level.png",    "box": [60, 2322, 1258, 2700], "r": 26, "r_tl": 4, "r_bl": 4}
+ }}

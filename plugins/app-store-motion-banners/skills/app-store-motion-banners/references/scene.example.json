@@ -1,0 +1,169 @@
+{
+ "lang": "en",
+ "loop": 10,
+ "fonts": [
+  "https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Outfit:wght@800&display=swap"
+ ],
+ "background": "linear-gradient(180deg,#0a6fc2 0%,#1291e0 26%,#29aef2 41%,#1d9fe8 52%,#0d82d4 76%,#0866b4 100%)",
+ "headline": {
+  "text": "Your headline here.",
+  "top": 352,
+  "font": "800 74px/84px Outfit,sans-serif"
+ },
+ "words": {
+  "items": [
+   "first",
+   "second",
+   "third"
+  ],
+  "top": 448
+ },
+ "acts": [
+  [
+   {
+    "img": "crops/q.png",
+    "left": 1030,
+    "top": 496,
+    "width": 400,
+    "kind": "chip"
+   },
+   {
+    "img": "crops/a1.png",
+    "left": 970,
+    "top": 574,
+    "width": 460
+   },
+   {
+    "img": "crops/a2.png",
+    "left": 970,
+    "top": 683,
+    "width": 460
+   },
+   {
+    "img": "crops/t0.png",
+    "left": 600,
+    "top": 520,
+    "width": 270
+   }
+  ],
+  [
+   {
+    "img": "crops/chipA.png",
+    "left": 800,
+    "top": 500,
+    "width": 150,
+    "kind": "chip"
+   },
+   {
+    "img": "crops/chipB.png",
+    "left": 962,
+    "top": 500,
+    "width": 140,
+    "kind": "chip"
+   },
+   {
+    "img": "crops/r0.png",
+    "left": 442,
+    "top": 552,
+    "width": 512
+   },
+   {
+    "img": "crops/r1.png",
+    "left": 966,
+    "top": 552,
+    "width": 512
+   },
+   {
+    "img": "crops/r2.png",
+    "left": 442,
+    "top": 675,
+    "width": 512
+   },
+   {
+    "img": "crops/r3.png",
+    "left": 966,
+    "top": 675,
+    "width": 512
+   }
+  ],
+  [
+   {
+    "img": "crops/chipA.png",
+    "left": 885,
+    "top": 500,
+    "width": 150,
+    "kind": "chip"
+   },
+   {
+    "img": "crops/t0.png",
+    "left": 454,
+    "top": 552,
+    "width": 241
+   },
+   {
+    "img": "crops/t1.png",
+    "left": 711,
+    "top": 552,
+    "width": 241
+   },
+   {
+    "img": "crops/t2.png",
+    "left": 968,
+    "top": 552,
+    "width": 241
+   },
+   {
+    "img": "crops/t3.png",
+    "left": 1225,
+    "top": 552,
+    "width": 241
+   }
+  ]
+ ],
+ "skyline": {
+  "seed": 8,
+  "base": 345,
+  "landmark_x": 560
+ },
+ "pins": {
+  "count": 12
+ },
+ "phones": [
+  {
+   "left": -46,
+   "top": 64,
+   "rotate": -10,
+   "scale": 0.92,
+   "float": "B",
+   "screen": "shots/s3.png"
+  },
+  {
+   "left": 96,
+   "top": 150,
+   "rotate": 5,
+   "float": "A",
+   "strip": [
+    "shots/s1.png",
+    "shots/s2.png",
+    "shots/s3.png"
+   ]
+  },
+  {
+   "left": 1644,
+   "top": 64,
+   "rotate": 10,
+   "scale": 0.92,
+   "float": "B",
+   "screen": "shots/s2.png"
+  },
+  {
+   "left": 1504,
+   "top": 150,
+   "rotate": -5,
+   "float": "A",
+   "delay": -2.5,
+   "screen": "shots/s1.png"
+  }
+ ],
+ "credit": "Demo assets, generated"
+}

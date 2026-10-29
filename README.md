@@ -9,6 +9,7 @@ Claude Code skills and plugins from my own projects, cleaned up enough to share.
 /plugin install executor-guard@plrojek
 /plugin install transcript-review@plrojek
 /plugin install pl-genealogy-record-search@plrojek
+/plugin install app-store-motion-banners@plrojek
 ```
 
 From a shell it's `claude plugin marketplace add plrojek/agent-skills`, then `claude plugin install garden-3d-viewer@plrojek`. If you don't want plugins, copy `plugins/garden-3d-viewer/skills/garden-3d-viewer` into `~/.claude/skills/` and it works the same way.
@@ -112,6 +113,16 @@ A few things to know:
 For finding Polish ancestors: Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers and scanned parish books, with the tree as a GEDCOM. It lists the brick walls on the direct line, sweeps the sources you choose, matches the results against the tree, grades every finding from confirmed to rejected, and patches a copy of the GEDCOM so it still imports.
 
 Most of the skill is the traps I hit working through my own family's lines: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery register that hides married women from a maiden-name search, a book written off as "needs a letter to the archive" that was already free online. The scripts are Python with no dependencies, identify themselves to the sites and wait between requests. Details, and exactly what it contacts, are in [its README](plugins/pl-genealogy-record-search/README.md).
+
+## app-store-motion-banners
+
+![Top: a header frame with the part an iPhone crops off darkened. Bottom: the same frame as the iPhone shows it. Demo assets.](docs/app-store-motion-banners.jpg)
+
+App Store product-page header videos that work on an iPhone. My own header looked fine in App Store Connect, but on the phone the icon sat under the Dynamic Island and everything that moved was cropped off at the sides.
+
+I measured from a screenshot what an iPhone shows: the full height, the middle 65% of the width, and the top 40% of that under the status bar and the store's buttons. The skill lays the banner out around those numbers. Real UI pieces cut from your screenshots fly in, one act per subtitle word.
+
+It renders a seamless loop frame by frame and checks the file against the specs, the black flash that B-frames cause at the loop point and the loop seam. It also makes a copy under 10 MB for browser uploads. Details, and what it runs, are in [its README](plugins/app-store-motion-banners/README.md).
 
 ## License
 
