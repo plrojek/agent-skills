@@ -30,6 +30,11 @@
       "name": "pl-genealogy-record-search",
       "source": "./plugins/pl-genealogy-record-search",
       "description": "Polish and former-Kresy genealogy: match a family tree against Geneteka, the Soviet deportation index, cemetery registers and scanned parish books, grade each finding, and patch the GEDCOM so it still imports."
+    },
+    {
+      "name": "app-store-motion-banners",
+      "source": "./plugins/app-store-motion-banners",
+      "description": "App Store product-page header videos that work on an iPhone: nothing under the Dynamic Island or the store's buttons, real UI pieces from your screenshots moving where the phone shows the banner, a seamless loop rendered frame by frame, checked, and copied under 10 MB for upload."
     }
   ]
 }
