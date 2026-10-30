@@ -116,11 +116,11 @@ Most of the skill is the traps I hit working through my own family's lines: Gene
 
 ## app-store-motion-banners
 
-![Top: a header frame with the part an iPhone crops off darkened. Bottom: the same frame as the iPhone shows it. Demo assets.](docs/app-store-motion-banners.jpg)
+![Top: a demo header frame with the part an iPhone crops off darkened. Bottom: what an iPhone shows of two demo apps, one light and one dark. Demo assets.](docs/app-store-motion-banners.jpg)
 
 App Store product-page header videos that work on an iPhone. My own header looked fine in App Store Connect, but on the phone the icon sat under the Dynamic Island and everything that moved was cropped off at the sides.
 
-I measured from a screenshot what an iPhone shows: the full height, the middle 65% of the width, and the top 40% of that under the status bar and the store's buttons. The skill lays the banner out around those numbers. Real UI pieces cut from your screenshots fly in, one act per subtitle word.
+I measured from a screenshot what an iPhone shows: the full height, the middle 65% of the width, and the top 40% of that under the status bar and the store's buttons. The skill lays the banner out around those numbers. Real UI pieces cut from your screenshots fly in, one act per subtitle word, in your app's colours, fonts and artwork. If you already have a header design, it runs that through the same render instead.
 
 It renders a seamless loop frame by frame and checks the file against the specs, the black flash that B-frames cause at the loop point and the loop seam. It also makes a copy under 10 MB for browser uploads. Details, and what it runs, are in [its README](plugins/app-store-motion-banners/README.md).
 

@@ -9,23 +9,29 @@ Measured on a device screenshot (iOS App Store, 2026): the header shows the FULL
   mute + share    x 1219-1533, y 186-327  (narrowest phones: from x 1147)
 SAFE for anything readable: y >= 345 inside the window; hero motion in x 430-1490.
 
-usage: iphone_mock.py <frame.png> <out.png> [--guides]     one frame with overlays + the white store page below
-       iphone_mock.py --overlay <out.png>                  transparent overlay only (2496x1646) for ffmpeg"""
+The clock and status icons turn dark when the top band of the frame is light, as iOS does.
+
+usage: iphone_mock.py <frame.png> <out.png> [--guides]      one frame with overlays + the white store page below
+       iphone_mock.py --overlay <out.png> [--frame <png>]   transparent overlay only (2496x1646) for ffmpeg; --frame picks
+                                                            the glyph colour from a frame of the video"""
 import sys
-from PIL import Image, ImageDraw, ImageFont
-OVERLAY = sys.argv[1] == '--overlay'
-src, out = (None, sys.argv[2]) if OVERLAY else (sys.argv[1], sys.argv[2]); guides = '--guides' in sys.argv
-im = Image.new('RGB', (3840, 1646)) if OVERLAY else Image.open(src).convert('RGB')
+from PIL import Image, ImageDraw, ImageFont, ImageStat
+A = sys.argv[1:]; OVERLAY = A[0] == '--overlay'; guides = '--guides' in A
+src, out = (A[A.index('--frame') + 1] if '--frame' in A else None, A[1]) if OVERLAY else (A[0], A[1])
+im = Image.open(src).convert('RGB') if src else Image.new('RGB', (3840, 1646))
+if im.size != (3840, 1646): im = im.resize((3840, 1646), Image.LANCZOS)
 S = im.width / 1920
 X0, X1 = 336, 1584
 win = im.crop((int(X0 * S), 0, int(X1 * S), im.height)); W, H = win.size; k = W / (X1 - X0)
 def R(x0, y0, x1, y1): return [(x0 - X0) * k, y0 * k, (x1 - X0) * k, y1 * k]
+light_top = ImageStat.Stat(win.crop((0, 0, W, int(171 * k))).convert('L')).mean[0] > 150
+glyph = (20, 20, 20, 255) if light_top else (255, 255, 255, 255)
 ov = Image.new('RGBA', win.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
 try: f = ImageFont.truetype('/System/Library/Fonts/SFNS.ttf', int(52 * k))
 except Exception: f = ImageFont.load_default()
-d.text(((395 - X0) * k, 62 * k), '9:41', font=f, fill=(255, 255, 255, 255))
-d.rounded_rectangle(R(1440, 72, 1520, 108), radius=10 * k, fill=(255, 255, 255, 255))
-d.rounded_rectangle(R(1330, 70, 1420, 110), radius=8 * k, fill=(255, 255, 255, 230))
+d.text(((395 - X0) * k, 62 * k), '9:41', font=f, fill=glyph)
+d.rounded_rectangle(R(1440, 72, 1520, 108), radius=10 * k, fill=glyph)
+d.rounded_rectangle(R(1330, 70, 1420, 110), radius=8 * k, fill=glyph[:3] + (230,))
 d.rounded_rectangle(R(760, 36, 1160, 154), radius=59 * k, fill=(0, 0, 0, 255))                 # Dynamic Island
 d.ellipse(R(389, 186, 524, 327), fill=(225, 238, 250, 215))                                   # back button
 d.rounded_rectangle(R(1219, 186, 1533, 327), radius=70 * k, fill=(225, 238, 250, 215))       # mute + share

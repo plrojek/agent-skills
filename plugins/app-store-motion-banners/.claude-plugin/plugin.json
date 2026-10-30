@@ -1,7 +1,7 @@
 {
   "name": "app-store-motion-banners",
-  "version": "1.0.0",
-  "description": "App Store product-page header videos that work on an iPhone. Nothing sits under the Dynamic Island, the status bar or the store's buttons. Real UI pieces from your screenshots move where the phone actually shows the banner. The video is rendered frame by frame to a seamless loop, checked against the specs, and copied under 10 MB for upload.",
+  "version": "1.1.0",
+  "description": "App Store product-page header videos that work on an iPhone. Nothing sits under the Dynamic Island, the status bar or the store's buttons. Real UI pieces from your screenshots move where the phone actually shows the banner, in your app's colours, fonts and artwork, or your existing HTML design goes through the same steps. The video is rendered frame by frame to a seamless loop, checked against the specs, and copied under 10 MB for upload.",
   "author": {
     "name": "Paweł Rojek",
     "url": "https://pawelrojek.dev"
