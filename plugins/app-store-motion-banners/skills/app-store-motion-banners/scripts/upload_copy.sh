@@ -5,6 +5,7 @@
 # usage: upload_copy.sh <master.mp4> <out.mp4> [target_kbps=7200]
 set -euo pipefail
 in=$1; out=$2; kbps=${3:-7200}
+mkdir -p "$(dirname "$out")"
 IFS=x read W H <<<"$(ffprobe -v error -select_streams v -show_entries stream=width,height -of csv=p=0:s=x "$in")"
 lvl=$(python3 -c "print('5.2' if $W*$H/256*30 > 983040 else '5.1')")
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
