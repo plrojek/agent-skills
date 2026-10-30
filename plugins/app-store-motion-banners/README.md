@@ -7,7 +7,7 @@ App Store product-page header videos that work on an iPhone. Nothing hides under
 /plugin install app-store-motion-banners@plrojek
 ```
 
-![Top: a header frame with the part an iPhone crops off darkened and the band it covers tinted red. Bottom: the same frame as the iPhone shows it, with the status bar, Dynamic Island and store buttons drawn on top. Demo assets.](docs/iphone-view.jpg)
+![Top: a frame of a demo header with the part an iPhone crops off darkened and the band it covers tinted red. Bottom: what an iPhone shows of two demo apps, a light to-do app and a dark stats app, with the status bar, Dynamic Island and store buttons drawn on top. Demo assets.](docs/iphone-view.jpg)
 
 My app's header video looked fine in App Store Connect. On my iPhone it didn't:
 - the app icon sat right under the Dynamic Island;
@@ -17,16 +17,18 @@ My app's header video looked fine in App Store Connect. On my iPhone it didn't:
 I measured what an iPhone shows from a screenshot of the live page. It shows the full height of the video but only the middle 65% of its width, and the status bar, the island and the store's buttons cover the top 40% of that. This skill builds the header around those numbers:
 
 1. **It cuts real UI pieces** (cards, chips, chat bubbles) out of your app's screenshots, with exact edges and rounded corners.
-2. **It generates the scene from a small JSON file:**
+2. **It generates the scene from a small JSON file,** in your app's colours, fonts and artwork:
    - the headline;
    - your store subtitle words as tabs;
    - one act per word, in which the UI pieces fly in and leave in a cascade;
-   - optionally, a skyline with pins dropping onto the roofs, and phones at the sides for iPad and Mac.
+   - optionally: your own artwork that drifts, floats, pulses or spins; markers that drop onto points you choose; phones at the sides for iPad and Mac; a built-in city skyline.
+
+   If you already have a header design in HTML, it keeps that and only fixes the layout for the phone.
 3. **It renders the loop frame by frame** in Chrome and encodes it the way App Store Connect accepts it. It avoids B-frames, which make the video flash black every time it loops.
 4. **It checks every file:** level, colour tags, B-frames, the edit list and the loop seam. It also shows you what the iPhone will show, with the status bar, island and buttons drawn on top.
 5. **It makes a copy under 10 MB** for uploading through a browser.
 
-I made the headers for two of my apps with it, in three languages. Ask Claude something like "make an App Store header video for my app". It should pick the skill up, ask for your copy and screenshots, and show you the iPhone view before rendering everything.
+I made the headers for two of my apps with it, in three languages. One was generated from a scene file. The other was an existing design: I moved its parts out from under the island and the buttons, and ran it through the same render and checks. Ask Claude something like "make an App Store header video for my app". It should pick the skill up, ask for your copy and screenshots, and show you the iPhone view before rendering everything.
 
 A few things to know:
 
