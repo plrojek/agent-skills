@@ -178,10 +178,11 @@ if C.get('decor'):
             divides(period, f'decor[{i}]')
             anim = (f'animation:dk-{m} {period:g}s {"linear" if m == "spin" else "ease-in-out"} infinite;'
                     f'animation-delay:{-float(d.get("delay", 0)):.3f}s;')
-        width = f'width:{d["width"]}px;' if 'width' in d else ''
+        width = f'width:{d["width"]}px;' if 'width' in d else ''        # no width: the artwork's own size
+        img_w = '' if 'width' in d else ' style="width:auto"'
         layers['front' if d.get('front') else 'decor'] += (
             f'<div class="dc" style="left:{d.get("left", 0)}px;top:{d.get("top", 0)}px;{width}opacity:{d.get("opacity", 1)};'
-            f'--a:{d.get("amount", AMOUNT[m])};{anim}"><img src="{uri(d["img"])}" alt=""></div>')
+            f'--a:{d.get("amount", AMOUNT[m])};{anim}"><img src="{uri(d["img"])}"{img_w} alt=""></div>')
 
 # ---------- optional skyline (built-in city motif: frosted tenements with twinkling windows) ----------
 tops = []
