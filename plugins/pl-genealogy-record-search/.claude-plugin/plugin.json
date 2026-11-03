@@ -1,7 +1,7 @@
 {
   "name": "pl-genealogy-record-search",
-  "version": "1.1.0",
-  "description": "Polish and former-Kresy genealogy: match a family tree against Geneteka parish indexes, the Soviet deportation index, cemetery registers and scanned parish books, find which parish a village belonged to, read the Latin and Greek-Catholic registers with a blind second reading of decisive words, log every search including the ones that found nothing, grade every finding, and patch the GEDCOM without breaking it. Python scripts, standard library only, keeping to each site's robots.txt.",
+  "version": "1.2.0",
+  "description": "Polish and former-Kresy genealogy: match a family tree against Geneteka parish indexes, the Soviet deportation index, cemetery registers and scanned parish books, find which parish a village belonged to, read the Latin and Greek-Catholic registers with a blind second reading of decisive words, log every search including the ones that found nothing, grade every finding, and patch the GEDCOM without breaking it. Python scripts, standard library only, keeping to each site's robots.txt. With a second skill that turns the tree into a private family-tree website and a printable family book.",
   "author": {
     "name": "Paweł Rojek",
     "url": "https://pawelrojek.dev"
@@ -17,7 +17,9 @@
     "galicia",
     "geneteka",
     "parish-records",
-    "polish"
+    "polish",
+    "family-tree-website",
+    "family-book"
   ],
   "documentationUrl": "https://github.com/plrojek/agent-skills/tree/main/plugins/pl-genealogy-record-search#readme",
   "supportUrl": "https://github.com/plrojek/agent-skills/issues",

@@ -26,6 +26,17 @@ A few things to know:
 - The scripts keep to each site's robots.txt. Geneteka asks for two minutes between automated requests (Skanoteka and Metryki for one), so a search that pages through a few hundred rows takes several minutes and a sweep of a family's surnames runs for hours. The wait is remembered between runs, so restarting a script doesn't skip it. Cached answers come back at once.
 - Geneteka can block an IP address that sent it too many automated searches. It doesn't return an error: every search from that address gets thousands of unrelated rows, in a script and in your browser alike. The skill spots that, stops querying and tells you. It happened to me after weeks of big sweeps: connecting the computer to the internet through my iPhone's hotspot gave real answers again at once, and the home connection was unblocked within two months. Whichever connection you use, keep the searches narrow.
 
+## The tree page and the family book
+
+The plugin has a second skill, `pl-genealogy-tree-viewer`, for showing the tree once the records are in it. From the GEDCOM and a small Python file with the research (which act proves what, where each line ends and what would break the wall, which links are only hypotheses, which sources disagree) it builds a private website and a printable family book. It is the viewer I use for my own family's tree.
+
+- **Views:** a family view with couples side by side and every partner's ancestors, a map of everyone, an ancestor fan, a timeline, a list grouped by family, kinship between any two people.
+- **Evidence on the card:** an "akt" mark next to each date, parent or spouse that a transcribed act proves, the act itself with its scan crop and translation, walls with the next step, hypotheses with their variants, conflicting sources side by side.
+- **Search** by every spelling of a surname, by place and by years, with the hits highlighted in the tree.
+- **Publishing:** a public copy with noindex and PESEL-like numbers masked, people presumed living redacted on request, and a book PDF built from that copy.
+
+The interface and the book are in Polish. Try it on the invented family in `skills/pl-genealogy-tree-viewer/templates/example/` first.
+
 ## What it runs, downloads and sends
 
 The skill tells Claude to run Python scripts from its `scripts/` folder; there are no hooks and no MCP servers.
@@ -35,7 +46,9 @@ The skill tells Claude to run Python scripts from its `scripts/` folder; there a
 - **What it saves:** Geneteka answers are cached in `~/.cache/pl-genealogy-record-search` for 30 days (`GENEALOGY_CACHE_DIR`, `GENEALOGY_CACHE_DAYS`), each site's robots.txt for a day, and the time of the next allowed request per site in `next-request.json` in the same folder. The research log, one line per search with the surnames, places and years searched and what came back, is written to `GENEALOGY_LOG`, or to `~/.local/share/pl-genealogy-record-search/searches.jsonl` if that isn't set; every write prints the path. Scans go to the folder you give. Everything else is files in your working folder.
 - **Your tree stays on your computer.** The GEDCOM, its JSON, the research log and your notes are read and written locally and never sent to these sites. A family tree is personal data about living people too, so keep it out of public repositories.
 
-The scripts' tests are offline and live outside the plugin: `python3 -m unittest discover -s tests/pl-genealogy-record-search` from the repository root.
+The tree viewer's scripts (`build_tree.py`, `check_tree.py`, `publish.py`, `build_book.py`) contact no site. They use the standard library, Pillow (`pillow==11.3.0` through `uv run`) only for scan pages and photos, and Google Chrome or Chromium for the browser check and the book PDF; `check_tree.py` serves the page on 127.0.0.1 for the browser it starts. They write the page, its `scans/` folder, the publication folder and the book where you point them. The page itself makes no outside requests.
+
+The scripts' tests are offline and live outside the plugin: `python3 -m unittest discover -s tests/pl-genealogy-record-search` and `python3 -m unittest discover -s tests/pl-genealogy-tree-viewer` from the repository root.
 
 ## License
 

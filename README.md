@@ -114,6 +114,10 @@ For finding Polish ancestors: Geneteka parish indexes, the Indeks Represjonowany
 
 Most of the skill is the traps I hit working through my own family's lines: Geneteka answering with thousands of rows from the wrong province, a zero that was a spelling, a marriage filed in the bride's parish because she was of the other rite, a cemetery register that hides married women from a maiden-name search, a book written off as "needs a letter to the archive" that was already free online. The scripts are Python with no dependencies, identify themselves to the sites and keep to each site's robots.txt, which for Geneteka means two minutes between requests. Every search goes into a research log, nothing-found included, so no book gets searched twice. Details, and exactly what it contacts, are in [its README](plugins/pl-genealogy-record-search/README.md).
 
+![The invented example tree: the family view, and the card of a man whose baptism is transcribed](docs/pl-genealogy-tree-viewer.jpg)
+
+The plugin's second skill, `pl-genealogy-tree-viewer`, shows the result: a private family-tree website and a printable family book built from the GEDCOM and the research behind it. Next to each date, parent or spouse that an act proves there is a mark that opens the act with its scan crop; walls say what would break them; hypotheses and conflicting sources sit side by side. There is a family view, a map of everyone, an ancestor fan, a timeline and search by every spelling of a surname. It's static files with no server code, it works on phones, and the publishing step can redact people presumed living. The interface is in Polish.
+
 ## app-store-motion-banners
 
 ![Top: a demo header frame with the part an iPhone crops off darkened. Bottom: what an iPhone shows of two demo apps, one light and one dark. Demo assets.](docs/app-store-motion-banners.jpg)

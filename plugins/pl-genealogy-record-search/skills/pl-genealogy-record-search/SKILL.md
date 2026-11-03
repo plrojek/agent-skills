@@ -370,8 +370,8 @@ independent reading before it is graded confirmed or written into the tree as fr
 
 1. Crop the cell at full resolution (`contact_sheet.py crop`, or `caak.py crop` at the host's
    native resolution). One cell, not the whole page again.
-2. Give the crop to a reader that knows nothing of the research. In Claude Code that is a
-   **fresh subagent** (`general-purpose`, the same model, no cheaper override), never a fork,
+2. Give the crop to a reader that knows nothing of the research: a **fresh subagent** where the
+   agent can start one (`general-purpose`, the same model, no cheaper override), never a fork,
    which inherits the whole conversation and isn't blind. Its prompt is the image path and one
    neutral question: *"Transcribe exactly what is written here. Mark letters you cannot read
    with [?]. Do not guess."* Never the expected value, the name hoped for, the place or why it

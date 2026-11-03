@@ -101,7 +101,7 @@ class RobotsTest(unittest.TestCase):
         finally:
             _net.time.sleep, _net._reserve = old_sleep, old_reserve
         self.assertIn("Crawl-delay 120", err.getvalue())
-        self.assertTrue(slept and 85 < slept[0] <= 90)
+        self.assertTrue(slept and 85 < slept[0] <= 91)        # the fake clock is read just after `now`: 90 s + a hair
 
 
 class SearchLogTest(unittest.TestCase):
