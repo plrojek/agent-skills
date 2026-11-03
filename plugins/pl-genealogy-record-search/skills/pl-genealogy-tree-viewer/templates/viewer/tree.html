@@ -1,0 +1,2385 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>__TITLE__</title>
+<style>
+:root{
+  --bg:#f6f4ef; --panel:#fffdf8; --ink:#241f1a; --dim:#7b7268; --line:#cfc6b8;
+  --m:#3f6ea8; --f:#a85570; --u:#8a8378; --acc:#9a6b2f; --hi:#f3e2bd;
+  --shadow:0 1px 3px rgba(0,0,0,.10),0 6px 18px rgba(0,0,0,.06);
+  --peek:34vh;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#16150f; --panel:#211f18; --ink:#ece5d8; --dim:#9a9184; --line:#3d382e;
+  --m:#7fb0e8; --f:#e298b0; --u:#9a9184; --acc:#d6a85f; --hi:#3a3018;
+  --shadow:0 1px 3px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+ font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+ display:flex;flex-direction:column;overflow:hidden}
+header{position:relative;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:9px 14px;
+ border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto;z-index:5;box-shadow:var(--shadow)}
+h1{font-size:15px;margin:0;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
+h1 small{font-weight:400;color:var(--dim);font-size:12px;margin-left:6px}
+.sbox{position:relative;flex:1;min-width:190px;max-width:340px}
+input[type=search]{width:100%;padding:7px 11px;border:1px solid var(--line);border-radius:8px;
+ background:var(--bg);color:var(--ink);font:inherit;font-size:13px}
+input[type=search]:focus{outline:2px solid var(--acc);outline-offset:-1px}
+#sug{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel);
+ border:1px solid var(--line);border-radius:8px;max-height:340px;overflow:auto;
+ display:none;z-index:20;box-shadow:var(--shadow)}
+#sug div{padding:6px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line)}
+#sug div:last-child{border-bottom:0}
+#sug div:hover,#sug div.on{background:var(--hi)}
+#sug span{color:var(--dim);font-size:11px;margin-left:6px}
+button{font:inherit;font-size:12.5px;padding:6px 11px;border:1px solid var(--line);
+ border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button:disabled{opacity:.4;cursor:default}
+/* --- header button groups --- */
+#menu{display:contents}
+.grp{display:inline-flex;align-items:center;gap:5px;padding:3px 5px 3px 8px;border:1px solid var(--line);
+ border-radius:10px;background:var(--panel)}
+.grp .gl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-right:3px;white-space:nowrap}
+.grp button{padding:5px 10px}
+#menubtn{display:none;width:40px;height:36px;padding:0;font-size:20px;line-height:1}
+#menubtn.on{border-color:var(--acc);color:var(--acc);background:var(--hi)}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}   /* dragging the tree does not select text */
+#stage #grid{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}   /* the List stays copyable */
+#stage.drag{cursor:grabbing}
+svg{position:absolute;top:0;left:0;width:100%;height:100%;display:block;--inv:1}
+.node rect{fill:var(--panel);stroke:var(--u);stroke-width:1.5;rx:9;filter:drop-shadow(0 1px 2px rgba(0,0,0,.12))}
+.node.M rect{stroke:var(--m)} .node.F rect{stroke:var(--f)}
+.node.focus rect{stroke-width:3;fill:var(--hi)}
+.node.sel rect{stroke:var(--acc);stroke-width:3}
+.node.sidek{opacity:.78}
+.node.sidek rect{stroke-dasharray:none;stroke-width:1.1}
+.node.far{opacity:.34}
+.node.far rect{stroke-width:1}
+.node.blood rect{stroke-width:2.2}
+path.link.long{opacity:.18}
+.node.onpath rect{stroke:var(--acc);stroke-width:2.5}
+.node{cursor:pointer}
+.node:hover rect{fill:var(--hi)}
+.node text{font-size:12.5px;font-weight:600;fill:var(--ink);pointer-events:none}
+.node text.d{font-size:10.5px;font-weight:400;fill:var(--dim)}
+.node text.src{font-size:10px;fill:var(--acc);font-weight:600}
+/* --- reliability tiers --- */
+:root{--t-akt:#2f7d3a; --t-praw:#a9761d; --t-hip:#3f6ea8; --t-luka:#8a8378}
+@media (prefers-color-scheme:dark){:root{--t-akt:#6fc27f; --t-praw:#d9a640; --t-hip:#7fb0e8; --t-luka:#9a9184}}
+.node.t-hip rect{stroke-dasharray:6 4}
+.node text tspan.unc{font-weight:700}
+.node .sn tspan.unc2{font-weight:700;opacity:.85}
+.node.t-luka rect{fill:none;stroke:var(--t-luka);stroke-dasharray:4 3;stroke-width:1.2;filter:none}
+.node.t-luka text{fill:var(--dim)}
+.node.t-luka:hover rect{fill:var(--hi)}
+.node.hyp rect{stroke-dasharray:6 4}
+path.link.hyp{stroke:var(--acc);stroke-dasharray:6 4;stroke-width:1.8}
+path.link.wall{stroke:var(--t-luka);stroke-dasharray:3 3;stroke-width:1.2;opacity:.75}
+/* --- level of detail (LOD) by zoom ---
+   lod0 (<0.35): coloured dots + family-name labels; lod1 (0.35–0.8): given name + surname; lod2: full tiles.
+   The lod1 label is TWO lines in one <text>: the tspans use `dy` in `em`, so the gap scales with the font
+   (the font grows as 1/k to keep a constant size on screen; a fixed `y` in SVG units would drift apart). */
+.node text.sn{display:none;font-size:min(calc(11px*var(--inv)),25px);font-weight:700;text-anchor:middle}
+.node text.sn.lg{font-size:min(calc(10px*var(--inv)),18px)}
+.node text.sn tspan.gn{font-size:.8em;font-weight:500}
+text.cl{display:none;font-weight:800;fill:var(--ink);opacity:.72;text-anchor:middle;pointer-events:none;
+ font-size:min(calc(13px*var(--inv)),100px);letter-spacing:.02em}
+svg.lod1 .node text:not(.sn){display:none}
+svg.lod1 .node text.sn{display:block}
+svg.lod1 .node image,svg.lod1 .node circle.av,svg.lod1 .node path.tier{display:none}
+svg.lod0 .node text,svg.lod0 .node image,svg.lod0 .node circle,svg.lod0 .node path.tier{display:none}
+svg.lod0 .node rect{stroke:none;filter:none;fill:var(--u);opacity:.9}
+svg.lod0 .node.t-akt rect{fill:var(--t-akt)}
+svg.lod0 .node.t-praw rect{fill:var(--t-praw)}
+svg.lod0 .node.t-hip rect{fill:var(--t-hip)}
+svg.lod0 .node.t-luka rect{fill:none;stroke:var(--t-luka);stroke-width:calc(1.5px*var(--inv));stroke-dasharray:none}
+svg.lod0 .node.focus rect,svg.lod0 .node.sel rect{stroke:var(--acc);stroke-width:calc(2.5px*var(--inv))}
+svg.lod0 text.cl{display:block}
+svg.lod0 path.link{opacity:.45}
+svg.lod0 path.link.long{opacity:.12}
+svg.lod1 path.link.long{opacity:.1}
+svg.lod0 .band{display:none}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;
+ padding:2px 7px;border-radius:99px;border:1px solid currentColor;margin:0 0 8px}
+.pill.akt{color:var(--t-akt)} .pill.praw{color:var(--t-praw)}
+.pill.hip{color:var(--t-hip)} .pill.luka{color:var(--t-luka)}
+.wallbox{font-size:12px;line-height:1.55;background:var(--hi);border-radius:8px;
+ padding:9px 11px;margin:0 0 12px}
+.wallbox b{display:block;margin-bottom:3px}
+.hypbox{font-size:11.5px;line-height:1.5;border-left:3px solid var(--t-hip);
+ padding:5px 0 5px 9px;margin:0 0 10px;color:var(--dim)}
+path.link{fill:none;stroke:var(--line);stroke-width:1.6;vector-effect:non-scaling-stroke;transition:opacity .22s}
+#vp.anim path.link{opacity:0;transition:none}
+path.link.sp{stroke:var(--f);stroke-dasharray:4 3}
+path.link.sp.um{stroke:var(--dim);stroke-dasharray:1 6;stroke-linecap:round;stroke-width:2.2}   /* shared child, not a marriage */
+path.link.hl{stroke:var(--acc);stroke-width:2.6}
+/* direct line of the person in the centre: them and their ancestors (markLine) */
+path.link.anc{stroke:var(--acc);stroke-width:3.6;opacity:1}
+path.link.sp.anc{stroke-width:2.6}
+svg.lod0 path.link.anc,svg.lod1 path.link.anc,svg path.link.long.anc{opacity:1}
+.band{font-size:10.5px;fill:var(--dim);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+aside{width:330px;flex:0 0 auto;border-left:1px solid var(--line);background:var(--panel);
+ overflow:auto;padding:14px 16px;position:relative}
+aside h2{font-size:16px;margin:0 0 2px;line-height:1.25}
+img.port{width:100%;border-radius:10px;margin:0 0 10px;display:block;box-shadow:var(--shadow)}
+aside .sub{color:var(--dim);font-size:12px;margin-bottom:12px}
+dl{margin:0 0 14px;display:grid;grid-template-columns:80px 1fr;gap:3px 10px;font-size:12.5px}
+dt{color:var(--dim)} dd{margin:0}
+aside h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);
+ margin:14px 0 6px;border-top:1px solid var(--line);padding-top:10px}
+.rel{font-size:12.5px;margin:2px 0;cursor:pointer;color:var(--ink)}
+.rel:hover{color:var(--acc);text-decoration:underline}
+.rel i{color:var(--dim);font-style:normal;font-size:11px}
+.note{font-size:11.5px;background:var(--bg);border-left:3px solid var(--acc);
+ padding:7px 9px;margin:6px 0;white-space:pre-wrap;border-radius:0 5px 5px 0;color:var(--ink)}
+/* --- person card header: 72 px photo + name --- */
+.phd{display:flex;gap:12px;align-items:center;margin:0 0 10px}
+.phd img,.phd .ph-ph{width:72px;height:72px;border-radius:12px;object-fit:cover;flex:0 0 auto;
+ box-shadow:var(--shadow);cursor:zoom-in}
+.phd .ph-ph{background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;
+ justify-content:center;font-size:26px;font-weight:600;color:var(--dim);cursor:default;box-shadow:none}
+.phd .ph-ph.M{border-left:3px solid var(--m)} .phd .ph-ph.F{border-left:3px solid var(--f)}
+.phd .sub{margin:2px 0 0}
+.phd .pill{margin:4px 0 0}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.86);display:none;z-index:100;
+ align-items:center;justify-content:center;cursor:zoom-out}
+#lb.on{display:flex}
+#lb img{max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+/* --- closest family as buttons --- */
+.crow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 7px}
+.crow .clab{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);
+ flex:0 0 100%;margin:2px 0 -2px}
+.chip{display:inline-flex;flex-direction:column;align-items:flex-start;padding:4px 9px 4px 8px;
+ border:1px solid var(--line);border-left-width:3px;border-radius:9px;background:var(--bg);cursor:pointer;
+ font:inherit;text-align:left;line-height:1.2;color:var(--ink);max-width:100%}
+.chip b{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+.chip i{font-style:normal;font-size:10.5px;color:var(--dim)}
+.chip.M{border-left-color:var(--m)} .chip.F{border-left-color:var(--f)}
+.chip:hover{border-color:var(--acc);background:var(--hi)}
+.chip.hp b::after{content:" ?";color:var(--t-hip)}
+#grid{position:absolute;inset:0;overflow:auto;padding:16px 18px 60px;display:none;background:var(--bg)}
+#grid.on{display:block}
+#grid h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);
+ margin:16px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+#grid .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:9px}
+#grid .card{display:flex;gap:9px;align-items:center;background:var(--panel);border:1px solid var(--line);
+ border-left:3px solid var(--u);border-radius:9px;padding:7px 9px;cursor:pointer;min-width:0}
+#grid .card.M{border-left-color:var(--m)} #grid .card.F{border-left-color:var(--f)}
+#grid .card:hover{background:var(--hi);border-color:var(--acc)}
+#grid .card.sel{outline:2px solid var(--acc);outline-offset:-1px}
+#grid .card img{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 auto}
+#grid .card .ph{width:38px;height:38px;border-radius:50%;flex:0 0 auto;background:var(--bg);
+ border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+ font-size:13px;color:var(--dim);font-weight:600}
+#grid .card b{display:block;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#grid .card i{font-style:normal;font-size:11px;color:var(--dim)}
+#grid .card .src{color:var(--acc);font-size:10px}
+#grid .bar{position:sticky;top:-16px;background:var(--bg);padding:6px 0 8px;margin:-16px 0 6px;
+ font-size:12px;color:var(--dim);z-index:2}
+#grid .bar .abc{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px}
+#grid .bar .abc button{padding:2px 6px;font-size:11.5px;border-radius:6px;min-width:26px}
+#grid .bar .bch{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#grid .bar .bch button{padding:3px 9px;font-size:11.5px;border-radius:99px}
+#grid .bar .bch button.on{border-color:var(--acc);color:var(--acc);background:var(--hi)}
+#pathbar{display:none;padding:8px 14px;background:var(--hi);border-bottom:1px solid var(--line);
+ font-size:12.5px;flex:0 0 auto}
+#pathbar b{color:var(--acc)}
+/* --- filters --- */
+.fbox{position:relative}
+#filt{position:absolute;top:calc(100% + 7px);right:0;min-width:278px;background:var(--panel);
+ border:1px solid var(--line);border-radius:10px;padding:11px 13px;display:none;z-index:25;
+ box-shadow:var(--shadow)}
+#filt.on{display:block}
+#filt label{display:block;font-size:12.5px;margin:0 0 10px;cursor:pointer;line-height:1.35}
+#filt label:last-child{margin-bottom:0}
+#filt label i{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-left:23px;margin-top:1px}
+#filt input[type=checkbox]{margin-right:8px;accent-color:var(--acc)}
+#filt select{margin-top:6px;width:100%;font:inherit;font-size:12.5px;padding:5px 7px;
+ border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink)}
+.fsep{border-top:1px solid var(--line);margin:11px 0}
+button.on{border-color:var(--acc);color:var(--acc);background:var(--hi)}
+button.act{border-color:var(--acc);color:var(--acc)}
+/* --- welcome card --- */
+.lead{font-size:12.5px;line-height:1.62;margin:0 0 11px}
+.big{display:flex;gap:6px;margin:2px 0 14px}
+.big div{flex:1;min-width:0}
+.big b{display:block;font-size:19px;font-weight:650;letter-spacing:-.02em;line-height:1.2}
+.big i{font-style:normal;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+/* --- line selector in the header --- */
+#brwrap{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--dim);
+ text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+#brwrap select{font:inherit;font-size:12.5px;text-transform:none;letter-spacing:0;color:var(--ink);
+ padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:200px}
+#brwrap select:focus{outline:2px solid var(--acc);outline-offset:-1px}
+#brwrap.act select{border-color:var(--acc);color:var(--acc);background:var(--hi)}
+/* --- Source section of the person card --- */
+.zrd{border:1px solid var(--line);border-left:3px solid var(--t-akt);border-radius:9px;
+ padding:10px 11px;margin:0 0 10px;background:var(--panel)}
+.zrd .ah{font-size:12.5px;font-weight:650;line-height:1.35}
+.zrd .ad{font-size:11px;color:var(--dim);margin:1px 0 7px}
+.zrd .ar{font-size:11.5px;margin:0 0 8px;line-height:1.45}
+.zrd .ar b{color:var(--acc)}
+.zrd img{display:block;width:100%;border:1px solid var(--line);border-radius:6px;background:#fff}
+.zrd .cap{font-size:10.5px;color:var(--dim);margin:4px 0 9px}
+.zrd pre{font:inherit;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;
+ margin:0;padding:8px 9px;background:var(--bg);border-radius:7px;border:1px solid var(--line)}
+.zrd details{margin-top:7px}
+.zrd details[open] summary{margin-bottom:5px}
+.zrd summary{font-size:11.5px;color:var(--acc);cursor:pointer}
+.zrd .tr{font-size:11.5px;line-height:1.6;color:var(--ink)}
+.zrd .sg{font-size:10.5px;color:var(--dim);line-height:1.5;margin-top:9px}
+.zrd .go{display:inline-block;margin-top:9px;font-size:11.5px;padding:5px 10px;border:1px solid var(--line);
+ border-radius:8px;text-decoration:none;color:var(--ink);background:var(--bg)}
+.zrd .go:hover{border-color:var(--acc);color:var(--acc)}
+.grip{display:none}
+#closeside{position:absolute;right:8px;top:3px;padding:2px 8px;line-height:1.4}
+/* --- tier as the tile's left edge (instead of a corner dot) --- */
+.node path.tier{fill:none;stroke-width:3;stroke-linecap:round}
+/* --- start screen: one card per line --- */
+#homescr{position:absolute;inset:0;z-index:8;display:none;overflow:auto;background:var(--bg);
+ padding:22px 18px 40px}
+#homescr.on{display:block}
+.hwrap{max-width:820px;margin:0 auto}
+.hwrap h2{font-size:26px;margin:14px 0 4px;letter-spacing:-.02em;font-weight:700}
+.hwrap .hsub{color:var(--dim);font-size:13.5px;margin:0 0 20px;line-height:1.5}
+.hcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 22px}
+.hcard{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px 16px 14px;
+ border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--shadow);
+ cursor:pointer;text-align:left;font:inherit;color:var(--ink);white-space:normal;min-width:0}
+.hcard:hover{border-color:var(--acc);background:var(--hi)}
+.hcard b{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.hcard i{font-style:normal;font-size:12px;color:var(--dim);line-height:1.4}
+.hav{display:flex;height:52px}
+.hav img,.hav span{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--panel);
+ margin-left:-12px;box-shadow:0 1px 3px rgba(0,0,0,.25);background:var(--bg)}
+.hav img:first-child,.hav span:first-child{margin-left:0}
+.hav span{display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--dim);font-size:18px}
+.hlinks{display:flex;flex-wrap:wrap;gap:8px}
+.hlinks button{padding:8px 14px;font-size:13px;border-radius:10px}
+.hfoot{color:var(--dim);font-size:11.5px;margin-top:22px;line-height:1.5}
+/* --- mini map --- */
+#mini{position:absolute;left:12px;bottom:12px;width:180px;height:112px;background:var(--panel);
+ border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);display:none;z-index:5;cursor:crosshair;
+ top:auto;right:auto}
+#mini.on{display:block}
+#mini rect.n{fill:var(--u);opacity:.55}
+#mini rect.n.f{fill:var(--acc);opacity:1}
+#mini rect.v{fill:var(--acc);fill-opacity:.12;stroke:var(--acc);stroke-width:1.5;vector-effect:non-scaling-stroke}
+/* --- gesture help (phone, first visit) --- */
+#coach{position:fixed;inset:0;z-index:60;background:rgba(20,16,10,.62);display:none;align-items:flex-end;
+ justify-content:center;padding:16px}
+#coach.on{display:flex}
+#coach .cbox{background:var(--panel);color:var(--ink);border-radius:16px;padding:18px 18px 16px;width:100%;max-width:420px;
+ box-shadow:0 10px 40px rgba(0,0,0,.4)}
+#coach h3{margin:0 0 10px;font-size:15px;font-weight:700}
+#coach .cr{display:flex;gap:12px;align-items:center;margin:0 0 10px;font-size:13px;line-height:1.4}
+#coach .cr span:first-child{font-size:24px;width:36px;text-align:center;flex:0 0 auto}
+#coach button{margin-top:6px;width:100%;padding:10px;font-size:14px;border-radius:10px;background:var(--hi);border-color:var(--acc)}
+/* --- tab bar on phones --- */
+:root{--tab:0px}
+#tabbar{display:none}
+#fback{display:none}
+/* edge hint: the centre person's parents are off screen, this way */
+#ptr{display:none;position:absolute;z-index:4;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:99px;
+ background:var(--acc);color:var(--panel);font-weight:700;font-size:12.5px;box-shadow:var(--shadow);white-space:nowrap;
+ max-width:min(62vw,300px);overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+#ptr.on{display:flex}
+#ptr .barr{width:15px;height:15px;transition:transform .15s}
+#ptr span{overflow:hidden;text-overflow:ellipsis}
+#back,#fback{font-weight:700}
+#back{display:inline-flex;align-items:center;gap:5px}
+.barr{position:static;display:inline-block;width:14px;height:14px;flex:0 0 auto;vertical-align:-2px}   /* the global svg{position:absolute} is meant for the tree canvas only */
+#fback .barr{margin-right:6px}
+/* --- kinship relative to “this is me” --- */
+.kin{display:inline-block;font-size:11px;font-weight:650;color:var(--acc);background:var(--hi);border:1px solid var(--acc);
+ border-radius:99px;padding:2px 8px;margin:4px 6px 0 0;vertical-align:middle}
+.kin.me{color:var(--t-akt);border-color:var(--t-akt);background:transparent}
+.mebtn{font-size:11px;padding:2px 8px;border-radius:99px;margin-top:4px;vertical-align:middle}
+/* --- button stack on the stage: + − ⌖ ? --- */
+#zoomctl{position:absolute;right:12px;bottom:12px;z-index:5;display:flex;flex-direction:column;gap:6px}
+#zoomctl button{width:42px;height:42px;padding:0;margin:0;font:22px/1 system-ui,sans-serif;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);touch-action:manipulation;user-select:none}
+#zoomctl button:hover{border-color:var(--acc);color:var(--acc)}
+#zoomctl button:active{background:var(--hi)}
+#zoomctl button.on{border-color:var(--acc);color:var(--acc);background:var(--hi)}
+#zoomctl #help{font-size:18px;font-weight:700}
+#legend{position:absolute;right:62px;bottom:12px;width:300px;max-width:calc(100% - 74px);background:var(--panel);
+ border:1px solid var(--line);border-radius:10px;padding:11px 13px;display:none;z-index:6;
+ box-shadow:var(--shadow);font-size:11.5px;line-height:1.5;color:var(--ink)}
+#legend.on{display:block}
+#legend .lr{display:flex;gap:9px;align-items:center;margin:0 0 6px}
+#legend .lr svg{width:44px;height:22px;flex:0 0 auto;position:static}
+#legend .lr span{flex:1}
+#legend .lr b{font-weight:650}
+#legend .gest{border-top:1px solid var(--line);margin-top:8px;padding-top:7px;color:var(--dim)}
+/* --- ancestor fan --- */
+.fseg{cursor:pointer}
+.fseg > path:first-child{fill:var(--panel);stroke:var(--line);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.fseg.M > path:first-child{fill:color-mix(in srgb,var(--m) 8%,var(--panel))}
+.fseg.F > path:first-child{fill:color-mix(in srgb,var(--f) 8%,var(--panel))}
+.fseg:hover > path:first-child{fill:var(--hi)}
+.fseg.c > path:first-child{fill:var(--hi);stroke:var(--acc);stroke-width:2}
+.fseg.empty{cursor:default} .fseg.empty > path:first-child{fill:none;stroke-dasharray:3 4;opacity:.7}
+.fseg.t-luka > path:first-child{fill:none;stroke:var(--t-luka);stroke-dasharray:4 3}
+.fseg.hyp > path:first-child{stroke:var(--t-hip);stroke-dasharray:6 4;stroke-width:1.6}
+.fseg .ftier{fill:none;stroke-width:3.5;stroke-linecap:round}
+.fseg text{fill:var(--ink);font-weight:600;pointer-events:none}
+.fseg text .fy{fill:var(--dim);font-weight:400}
+.fseg.t-luka text{fill:var(--dim)}
+.fseg.sel > path:first-child{stroke:var(--acc);stroke-width:2.6}
+.fseg.hit > path:first-child{stroke:var(--acc);stroke-width:3}
+.fseg.nohit{opacity:.3}
+.fcap{font-size:13px;fill:var(--dim);text-anchor:middle}
+/* --- timeline --- */
+.tlrow{cursor:pointer}
+.tlrow .tlb{fill:color-mix(in srgb,var(--u) 20%,var(--panel));stroke:var(--u);stroke-width:1;vector-effect:non-scaling-stroke}
+.tlrow.M .tlb{fill:color-mix(in srgb,var(--m) 20%,var(--panel));stroke:var(--m)}
+.tlrow.F .tlb{fill:color-mix(in srgb,var(--f) 20%,var(--panel));stroke:var(--f)}
+.tlrow .tlq{fill:none;stroke:var(--u);stroke-dasharray:3 3;opacity:.7;vector-effect:non-scaling-stroke}
+.tlrow .tlm{fill:var(--acc)}
+.tlrow .tln{font-size:11.5px;fill:var(--ink);font-weight:550;pointer-events:none}
+.tlrow:hover .tlb{fill:var(--hi)}
+.tlrow.focus .tlb,.tlrow.sel .tlb{stroke:var(--acc);stroke-width:2.4}
+.tlrow.nohit{opacity:.3}
+.tlg{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.55}
+.tlg.m{opacity:1}
+.tlx{font-size:11px;fill:var(--dim);text-anchor:middle}
+.tlband{fill:var(--hi);opacity:.6}
+.tlbl{font-size:11px;fill:var(--dim);font-weight:650}
+.tlcap{font-size:14px;font-weight:700;fill:var(--ink)}
+/* --- evidence on the card: act next to a fact, conflicting sources, hypotheses with variants --- */
+.ev{display:inline-block;margin-left:6px;padding:0 7px;font-size:10px;font-weight:700;line-height:16px;border-radius:99px;
+ border:1px solid var(--t-akt);color:var(--t-akt);background:transparent;cursor:pointer;vertical-align:1px}
+.ev:hover{background:var(--t-akt);color:var(--panel);border-color:var(--t-akt)}
+.chip i .evc{color:var(--t-akt);font-weight:700}
+.zrd .dw{font-size:11.5px;margin:0 0 8px;line-height:1.45}
+.zrd .dw ul{margin:3px 0 0;padding-left:18px}
+.zrd.flash{outline:2px solid var(--t-akt);outline-offset:2px}
+.cfx,.hyx{border:1px solid var(--line);border-left:3px solid var(--t-praw);border-radius:9px;padding:9px 11px;margin:0 0 12px;
+ font-size:12px;line-height:1.5;background:var(--panel)}
+.hyx{border-left-color:var(--t-hip)}
+.cfx table{width:100%;border-collapse:collapse;margin:6px 0 4px}
+.cfx td{vertical-align:top;padding:4px 6px 4px 0;border-top:1px solid var(--line)}
+.cfx td:first-child{color:var(--dim);width:60%;font-size:11.5px}
+.cfx td:last-child{font-weight:650}
+.cfs,.hyr{font-size:11.5px;color:var(--dim)}
+.cfs.ok{color:var(--t-akt)}
+.hv{display:grid;gap:6px;margin:7px 0}
+.hv>div{border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.hv .st{display:inline-block;font-size:9.5px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;margin-right:6px}
+.hv .u{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+.hv .s-przyjety{border-color:var(--t-akt)} .hv .s-przyjety .st{color:var(--t-akt)}
+.hv .s-otwarty .st{color:var(--t-praw)}
+.hv .s-wykluczony{opacity:.66} .hv .s-wykluczony .st{color:var(--dim)}
+/* --- search results highlighted in the tree --- */
+#findbar{display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 14px;background:var(--hi);
+ border-bottom:1px solid var(--line);font-size:12.5px;flex:0 0 auto}
+#findbar.on{display:flex}
+#findbar b{color:var(--acc)}
+#findbar button{padding:3px 10px;font-size:12px}
+.node.hit rect{stroke:var(--acc);stroke-width:3.2}
+.node.nohit{opacity:.2}
+svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
+#mini rect.n.h{fill:var(--acc);opacity:.9}
+#sug div.all{font-weight:650;color:var(--acc)}
+#grid h3 i.var{font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;color:var(--dim)}
+@media(max-width:820px){
+  :root{--tab:calc(54px + env(safe-area-inset-bottom,0px))}
+  #tabbar{display:flex;flex:0 0 auto;height:var(--tab);padding:0 0 env(safe-area-inset-bottom,0px);
+   background:var(--panel);border-top:1px solid var(--line);z-index:35;position:relative}
+  #tabbar button{flex:1;border:0;border-radius:0;background:none;padding:6px 2px 4px;font-size:10.5px;color:var(--dim);
+   display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
+  #tabbar button span{font-size:20px;line-height:1}
+  #tabbar button.on{color:var(--acc)}
+  #tabbar button:hover{color:var(--acc)}
+  header{flex-wrap:nowrap;gap:8px;padding:8px 10px}
+  h1{display:none}
+  .sbox{max-width:none}
+  #menu{display:none;position:absolute;top:100%;left:0;right:0;background:var(--panel);
+   border-bottom:1px solid var(--line);padding:10px 12px 12px;flex-direction:column;align-items:stretch;gap:9px;
+   z-index:40;box-shadow:var(--shadow);max-height:calc(100vh - 60px);overflow:auto}
+  #menu.on{display:flex}
+  #menu .grp{flex-wrap:wrap;padding:6px 8px}
+  #menu .grp .gl{flex:0 0 100%;margin:0 0 2px}
+  #menu > button{align-self:flex-start}
+  #brwrap select{max-width:none;flex:1}
+  #brwrap{width:100%}
+  .fbox{width:100%}
+  #filtbtn{display:none}
+  #filt{position:static;display:block;min-width:0;padding:8px 10px;box-shadow:none}
+  #zoomctl{top:12px;bottom:auto}
+  #legend{top:12px;bottom:auto;right:62px}
+  #mini{top:12px;bottom:auto;width:112px;height:72px}
+  #homescr{padding:14px 14px 40px}
+  .hwrap h2{font-size:22px;margin-top:6px}
+  .hcards{gap:10px}
+  .hcard{padding:12px 12px 11px;gap:8px}
+  .hcard b{font-size:16px}
+  .hav,.hav img,.hav span{height:40px} .hav img,.hav span{width:40px;margin-left:-10px}
+  aside{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:var(--peek);max-height:none;
+   border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;z-index:30;padding-top:6px;
+   transform:translateY(102%);transition:transform .24s ease,height .24s ease;
+   box-shadow:0 -6px 26px rgba(0,0,0,.28)}
+  aside.peek{transform:none;height:var(--peek)}
+  aside.full{transform:none;height:82vh}
+  aside.dragging{transition:none}
+  .grip{display:block;position:sticky;top:-6px;margin:-6px -16px 8px;padding:8px 0 6px;background:var(--panel);
+   z-index:3;cursor:grab;touch-action:none}
+  .grip::before{content:"";display:block;width:44px;height:5px;border-radius:99px;background:var(--line);margin:0 auto}
+  #grid .bar .abc{display:none}
+  header{z-index:40}   /* the “More” menu lives in the header; it must rise above the start screen (8) and the sheet (30) */
+  #menubtn{display:none}
+  #menu{position:fixed;top:auto;bottom:var(--tab);left:0;right:0;max-height:calc(100vh - var(--tab) - 60px);
+   border-top:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -6px 26px rgba(0,0,0,.28);z-index:34}
+  aside{bottom:var(--tab)}
+  #coach{padding-bottom:calc(var(--tab) + 12px)}
+  #fback.on{display:block;position:absolute;left:12px;top:12px;z-index:5;max-width:min(56vw,240px);
+   padding:8px 13px;border-radius:99px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);
+   font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mini.on ~ #fback{top:94px}
+}
+</style></head><body>
+<header>
+  <h1>__H1__<small id="cnt"></small></h1>
+  <div class="sbox">
+    <input type="search" id="q" placeholder="Szukaj: osoba, miejscowość, rok&hellip;  (/ aby skoczyć)" autocomplete="off">
+    <div id="sug"></div>
+  </div>
+  <button id="menubtn" type="button" aria-label="Menu" title="Menu">&#8943;</button>
+  <div id="menu">
+    <nav class="grp" aria-label="Przeglądaj"><span class="gl">Przeglądaj</span>
+      <button id="home" title="Ekran startowy — rodziny">&#8962; Start</button>
+      <button id="mode" title="Wybrana osoba z rodzicami, rodzeństwem, małżonkiem i dziećmi">Rodzina</button>
+      <button id="all" title="Wszystkie osoby na jednej mapie">Mapa całości</button>
+      <button id="fan" title="Przodkowie osoby w środku na półkolu: linia ojca po lewej, matki po prawej">Wachlarz</button>
+      <button id="time" title="Życie przodków i potomków osoby w środku jako paski na osi lat">Oś czasu</button>
+      <button id="list" title="Spis wszystkich osób według nazwisk">Lista</button>
+    </nav>
+    <nav class="grp" aria-label="Badania"><span class="gl">Badania</span>
+      <label id="brwrap" title="Ustaw w środku drzewa jedną z osób, od których liczą się gałęzie — z całą jej rodziną">Przejdź do
+        <select id="f-br"><option value="">wybierz osobę…</option></select></label>
+      <button id="wallbtn">Ściany i luki</button>
+      <button id="relbtn">Pokrewieństwo</button>
+      <div class="fbox">
+        <button id="filtbtn">Filtry &#9662;</button>
+        <div id="filt">
+          <label><input type="checkbox" id="f-luka" checked>Pokaż ściany i luki
+            <i>przerywane pola „tego nie wiemy” wraz z opisem następnego kroku</i></label>
+          <label><input type="checkbox" id="f-hip" checked>Pokaż gałęzie hipotetyczne
+            <i>rody wpięte na poszlace, rysowane linią przerywaną — bez dowodu w dokumencie</i></label>
+          <label><input type="checkbox" id="f-side">Pokaż krewnych bocznych
+            <i>w widoku rodziny dokłada rodzeństwo przodków i ich potomków — ciocie, wujków, kuzynów; przygaszone kafelki obok linii prostej</i></label>
+          <label><input type="checkbox" id="f-hi">Podświetl krewnych wybranej osoby
+            <i>reszta drzewa przygasa; działa na mapie całości</i></label>
+        </div>
+      </div>
+    </nav>
+    <button id="start">O drzewie</button>
+    <button id="back" disabled title="Wróć do poprzedniego widoku"><svg class="barr" viewBox="0 0 16 16" aria-hidden="true"><path d="M14.5 8H3.6M8.2 3.2 3.4 8l4.8 4.8" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Wstecz</button>
+    <span id="genwrap" style="font-size:12px;color:var(--dim);white-space:nowrap">pokoleń&nbsp;<button id="less" style="padding:3px 8px">&minus;</button><b id="gen" style="margin:0 5px">9&nbsp;/&nbsp;9</b><button id="more" style="padding:3px 8px">+</button></span>
+  </div>
+</header>
+<div id="pathbar"></div>
+<div id="findbar"></div>
+<main>
+  <div id="stage"><div id="grid"></div><svg id="svg" class="lod2"><g id="vp"></g></svg>
+    <svg id="mini" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mini-n"></g><rect id="mini-v" class="v" x="0" y="0" width="0" height="0"/></svg>
+    <button id="ptr" type="button"></button>
+    <button id="fback" type="button" aria-label="Wstecz"><svg class="barr" viewBox="0 0 16 16" aria-hidden="true"><path d="M14.5 8H3.6M8.2 3.2 3.4 8l4.8 4.8" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Wstecz</span></button>
+    <div id="homescr"></div>
+    <div id="zoomctl">
+      <button id="zin" type="button" title="Powiększ" aria-label="Powiększ">+</button>
+      <button id="zout" type="button" title="Pomniejsz" aria-label="Pomniejsz">&minus;</button>
+      <button id="fit" type="button" title="Wyśrodkuj widok" aria-label="Wyśrodkuj">&#8982;</button>
+      <button id="help" type="button" title="Legenda" aria-label="Legenda">?</button>
+    </div>
+    <div id="legend">
+      <div class="lr"><svg viewBox="0 0 44 22"><rect x="2" y="3" width="40" height="16" rx="4" fill="none" stroke="var(--m)" stroke-width="1.5"/><rect x="24" y="8" width="16" height="6" rx="1" fill="var(--m)" opacity=".35"/></svg><span><b style="color:var(--m)">niebieska ramka</b> mężczyzna &nbsp;·&nbsp; <b style="color:var(--f)">różowa</b> kobieta</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><rect x="2" y="3" width="40" height="16" rx="4" fill="none" stroke="var(--u)" stroke-width="1.2"/><path d="M5 7 V15" stroke="var(--t-akt)" stroke-width="3" stroke-linecap="round"/><path d="M19 7 V15" stroke="var(--t-praw)" stroke-width="3" stroke-linecap="round"/><path d="M33 7 V15" stroke="var(--t-hip)" stroke-width="3" stroke-linecap="round"/></svg><span>lewa krawędź = pewność: <b style="color:var(--t-akt)">akt</b> · <b style="color:var(--t-praw)">poszlaka</b> · <b style="color:var(--t-hip)">hipoteza</b></span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><rect x="2" y="3" width="40" height="16" rx="4" fill="none" stroke="var(--u)" stroke-width="1.2"/><text x="22" y="16" text-anchor="middle" font-size="12" font-weight="700" fill="var(--t-praw)">(?)</text></svg><span><b>(?)</b> przy nazwisku = <b>to nie jest pewne</b>: żółte — poszlaka, niebieskie — hipoteza albo rodzice wpięci hipotetycznie. Powód jest w karcie osoby.</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><rect x="6" y="4" width="32" height="14" rx="7" fill="none" stroke="var(--t-akt)" stroke-width="1.3"/><text x="22" y="14.5" text-anchor="middle" font-size="9" font-weight="700" fill="var(--t-akt)">akt</text></svg><span>w karcie osoby: <b>akt</b> przy dacie i <b>✓ akt</b> przy krewnym = jest przepisany akt, który to potwierdza; klik prowadzi do aktu</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><rect x="2" y="3" width="40" height="16" rx="4" fill="none" stroke="var(--t-luka)" stroke-width="1.3" stroke-dasharray="4 3"/></svg><span><b>ściana</b> — tu wiedza się kończy; karta mówi, co dalej</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><path d="M22 20 V2" stroke="var(--acc)" stroke-width="1.8" stroke-dasharray="6 4" fill="none"/></svg><span>przerywana linia w górę = pokrewieństwo <b>przypuszczalne</b></span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><path d="M22 21 V11 H8 V1" stroke="var(--acc)" stroke-width="3.4" fill="none"/></svg><span><b>gruba linia</b> = droga od osoby w środku do jej rodziców i dalszych przodków</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><path d="M4 11 H40" stroke="var(--f)" stroke-width="1.6" stroke-dasharray="4 3" fill="none"/></svg><span>linia kropkowana = małżeństwo</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><path d="M4 11 H40" stroke="var(--dim)" stroke-width="2.2" stroke-dasharray="1 6" stroke-linecap="round" fill="none"/></svg><span>rzadkie szare kropki = rodzice wspólnego dziecka, nie małżeństwo</span></div>
+      <div class="lr"><svg viewBox="0 0 44 22"><text x="22" y="16" text-anchor="middle" font-size="13" fill="var(--acc)">&#9670;</text></svg><span>ma zapisane źródło lub uwagi</span></div>
+      <div class="gest">klik = ta osoba w środku (Rodzina) albo karta (Mapa) · dwuklik / podwójne dotknięcie = przybliż · przeciągnij = przesuń · kółko, szczypanie, przyciski albo klawisze + − = powiększenie · <b>/</b> = szukaj · wstecz w przeglądarce (Alt+&larr;) = poprzedni widok</div>
+    </div>
+  </div>
+  <aside id="side"></aside>
+</main>
+<nav id="tabbar" aria-label="Nawigacja">
+  <button type="button" id="tb-home"><span>&#8962;</span>Start</button>
+  <button type="button" id="tb-tree"><span>&#127795;</span>Drzewo</button>
+  <button type="button" id="tb-list"><span>&#9776;</span>Lista</button>
+  <button type="button" id="tb-more"><span>&#8943;</span>Więcej</button>
+</nav>
+<div id="lb"><img alt=""></div>
+<div id="coach"><div class="cbox"><h3>Jak korzystać z drzewa</h3>
+  <div class="cr"><span>&#128070;</span><span>Dotknij kafelka, żeby ustawić tę osobę w środku — z małżonkami, dziećmi i przodkami — i otworzyć jej kartę. W karcie przyciski <b>Rodzice · Małżonek · Dzieci</b> prowadzą dalej.</span></div>
+  <div class="cr"><span>&#128400;</span><span>Rozsuń dwoma palcami, żeby powiększyć; przeciągnij, żeby przesunąć. Podwójne dotknięcie tła przybliża.</span></div>
+  <div class="cr"><span>&#8597;</span><span>Kartę na dole przeciągnij za uchwyt w górę (cała karta) albo w dół (zamknij).</span></div>
+  <div class="cr"><span>&#8617;</span><span>Gest „wstecz” telefonu albo przycisk <b>&larr;</b> w lewym górnym rogu wraca do poprzedniej osoby i poprzedniego widoku.</span></div>
+  <button type="button" id="coachok">Rozumiem</button></div></div>
+<script>
+const DB = __DB__;
+const IMG = __IMG__;
+const P = DB.people, F = DB.fams, A = DB.acts || {}, LINES = DB.lines || {};
+const META = DB.meta || {}, TITLE = META.title || "Drzewo rodzinne";
+const NW=186, NH=62, GX=20, GY=102;
+const AV=44;
+
+/* ---------- helpers ---------- */
+const fam = id => F[id] || {c:[],h:null,w:null};
+
+/* ---------- visibility filters ---------- */
+let SHOWL  = true;    // show WALL nodes (dashed “we don't know” boxes)?
+let SHOWH  = true;    // show branches attached on a hypothesis?
+let BRF    = null;    // narrows the LIST view to one line (the drawing is never narrowed)
+let HILITE = false;   // dim everyone but the selected person's relatives?
+let SIDEK  = false;   // add side relatives (ancestors' siblings and their descendants)? OFF by default
+
+/* A hypothetical branch = everything that falls off the core of the tree once the family edges
+   marked `hp` are removed. Computed once at start: build the graph without those edges and keep
+   the largest connected component as the core. */
+const HYPOFF = (()=>{
+  const adj={}, add=(a,b)=>{ if(!a||!b) return; (adj[a]=adj[a]||[]).push(b); (adj[b]=adj[b]||[]).push(a); };
+  for(const f of Object.values(F)){
+    add(f.h,f.w);
+    if(f.hp) continue;                       // this is the hypothetical edge
+    for(const c of f.c){ add(f.h,c); add(f.w,c); }
+  }
+  const seen=new Set(), comps=[];
+  for(const id of Object.keys(P)){
+    if(seen.has(id)) continue;
+    const c=[id]; seen.add(id);
+    for(let i=0;i<c.length;i++) for(const y of (adj[c[i]]||[])) if(!seen.has(y)){ seen.add(y); c.push(y); }
+    comps.push(c);
+  }
+  comps.sort((a,b)=>b.length-a.length);
+  const core=new Set(comps[0]||[]);
+  // which components rejoin the core once the hypothetical edges are restored
+  const hpadj={};
+  for(const f of Object.values(F)) if(f.hp)
+    for(const c of f.c) for(const q of [f.h,f.w]) if(q && c){
+      (hpadj[c]=hpadj[c]||[]).push(q); (hpadj[q]=hpadj[q]||[]).push(c); }
+  const off=new Set();
+  for(const c of comps.slice(1)){
+    const hangs = c.some(id=>(hpadj[id]||[]).some(y=>core.has(y)));
+    const lone  = c.length===1 && P[c[0]].t==="hip";   // a loose person marked as a hypothesis
+    if(hangs || lone) for(const id of c) off.add(id);
+  }
+  return off;
+})();
+
+const vis = id => (id && P[id]
+  && (SHOWL || P[id].t!=="luka")
+  && (SHOWH || !HYPOFF.has(id))) ? id : null;
+/* A line (BRF) never hides people in the drawing. Filtering the drawing by line hid a person's own
+   children whenever they had been assigned to the other parent's line (each person has exactly one line). */
+const par = id => { const p=P[id]; if(!p||!p.fc.length) return {};
+  for(const fi of p.fc){ const f=fam(fi), h=vis(f.h), m=vis(f.w);
+    if(h||m) return {f:h,m,fid:fi}; }
+  return {}; };
+function wrap2(s,max){ const w=s.split(" "); let a="",b="";
+  for(const x of w){ if(!b && (a?a.length+1+x.length:x.length)<=max) a=(a?a+" ":"")+x; else b=(b?b+" ":"")+x; }
+  if(b.length>max) b=b.slice(0,max-1)+"…";
+  return [a,b]; }
+const spouses = id => (P[id]?.fs||[]).map(fi=>{const f=fam(fi);return {sp:(f.h===id?f.w:f.h),fid:fi,md:f.md,mp:f.mp,um:!!f.um};}).filter(x=>x.sp);
+/* um = parents of a shared child, NOT a marriage (UNMARRIED in the builder); the card says “Dziecko z” */
+const kids = id => (P[id]?.fs||[]).flatMap(fi=>fam(fi).c);
+const sibs = id => { const p=P[id]; if(!p||!p.fc.length) return []; return fam(p.fc[0]).c.filter(c=>c!==id); };
+/* siblings counted in the SAME family the drawing shows (par() skips families hidden by a filter) */
+const sibsVis = id => { const {fid}=par(id); return fid ? fam(fid).c.filter(c=>c!==id && vis(c)) : []; };
+const life = p => { const a=p.by, b=p.dy; if(!a&&!b) return ""; return (a||"?")+" – "+(b||(p.dd||p.bu?"?":"")); };
+const esc = s => (s||"").replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------- surnames: several spellings of one family ----------
+   DB.var (VARIANTS in the builder) joins spellings proven in the records. Diacritics and the -ska/-cka/-dzka
+   forms next to -ski/-cki/-dzki of the same family are joined here automatically; a female form goes to
+   the male one only when the male form is also in the tree. */
+const fold = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ł/g,"l");
+const VARG = DB.var || [];
+const VMAP = {};
+for(const g of VARG){ const k=fold(g[0]); for(const v of g) VMAP[fold(v)]=k; }
+const SNSET = new Set(Object.values(P).map(p=>fold(p.sn)).filter(Boolean));
+function snKey(sn){
+  let k=fold(sn).trim(); if(!k) return "";
+  if(VMAP[k]) return VMAP[k];
+  const m=k.match(/^(.*(?:s|c|dz))ka$/); if(m && SNSET.has(m[1]+"ki")) k=m[1]+"ki";
+  return VMAP[k] || k;
+}
+const SNGROUP = {};          // key -> {sp: spelling -> number of people, extra: spellings found only in the records}
+for(const p of Object.values(P)){ if(p.t==="luka" || !p.sn) continue;
+  const g=SNGROUP[snKey(p.sn)]=SNGROUP[snKey(p.sn)]||{sp:new Map(), extra:[]}; g.sp.set(p.sn,(g.sp.get(p.sn)||0)+1); }
+for(const grp of VARG){ const g=SNGROUP[fold(grp[0])]; if(!g) continue;
+  const have=new Set([...g.sp.keys()].map(fold)); g.extra=grp.filter(v=>!have.has(fold(v))); }
+const snLabel = k => { const g=SNGROUP[k]; return g ? [...g.sp.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]).join(" · ") : k; };
+const snSpellings = sn => { const g=sn && SNGROUP[snKey(sn)]; return g ? [...g.sp.keys(), ...g.extra] : (sn ? [sn] : []); };
+const snOthers = sn => { const own=fold(sn); return [...new Set(snSpellings(sn))].filter(v=>fold(v)!==own); };
+const snExtra = sn => (sn && SNGROUP[snKey(sn)]?.extra) || [];
+
+/* The person the family view starts from when nobody is chosen. Picked from the data — the one
+   with the most descendants — so the file is not built around one particular person. */
+const ROOT = (()=>{
+  let best=null, bn=-1;
+  for(const p of Object.values(P)){
+    if(p.t==="luka") continue;
+    let n=0; const q=[p.id], seen=new Set([p.id]);
+    while(q.length){ const x=q.pop(); for(const c of kids(x)) if(!seen.has(c)){ seen.add(c); n++; q.push(c); } }
+    if(n>bn || (n===bn && (p.by||"9999") < (P[best]?.by||"9999"))){ bn=n; best=p.id; }
+  }
+  return best || Object.keys(P)[0];
+})();
+
+/* ---------- kinship graph (for the path) ---------- */
+const ADJ = {};
+const link=(a,b)=>{ if(!a||!b) return; (ADJ[a]=ADJ[a]||new Set()).add(b); (ADJ[b]=ADJ[b]||new Set()).add(a); };
+for(const [fi,f] of Object.entries(F)){ if(!f.um) link(f.h,f.w); for(const c of f.c){ link(f.h,c); link(f.w,c);} }
+/* a couple without a marriage (f.um) is not a kinship step — the path goes by blood */
+function shortestPath(a,b){
+  if(a===b) return [a];
+  const prev={[a]:null}; const q=[a];
+  while(q.length){ const x=q.shift();
+    for(const y of (ADJ[x]||[])) if(!(y in prev)){ prev[y]=x; if(y===b){ const r=[]; let c=y; while(c!==null){r.push(c);c=prev[c];} return r.reverse(); } q.push(y); } }
+  return null;
+}
+/* Among EQUALLY short paths pick one that does not step down to a child only to climb to its other parent
+   (“mother of a great-great-grandfather's son”) — then the blood path wins (“great-great-grandmother's sister”).
+   Only matters for couples without a marriage (f.um); spouses are joined by a direct edge. */
+function bestPath(a,b){
+  if(a===b) return [a];
+  const coParent=pa=>{ for(let i=2;i<pa.length;i++) if(stepType(pa[i-2],pa[i-1])==="C" && stepType(pa[i-1],pa[i])==="P") return true; return false; };
+  const first=shortestPath(a,b);
+  if(!first || !coParent(first)) return first;          // usually nothing changes — other descriptions stay as they were
+  const dist={[a]:0}, q=[a];
+  while(q.length){ const x=q.shift(); if(x===b) break;
+    for(const y of (ADJ[x]||[])) if(!(y in dist)){ dist[y]=dist[x]+1; q.push(y); } }
+  if(!(b in dist)) return null;
+  const paths=[], cur=[b];
+  (function back(x){ if(paths.length>=64) return;
+    if(x===a){ paths.push(cur.slice().reverse()); return; }
+    for(const y of (ADJ[x]||[])) if(dist[y]===dist[x]-1){ cur.push(y); back(y); cur.pop(); } })(b);
+  return paths.find(pa=>!coParent(pa)) || first;
+}
+function relLabel(a,b){ // label of the step a -> b
+  const pa=par(a), pb=par(b);
+  if(pa.f===b||pa.m===b) return "dziecko →";
+  if(pb.f===a||pb.m===a) return "rodzic →";
+  if(spouses(a).some(s=>s.sp===b && !s.um)) return "małżonek →";
+  if(pa.fid && pa.fid===pb.fid) return "rodzeństwo →";
+  return "→";
+}
+
+/* ---------- “Path to me”: kinship relative to the person marked “this is me” ---------- */
+let ME=null; try{ const v=localStorage.getItem("drzewo.me"); if(v && P[v]) ME=v; }catch(e){}
+function setMe(id){ ME=id; try{ if(id) localStorage.setItem("drzewo.me",id); else localStorage.removeItem("drzewo.me"); }catch(e){} }
+const KIN={
+  rodzic:{M:["ojciec","ojca"],F:["matka","matki"],U:["rodzic","rodzica"]},
+  dziadek:{M:["dziadek","dziadka"],F:["babcia","babci"],U:["dziadek lub babcia","dziadka lub babci"]},
+  dziecko:{M:["syn","syna"],F:["córka","córki"],U:["dziecko","dziecka"]},
+  wnuk:{M:["wnuk","wnuka"],F:["wnuczka","wnuczki"],U:["wnuk lub wnuczka","wnuka lub wnuczki"]},
+  malzonek:{M:["mąż","męża"],F:["żona","żony"],U:["małżonek","małżonka"]},
+  rodzenstwo:{M:["brat","brata"],F:["siostra","siostry"],U:["brat lub siostra","brata lub siostry"]},
+  wuj:{M:["wujek","wujka"],F:["ciocia","cioci"],U:["wujek lub ciocia","wujka lub cioci"]},
+  kuzyn:{M:["kuzyn","kuzyna"],F:["kuzynka","kuzynki"],U:["kuzyn lub kuzynka","kuzyna lub kuzynki"]},
+  bratanek:{M:["bratanek","bratanka"],F:["bratanica","bratanicy"],U:["bratanek lub bratanica","bratanka lub bratanicy"]},
+  siostrzeniec:{M:["siostrzeniec","siostrzeńca"],F:["siostrzenica","siostrzenicy"],U:["siostrzeniec lub siostrzenica","siostrzeńca lub siostrzenicy"]},
+  tesc:{M:["teść","teścia"],F:["teściowa","teściowej"],U:["teść lub teściowa","teścia lub teściowej"]},
+  ziec:{M:["zięć","zięcia"],F:["synowa","synowej"],U:["zięć lub synowa","zięcia lub synowej"]},
+  szwagier:{M:["szwagier","szwagra"],F:["szwagierka","szwagierki"],U:["szwagier lub szwagierka","szwagra lub szwagierki"]},
+  bratowa:{M:["szwagier","szwagra"],F:["bratowa","bratowej"],U:["szwagier lub bratowa","szwagra lub bratowej"]},
+};
+const kt=(k,sex,pre)=>{ const t=KIN[k][sex]||KIN[k].U; pre=pre||""; return [pre+t[0], pre+t[1]]; };
+/* path steps: P = to a parent, C = to a child, S = spouse; then “PC” through the same family → B (sibling) */
+function stepType(a,b){
+  const pa=par(a); if(pa.f===b||pa.m===b) return "P";
+  const pb=par(b); if(pb.f===a||pb.m===a) return "C";
+  if(spouses(a).some(x=>x.sp===b && !x.um)) return "S";
+  return "?";
+}
+function kinship(me,id){
+  if(!me||!P[me]||!P[id]) return null;
+  if(me===id) return "to ja";
+  const pa=bestPath(me,id); if(!pa) return null;
+  const st=[]; // [{t, who}] — who = the person at the end of the step
+  for(let i=1;i<pa.length;i++) st.push({t:stepType(pa[i-1],pa[i]), who:pa[i]});
+  if(st.some(x=>x.t==="?")) return null;
+  // P+C through the same family = sibling
+  const c=[]; for(let i=0;i<st.length;i++){
+    if(st[i].t==="P" && st[i+1] && st[i+1].t==="C" && par(i?st[i-1].who:me).fid && par(i?st[i-1].who:me).fid===par(st[i+1].who).fid){ c.push({t:"B",who:st[i+1].who}); i++; }
+    else c.push(st[i]); }
+  if(c.length>7) return "daleka rodzina — "+(pa.length-1)+" kroków";
+  const sx=x=>P[x]?.s||"U";
+  function describe(i){                 // describe from step i to the end; returns [nominative, genitive]
+    if(i>=c.length) return null;
+    const t=c.slice(i).map(x=>x.t).join("");
+    const pat=[["PBC","kuzyn"],["PB","wuj"],["CS","ziec"],["SP","tesc"],["SB","szwagier"]];
+    for(const [p,k] of pat) if(t.startsWith(p)){ const w=c[i+p.length-1].who; return join(kt(k,sx(w)), describe(i+p.length)); }
+    if(t.startsWith("BC")){ const b=c[i].who, w=c[i+1].who; return join(kt(sx(b)==="F"?"siostrzeniec":"bratanek",sx(w)), describe(i+2)); }
+    if(t.startsWith("BS")){ const b=c[i].who, w=c[i+1].who; return join(kt(sx(b)==="M"?"bratowa":"szwagier",sx(w)), describe(i+2)); }
+    if(c[i].t==="P"||c[i].t==="C"){ let n=0; while(c[i+n]&&c[i+n].t===c[i].t) n++;
+      const w=c[i+n-1].who, pre="pra".repeat(Math.max(0,n-2));
+      const k=c[i].t==="P"?(n===1?"rodzic":"dziadek"):(n===1?"dziecko":"wnuk");
+      return join(kt(k,sx(w),pre), describe(i+n)); }
+    if(c[i].t==="S") return join(kt("malzonek",sx(c[i].who)), describe(i+1));
+    if(c[i].t==="B") return join(kt("rodzenstwo",sx(c[i].who)), describe(i+1));
+    return null;
+  }
+  function join(head, rest){ if(!rest) return head; return [rest[0]+" "+head[1], rest[1]+" "+head[1]]; }
+  const d=describe(0); return d ? d[0] : null;
+}
+
+/* ---------- layout ---------- */
+let focusId = ROOT, pathSet=new Set(), pathArr=null, PICK=null;
+let UP=9, DN=9, PAIR=true, selId=null, MODE='all';
+
+/* ---------- FAMILY view: couples as one node, spacing from contours ----------
+   The rules this layout stands on:
+   1. A couple ALWAYS stands side by side (gap PG). Pulling ancestors towards the child within their own
+      subtree separated spouses by hundreds of pixels whenever one side had many more ancestors.
+   2. The centre person has ALL partners next to them (1st on the right, 2nd on the left, further ones
+      outwards), the children under each couple, and each partner's ancestors above them.
+   3. Children (and further descendants) carry their spouses with them.
+   4. Blocks (subtrees) are pushed as close as their CONTOURS allow, row by row (tidy tree), and a group is
+      placed as close as possible to its target (isotonic regression, PAV).
+   5. Everyone appears once; where ancestors coincide (e.g. two partners who are sisters) the second path
+      only gets a line to the couple already drawn.
+   6. Side relatives (option): ancestors' siblings with descendants, outside the drawing on their line's
+      side, the nearest generation nearest the centre. */
+const PG=18, FG=40;
+const cAdd=(c,r,l,rr)=>{ const v=c[r]; if(v){ if(l<v[0]) v[0]=l; if(rr>v[1]) v[1]=rr; } else c[r]=[l,rr]; };
+const cMerge=(c,d,dx)=>{ for(const k in d) cAdd(c,+k,d[k][0]+dx,d[k][1]+dx); };
+/* smallest shift of B relative to A that puts B entirely to the right of A (with a gap) */
+const cSep=(A,B,gap)=>{ let s=-Infinity; for(const k in A) if(B[k]) s=Math.max(s, A[k][1]-B[k][0]+gap); return s; };
+const mkBlock=()=>({items:[], c:{}});
+function bShift(b,dx){ if(!dx) return b; for(const it of b.items) it.x+=dx;
+  const c={}; for(const k in b.c) c[k]=[b.c[k][0]+dx,b.c[k][1]+dx]; b.c=c; return b; }
+function bAbsorb(dst,src){ for(const it of src.items) dst.items.push(it); cMerge(dst.c,src.c,0); }
+function bBox(b,id,x,row,side){ b.items.push({id,x,row,side:!!side}); cAdd(b.c,row,x-NW/2,x+NW/2); }
+/* place blocks left to right as close as possible to the targets d[i] so that no two (adjacent
+   or not) overlap in any row; returns the shifts */
+function packBlocks(blocks, d, gap){
+  const n=blocks.length; if(!n) return [];
+  const sep=[];
+  for(let i=0;i<n-1;i++){
+    let s=cSep(blocks[i].c, blocks[i+1].c, gap); if(!isFinite(s)) s=-Infinity;
+    let acc=0;
+    for(let j=i-1;j>=0;j--){ acc+=sep[j]; const t=cSep(blocks[j].c, blocks[i+1].c, gap);
+      if(isFinite(t)) s=Math.max(s, t-acc); }
+    sep.push(isFinite(s)?s:0);
+  }
+  // PAV: min Σ(p_i-d_i)² subject to p_{i+1}-p_i >= sep_i
+  const S=[0]; for(let i=1;i<n;i++) S[i]=S[i-1]+sep[i-1];
+  const st=[];
+  for(let i=0;i<n;i++){ st.push({s:d[i]-S[i],c:1});
+    while(st.length>1 && st[st.length-2].s/st[st.length-2].c > st[st.length-1].s/st[st.length-1].c){
+      const b=st.pop(), a=st.pop(); st.push({s:a.s+b.s,c:a.c+b.c}); } }
+  const p=[]; for(const g of st){ const v=g.s/g.c; for(let j=0;j<g.c;j++) p.push(v+S[p.length]); }
+  return p;
+}
+/* a person's partners in drawing order: 1st on the right, 2nd on the left, 3rd further right, … */
+function partnersOf(id){
+  if(!PAIR) return [];
+  const out=[], seenSp=new Set();
+  for(const s of spouses(id)) if(vis(s.sp) && !seenSp.has(s.sp)){ seenSp.add(s.sp); out.push(s.sp); }
+  return out;
+}
+
+function build(){
+  const placed=new Set(), placedFam=new Set();
+  const famOf = id => (P[id]?.fs||[]);
+
+  /* descendant block of X in row `row`: X + partners in the same row, each couple's children below */
+  function descBlock(X, row, floor, side){
+    const b=mkBlock(); placed.add(X); bBox(b,X,0,row,side);
+    const parts=partnersOf(X).filter(s=>!placed.has(s));
+    const at={}; at[X]=0;
+    let xr=NW+PG, xl=-(NW+PG), nR=0;
+    parts.forEach((s,i)=>{
+      let x;
+      if(i===0){ x=xr; xr+=NW+GX; nR++; }
+      else if(i===1){ x=xl; xl-=NW+GX; }
+      else if(i%2===0){ x=xr; xr+=NW+GX; } else { x=xl; xl-=NW+GX; }
+      placed.add(s); bBox(b,s,x,row,side); at[s]=x;
+    });
+    if(row>=floor) return b;
+    // children grouped by family (couple)
+    const groups=[];
+    for(const fi of famOf(X)){
+      const f=fam(fi), other=f.h===X?f.w:f.h;
+      const ks=f.c.filter(c=>vis(c) && !placed.has(c));
+      if(!ks.length) continue;
+      const target = (other && at[other]!=null) ? (at[other]/2) : 0;   // middle of the couple, or X alone
+      const kb=ks.map(c=>descBlock(c,row+1,floor,side));
+      // one couple's children, pushed together by their contours
+      const g=mkBlock(), offs=[];
+      kb.forEach((k,i)=>{ let o=0;
+        if(i){ o=-Infinity; for(let j=0;j<i;j++){ const t=cSep(kb[j].c,k.c,GX); if(isFinite(t)) o=Math.max(o, offs[j]+t); }
+               if(!isFinite(o)) o=offs[i-1]+NW+GX; }
+        offs.push(o); });
+      kb.forEach((k,i)=>{ bShift(k,offs[i]); bAbsorb(g,k); });
+      const mid=(offs[0]+offs[offs.length-1])/2;
+      bShift(g,-mid);
+      groups.push({g,target});
+    }
+    groups.sort((a,b)=>a.target-b.target);
+    const pos=packBlocks(groups.map(x=>x.g), groups.map(x=>x.target), FG);
+    groups.forEach((x,i)=>{ bShift(x.g,pos[i]); bAbsorb(b,x.g); });
+    return b;
+  }
+
+  /* ancestor block: the parents (family fid) in row `row`, each one's parents above them */
+  const LAT=[];   // ancestor couples that may have side relatives: {fid,row,lane,line}
+  function upBlock(fid, row, lane, line){
+    placedFam.add(fid);
+    const f=fam(fid), b=mkBlock();
+    const ps=[f.h,f.w].filter(q=>vis(q) && !placed.has(q));
+    if(!ps.length) return null;
+    const xs = ps.length===2 ? [-(NW+PG)/2,(NW+PG)/2] : [0];
+    ps.forEach((q,i)=>{ placed.add(q); bBox(b,q,xs[i],row); });
+    if(SIDEK && line) LAT.push({fid,row,lane,line});
+    if(-(row-1)>UP) return b;
+    const ups=[];
+    ps.forEach((q,i)=>{
+      const pf=par(q).fid; if(!pf || placedFam.has(pf)) return;
+      const l2 = lane!==0 ? lane : (i===0 ? -1 : 1);     // no partner: father to the left, mother to the right
+      const ub=upBlock(pf,row-1,l2,q); if(ub) ups.push({g:ub,target:xs[i]});
+    });
+    const pos=packBlocks(ups.map(x=>x.g), ups.map(x=>x.target), FG);
+    ups.forEach((x,i)=>{ bShift(x.g,pos[i]); bAbsorb(b,x.g); });
+    return b;
+  }
+
+  /* 1) the person's row + descendants */
+  const core=descBlock(focusId,0,DN);
+  const at={}; for(const it of core.items) if(it.row===0) at[it.id]=it.x;
+  const rowL=()=>core.c[0][0], rowR=()=>core.c[0][1];
+  // the person's siblings to the left; the first partner's siblings to the right
+  const parts0=partnersOf(focusId).filter(s=>at[s]!=null);
+  const P1=parts0.find(s=>at[s]>0);
+  const sibsOf=id=>{ const {fid}=par(id); return fid ? fam(fid).c.filter(c=>c!==id && vis(c) && !placed.has(c)) : []; };
+  for(const s of sibsOf(focusId).reverse()){ const x=rowL()-GX-NW/2; placed.add(s); bBox(core,s,x,0); at[s]=x; }
+  if(P1) for(const s of sibsOf(P1)){ const x=rowR()+GX+NW/2; placed.add(s); bBox(core,s,x,0); at[s]=x; }
+
+  /* 2) ancestors of everyone in the person's row who has parents */
+  const tops=[];
+  const row0=Object.keys(at).sort((a,b)=>at[a]-at[b]);
+  const hasRight = parts0.some(s=>at[s]>0), focusFid = par(focusId).fid;
+  // parents stand centred over all their children in this row
+  const kidSpan={};
+  for(const id of row0){ const fid=par(id).fid; if(!fid) continue;
+    const v=kidSpan[fid]; if(v){ v[0]=Math.min(v[0],at[id]); v[1]=Math.max(v[1],at[id]); } else kidSpan[fid]=[at[id],at[id],id]; }
+  for(const id of row0){
+    const fid=par(id).fid; if(!fid || placedFam.has(fid) || UP<1) continue;
+    const line = (fid===focusFid) ? focusId : id;
+    // the centre person's line: with a partner on the right it all goes left; without, father left and mother right
+    const lane = fid===focusFid ? (hasRight ? -1 : 0) : (at[id]<0 ? -1 : 1);
+    const ub=upBlock(fid,-1,lane,line);
+    if(ub) tops.push({g:ub, target:(kidSpan[fid][0]+kidSpan[fid][1])/2});
+  }
+  tops.sort((a,b)=>a.target-b.target);
+  const tpos=packBlocks(tops.map(x=>x.g), tops.map(x=>x.target), FG);
+  const all=mkBlock(); bAbsorb(all,core);
+  tops.forEach((x,i)=>{ bShift(x.g,tpos[i]); bAbsorb(all,x.g); });
+
+  /* 3) side relatives: ancestors' siblings with descendants, outside, on their line's side */
+  if(SIDEK){
+    LAT.sort((a,b)=>b.row-a.row);                  // nearest generation first
+    for(const L of LAT){
+      const ks=fam(L.fid).c.filter(c=>c!==L.line && vis(c) && !placed.has(c));
+      if(!ks.length) continue;
+      const kb=ks.map(c=>descBlock(c,L.row+1,0,true));
+      const g=mkBlock(), offs=[];
+      kb.forEach((k,i)=>{ let o=0;
+        if(i){ o=-Infinity; for(let j=0;j<i;j++){ const t=cSep(kb[j].c,k.c,GX); if(isFinite(t)) o=Math.max(o, offs[j]+t); }
+               if(!isFinite(o)) o=offs[i-1]+NW+GX; }
+        offs.push(o); });
+      kb.forEach((k,i)=>{ bShift(k,offs[i]); bAbsorb(g,k); });
+      const lane = L.lane || -1;
+      const dx = lane<0 ? -cSep(g.c, all.c, FG) : cSep(all.c, g.c, FG);
+      bShift(g, isFinite(dx)?dx:0); bAbsorb(all,g);
+    }
+  }
+
+  /* 4) nodes and edges */
+  const nodes=all.items.map(it=>({id:it.id, x:it.x, y:it.row*GY, side:it.side}));
+  const pos=Object.fromEntries(nodes.map(n=>[n.id,n]));
+  const byRow={}; for(const n of nodes) (byRow[n.y]=byRow[n.y]||[]).push(n.x);
+  const between=(y,x0,x1)=>byRow[y].some(x=>x>Math.min(x0,x1)+1 && x<Math.max(x0,x1)-1);
+  const edges=[], famDone=new Set();
+  for(const n of nodes){
+    for(const fi of [...(P[n.id]?.fs||[]), ...(P[n.id]?.fc||[])]){
+      if(famDone.has(fi)) continue; famDone.add(fi);
+      const f=fam(fi);
+      const ps=[f.h,f.w].filter(q=>q && pos[q]);
+      const ks=f.c.filter(c=>pos[c]);
+      let adj=false;
+      if(ps.length===2){ const [a,b]=ps.map(q=>pos[q]);
+        if(a.y===b.y && !between(a.y,a.x,b.x)){ adj=true; edges.push({a:a.x<b.x?a:b, b:a.x<b.x?b:a, t:"sp", um:!!f.um}); } }
+      if(ps.length && ks.length) edges.push({t:"fam", p:ps.map(q=>pos[q]), k:ks.map(c=>pos[c]), adj, fid:fi});
+    }
+  }
+  return {nodes,edges};
+}
+
+/* ---------- layout of the WHOLE tree: recursively BY FAMILY ---------- */
+const ANW=150, ANH=40, AGX=16, AGY=86;
+const SLOT=ANW+AGX, PAIRGAP=6, FAMGAP=34;
+
+function buildAll(){
+  const nodes=[], placed={}, doneFam=new Set();
+
+  // 1. measure each family's subtree width (couple + descendants)
+  function measure(fid, depth){
+    if(doneFam.has(fid) || depth>14) return null;
+    doneFam.add(fid);
+    const f=F[fid];
+    const par=[f.h,f.w].filter(Boolean).filter(vis);
+    if(!par.length && !f.c.some(vis)) return null;
+    const selfW = Math.max(1,par.length)*SLOT + (par.length>1?PAIRGAP:0);
+    const kids=[]; let kw=0;
+    for(const c of f.c){
+      if(!vis(c)) continue;
+    const own=(P[c]?.fs||[]).find(x=>!doneFam.has(x));
+      const sub= own ? measure(own, depth+1) : null;
+      const w = sub ? sub.w : SLOT;
+      kids.push({id:c, sub, w}); kw += w + FAMGAP;
+    }
+    if(kw) kw -= FAMGAP;
+    return {fid, par, kids, w: Math.max(selfW, kw), kidsW: kw};
+  }
+
+  // 2. place: parents in one row, children below
+  function put(m, cx, y){
+    if(!m) return;
+    let px = cx - ((m.par.length-1)*(SLOT+PAIRGAP))/2;
+    for(const p of m.par){
+      if(!placed[p]){ placed[p]={id:p,x:px,y,all:true}; nodes.push(placed[p]); }
+      px += SLOT+PAIRGAP;
+    }
+    let x = cx - m.kidsW/2;
+    for(const k of m.kids){
+      const kx = x + k.w/2;
+      if(k.sub) put(k.sub, kx, y+AGY);
+      else if(!placed[k.id]){ placed[k.id]={id:k.id,x:kx,y:y+AGY,all:true}; nodes.push(placed[k.id]); }
+      x += k.w + FAMGAP;
+    }
+  }
+
+  // 3. roots = families where neither parent has parents in the data
+  const roots=[];
+  for(const [fid,f] of Object.entries(F)){
+    const par=[f.h,f.w].filter(Boolean).filter(vis);
+    if(!par.length) continue;
+    if(par.every(p=>!(P[p]?.fc||[]).length)) roots.push(fid);
+  }
+  const trees=[];
+  for(const fid of roots){ const m=measure(fid,0); if(m) trees.push(m); }
+  // families not reached (loops / unusual links)
+  for(const fid of Object.keys(F)){ const m=measure(fid,0); if(m) trees.push(m); }
+  trees.sort((a,b)=>b.w-a.w);
+
+  // 4. lay the subtrees out in rows of sensible width instead of one long strip
+  const depthOf=m=>{ let d=1; for(const k of m.kids) if(k.sub) d=Math.max(d,1+depthOf(k.sub)); else d=Math.max(d,2); return d; };
+  const sumW=trees.reduce((s,t)=>s+t.w+FAMGAP*2,0);
+  const avgH=(trees.reduce((s,t)=>s+depthOf(t),0)/Math.max(1,trees.length))*AGY + AGY*1.6;
+  const MAXW = Math.max(2400, Math.sqrt(1.7*sumW*avgH));   // aim for a ~1.7:1 aspect ratio
+  const sizeOf=m=>m.par.length+m.kids.reduce((s,k)=>s+(k.sub?sizeOf(k.sub):1),0);
+  const labels=[];
+  let cx=0, rowY=0, rowH=0;
+  for(const t of trees){
+    if(cx>0 && cx+t.w>MAXW){ rowY += rowH + AGY*1.6; cx=0; rowH=0; }
+    put(t, cx+t.w/2, rowY);
+    const n=sizeOf(t);
+    if(n>=5){ const who=t.par.map(p=>P[p]).find(p=>p&&p.sn&&p.t!=="luka") || t.kids.map(k=>P[k.id]).find(p=>p&&p.sn&&p.t!=="luka");
+      if(who) labels.push({x:cx+t.w/2, y:rowY-ANH/2-10, s:who.sn+" · "+n}); }
+    cx += t.w + FAMGAP*2;
+    rowH = Math.max(rowH, depthOf(t)*AGY);
+  }
+  // people placed nowhere (no family)
+  let ox=0;
+  for(const id of Object.keys(P)) if(!placed[id] && vis(id)){
+    placed[id]={id,x:ox,y:rowY+rowH+AGY*2,all:true}; nodes.push(placed[id]); ox+=SLOT;
+  }
+
+  const edges=[];
+  for(const n of nodes){
+    const {f,m}=par(n.id);
+    for(const p of [f,m]) if(p&&placed[p]) edges.push({a:placed[p],b:n,t:"pc"});
+    for(const s of spouses(n.id)){ const o=placed[s.sp];
+      if(o&&o.y===n.y&&s.sp>n.id&&Math.abs(o.x-n.x)<SLOT*2.2) edges.push({a:n,b:o,t:"sp",um:s.um}); }
+  }
+  return {nodes, edges, labels};
+}
+
+/* ---------- render ---------- */
+const vp=document.getElementById("vp"), svg=document.getElementById("svg");
+let T={x:0,y:0,k:1}, LOD=-1, POS={};
+const SVGNS="http://www.w3.org/2000/svg";
+function el(t,a,txt){ const e=document.createElementNS(SVGNS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!=null) e.textContent=txt; return e; }
+
+function render(){
+  if(MODE==="fan"){ renderFan(); return; }
+  if(MODE==="time"){ renderTime(); return; }
+  const all = MODE==="all";
+  const hi = all && HILITE && selId && P[selId];
+  if(hi){                        // the selected person's relatives: their blood + their spouse's blood + spouses
+    BLOOD=bloodOf(selId);
+    for(const sp of spouses(selId)) for(const x of bloodOf(sp.sp)) BLOOD.add(x);
+    for(const id of [...BLOOD]) for(const sp of spouses(id)) BLOOD.add(sp.sp);
+  } else BLOOD=null;
+  const W=all?ANW:NW, Hh=all?ANH:NH, GYY=all?AGY:GY;
+  const {nodes,edges,labels}=all?buildAll():build();
+  POS=Object.fromEntries(nodes.map(n=>[n.id,n]));
+  vp.replaceChildren();
+  const gL=el("g"), gE=el("g"), gA=el("g",{class:"lnTop"}), gN=el("g");
+  vp.append(gL,gE,gA,gN);
+  const minX=Math.min(...nodes.map(n=>n.x))-W/2-14;
+  const LAB={"-7":"7 pokoleń wstecz","-6":"6 pokoleń wstecz","-5":"praprapradziadkowie",
+             "-4":"prapradziadkowie","-3":"pradziadkowie","-2":"dziadkowie","-1":"rodzice",
+             "0":"pokolenie osoby","1":"dzieci","2":"wnuki","3":"prawnuki","4":"praprawnuki"};
+  const rows=all?[]:[...new Set(nodes.map(n=>n.y))].sort((a,b)=>a-b);
+  for(const y of rows){ const g=Math.round(y/GY); if(LAB[g])
+    gL.append(el("text",{x:minX,y:y+4,"text-anchor":"end",class:"band"},LAB[g])); }
+  for(const l of (labels||[])) gL.append(el("text",{x:l.x,y:l.y,class:"cl"},l.s));
+  for(const e of edges){
+    if(e.t==="fam"){                               // family: from the middle of the couple (or from the parent) to each child
+      const ps=e.p.filter(n=>vis(n.id)), ks=e.k.filter(n=>vis(n.id));
+      if(!ps.length || !ks.length) continue;
+      const two = ps.length===2 && e.adj;
+      const wall = ps.some(n=>P[n.id] && P[n.id].t==="luka");
+      for(const k of ks){
+        const srcs = two ? [{x:(ps[0].x+ps[1].x)/2, y:ps[0].y, mid:true}] : ps.map(n=>({x:n.x, y:n.y}));
+        for(const sx of srcs){
+          const dn = k.y>sx.y;
+          const y0 = sx.mid ? sx.y : sx.y+(dn?Hh/2:-Hh/2);
+          const my = dn ? k.y-Hh/2-(GYY-Hh)/2 : k.y+Hh/2+(GYY-Hh)/2;
+          const hl = pathSet.has(k.id) && ps.some(n=>pathSet.has(n.id));
+          const kind = wall ? " wall" : ((P[k.id]||{}).hp ? " hyp" : "");
+          const lng = !sx.mid && Math.abs(sx.x-k.x) > 3*NW ? " long" : "";   // parent far away (coinciding ancestors) — dim it
+          const pth=el("path",{class:"link "+(hl?"hl":"")+kind+lng, d:`M${sx.x},${y0} V${my} H${k.x} V${k.y+(dn?-Hh/2:Hh/2)}`});
+          pth.__c=k.id; pth.__p=ps.map(n=>n.id); gE.append(pth);
+        }
+      }
+      continue;
+    }
+    if(!vis(e.a.id) || !vis(e.b.id)) continue;   // a filter hid one end — don't draw a stub
+    const hl = pathSet.has(e.a.id) && pathSet.has(e.b.id);
+    let dpath;
+    if(e.t==="sp"){ dpath=`M${e.a.x+W/2},${e.a.y} H${e.b.x-W/2}`; }
+    else { const my=(e.a.y+e.b.y)/2; dpath=`M${e.a.x},${e.a.y+(e.b.y>e.a.y?Hh/2:-Hh/2)} V${my} H${e.b.x} V${e.b.y+(e.b.y>e.a.y?-Hh/2:Hh/2)}`; }
+    const far = all && Math.hypot(e.b.x-e.a.x, e.b.y-e.a.y) > 900;
+    let kind="";
+    if(e.t!=="sp"){ const up=P[e.a.y<e.b.y?e.a.id:e.b.id]||{}, dn=P[e.a.y<e.b.y?e.b.id:e.a.id]||{};
+      kind = up.t==="luka" ? " wall" : (dn.hp ? " hyp" : ""); }
+    const pth=el("path",{class:"link "+(e.t==="sp"?"sp ":"")+(e.um?"um ":"")+(far?"long ":"")+(hl?"hl":"")+kind,d:dpath});
+    if(e.t==="sp") pth.__sp=[e.a.id,e.b.id];
+    else { const lo=e.a.y<e.b.y; pth.__c=lo?e.b.id:e.a.id; pth.__p=[lo?e.a.id:e.b.id]; }
+    gE.append(pth);
+  }
+  for(const n of nodes){
+    const p=P[n.id]; if(!p||!vis(n.id)) continue;
+    const cls="node "+(p.s||"U")+" t-"+(p.t||"none")+(n.side?" sidek":"")+(hi&&!BLOOD.has(n.id)?" far":"")+(hi&&BLOOD.has(n.id)?" blood":"")+(!all&&n.id===focusId?" focus":"")+(n.id===selId?" sel":"")+(pathSet.has(n.id)?" onpath":"")+(FIND?(FIND.ids.has(n.id)?" hit":" nohit"):"");
+    const g=el("g",{class:cls,transform:`translate(${n.x},${n.y})`});
+    g.append(el("rect",{x:-W/2,y:-Hh/2,width:W,height:Hh}));
+    const has=IMG.t[n.id], av=all?28:AV;
+    if(has){
+      const cid="c"+n.id.replace(/@/g,"");
+      const cp=el("clipPath",{id:cid});
+      cp.append(el("circle",{cx:-W/2+7+av/2,cy:0,r:av/2}));
+      g.append(cp);
+      g.append(el("image",{x:-W/2+7,y:-av/2,width:av,height:av,"clip-path":`url(#${cid})`,
+                           preserveAspectRatio:"xMidYMid slice",href:has}));
+      g.append(el("circle",{cx:-W/2+7+av/2,cy:0,r:av/2,fill:"none",class:"av",
+                           stroke:"var(--"+(p.s==="F"?"f":p.s==="M"?"m":"u")+")","stroke-width":1.5}));
+    }
+    const tx = has ? -W/2+7+av+(all?6:8) : -W/2+9;
+    if(p.t==="luka"){
+      const w2=wrap2(p.n, all?20:26);
+      g.append(el("text",{x:tx,y:all?-3:-4,"font-size":all?"9.5px":"11.5px"},w2[0]));
+      g.append(el("text",{x:tx,y:all?8:11,"font-size":all?"9.5px":"11.5px"},w2[1]));
+    } else {
+      const maxc = all ? (has?16:20) : (has ? 19 : 25);
+      const uk = (p.t==="hip"||p.t==="praw") ? p.t : (p.hp ? (p.hpt||"hip") : "");
+      const nmx = maxc - (uk?3:0);
+      let nm=p.n; if(nm.length>nmx) nm=nm.slice(0,nmx-1)+"…";
+      const nt=el("text",{x:tx,y:all?-2:-4,"font-size":all?"10.5px":null},nm);
+      if(uk){
+        const q=el("tspan",{class:"unc",fill:"var(--t-"+uk+")"}," (?)");
+        q.append(el("title",{}, p.t==="hip"  ? "hipoteza — powiązanie nie jest udowodnione"
+                            : p.t==="praw" ? "poszlaka — indeks, rejestr albo przekaz rodzinny, bez aktu"
+                            : (p.hpt==="praw" ? "rodzice wpięci na poszlakę — patrz karta osoby"
+                                              : "rodzice wpięci hipotetycznie — patrz karta osoby")));
+        nt.append(q);
+      }
+      g.append(nt);
+      g.append(el("text",{x:tx,y:all?10:13,class:"d","font-size":all?"9px":null},life(p)||"—"));
+      if(p.t) g.append(el("path",{class:"tier",d:`M${-W/2+2.2},${-Hh/2+8} V${Hh/2-8}`,stroke:"var(--t-"+p.t+")"}));
+      if(p.no.length) g.append(el("text",{x:W/2-7,y:-Hh/2+12,"text-anchor":"end",class:"src"},"◆"));
+    }
+    /* label shown when zoomed out (lod1): given name above surname — the surname alone can't tell siblings
+       or cousins apart, and this is the zoom level where people are looked for */
+    const snTxt = p.t==="luka" ? "?" : (p.sn || p.mn || "");   // no surname: the given name alone, not “Anna / Anna”
+    let gnTxt = "";
+    if(p.t!=="luka"){
+      let full = p.n.replace(/^❓ /,"").replace(/^\(.*?\)\s*/,"").trim();
+      if(p.sn && full.endsWith(p.sn)) full = full.slice(0, -p.sn.length).trim();
+      gnTxt = full;
+    }
+    const cut=(t,n)=> t.length>n ? t.slice(0,n-1)+"…" : t;
+    const lab = el("text",{x:0,class:"sn"+(all?" lg":"")});
+    if(gnTxt){
+      const l1=el("tspan",{x:0,dy:"-0.45em",class:"gn"},cut(gnTxt, all?13:15));
+      const l2=el("tspan",{x:0,dy:"1.0em"},cut(snTxt, all?12:13));
+      if(p.t==="hip"||p.t==="praw"||p.hp) l2.textContent += " (?)";
+      lab.setAttribute("y",0); lab.append(l1,l2);
+    } else { lab.setAttribute("y", all?7:9);
+      lab.textContent = snTxt + ((p.t!=="luka" && (p.t==="hip"||p.t==="praw"||p.hp)) ? " (?)" : ""); }
+    g.append(lab);
+    g.addEventListener("click",ev=>{ ev.stopPropagation(); if(moved) return;
+       if(relPick(n.id)) return;
+       if(!all && n.id!==focusId){ if(Date.now()-NAVAT<450) return; NAVAT=Date.now(); go(n.id); return; }
+       selId=n.id; side(n.id); markSel(); if(HILITE&&MODE==="all") render(); });
+    g.addEventListener("dblclick",ev=>{ ev.stopPropagation(); if(Date.now()-dblAt<600) return; nodeDbl(n.id); });
+    g.__id=n.id;
+    gN.append(g);
+  }
+  miniBuild(nodes, W, Hh);
+  apply(); markSel();
+}
+/* ---------- FAN: the centre person's ancestors on a half circle ----------
+   Ahnentafel numbering: person = 1, father = 2, mother = 3, father's father = 4 … Generation g has 2^g slots,
+   the father's line on the left, the mother's on the right. An empty slot is drawn only above a known person,
+   so it shows where knowledge ends. Walls and hypothetically attached parents get a dashed outline, as on tiles.
+   Click on a slot = that person in the centre of the fan (and their card). */
+const FAN_R0=78, FAN_W=[0,84,84,84,112,124,132,132];
+const fanR = g => { let r=FAN_R0; for(let i=1;i<=g;i++) r+=FAN_W[i]; return r; };
+const fpt = (r,a) => (r*Math.cos(a)).toFixed(1)+","+(r*Math.sin(a)).toFixed(1);
+const arcPath = (r0,r1,a0,a1) => `M${fpt(r1,a0)} A${r1},${r1} 0 0 1 ${fpt(r1,a1)} L${fpt(r0,a1)} A${r0},${r0} 0 0 0 ${fpt(r0,a0)} Z`;
+function fanText(sg,p,g,r0,r1,a0,a1){
+  const am=(a0+a1)/2, rm=(r0+r1)/2, deg=am*180/Math.PI, wall=p.t==="luka";
+  let full=p.n.replace(/^❓ /,"").replace(/^\(.*?\)\s*/,"").trim();
+  let sn=(p.sn && full.endsWith(p.sn)) ? p.sn : "", gn=sn ? full.slice(0,-sn.length).trim() : full;
+  if(wall){ gn="?"; sn=""; }
+  const yrs=wall ? "" : life(p), tang=g<=3;
+  const rot = tang ? deg+90 : (deg>270 ? deg : deg+180);     // radial: the right half reads outwards, the left half inwards
+  const fs = g<=3 ? 12.5 : g===4 ? 11 : g===5 ? 10 : 9;
+  const len = tang ? rm*(a1-a0) : (r1-r0);
+  const maxc = Math.max(3, Math.floor((len-10)/(fs*0.58)));
+  const cut = (x,n) => x.length>n ? x.slice(0,n-1)+"…" : x;
+  const lines = g<=4 ? [gn,sn,yrs] : g===5 ? [(gn+" "+sn).trim(), yrs] : [(gn+" "+sn).trim()];
+  const ls = lines.filter((x,i)=>x || i===0), lh=fs*1.18, y0=-(ls.length-1)*lh/2+fs*0.35;
+  const t=el("text",{transform:`translate(${fpt(rm,am)}) rotate(${rot.toFixed(1)})`,"text-anchor":"middle","font-size":fs+"px"});
+  ls.forEach((x,i)=>t.append(el("tspan",{x:0,y:(y0+i*lh).toFixed(1),class:(yrs && i===ls.length-1 && x===yrs)?"fy":""},cut(x,maxc))));
+  sg.append(t);
+}
+function renderFan(){
+  vp.replaceChildren(); POS={};
+  const G=Math.min(UP,7), slot=[null,focusId];
+  for(let a=2;a<2**(G+1);a++){ const c=slot[a>>1]; let v=null; if(c){ const pr=par(c); v=(a%2===0)?pr.f:pr.m; } slot.push(v||null); }
+  const g0=el("g"); vp.append(g0);
+  const pc=P[focusId];
+  const cg=el("g",{class:"fseg c "+(pc.s||"U")});
+  cg.append(el("path",{d:`M${-FAN_R0},0 A${FAN_R0},${FAN_R0} 0 0 1 ${FAN_R0},0 Z`}));
+  const ct=el("text",{"text-anchor":"middle","font-size":"13px"});
+  const cn=pc.n.replace(/^❓ /,""), sp=cn.lastIndexOf(" ");
+  [[sp>0?cn.slice(0,sp):cn,-44],[sp>0?cn.slice(sp+1):"",-27],[life(pc),-10]].forEach(([x,y],i)=>{ if(x) ct.append(el("tspan",{x:0,y,class:i===2?"fy":""},x)); });
+  cg.append(ct); cg.addEventListener("click",ev=>{ ev.stopPropagation(); if(moved) return; if(relPick(focusId)) return; selId=focusId; side(focusId); });
+  g0.append(cg);
+  for(let g=1; g<=G; g++){
+    const n=2**g, r0=fanR(g-1), r1=fanR(g);
+    for(let i=0;i<n;i++){
+      const a=n+i, id=slot[a], child=slot[a>>1];
+      if(!id && !(child && P[child] && P[child].t!=="luka")) continue;
+      const a0=Math.PI+i*Math.PI/n, a1=Math.PI+(i+1)*Math.PI/n, p=id ? P[id] : null;
+      const pf=child ? par(child).fid : null, hyp=!!(id && pf && F[pf] && F[pf].hp);
+      const cls="fseg "+(p ? (p.s||"U")+" t-"+(p.t||"none") : "empty")+(hyp?" hyp":"")
+        +(id && id===selId ? " sel" : "")+(FIND && id ? (FIND.ids.has(id) ? " hit" : " nohit") : "");
+      const sg=el("g",{class:cls});
+      sg.append(el("path",{d:arcPath(r0,r1,a0,a1)}));
+      if(p && p.t && p.t!=="luka") sg.append(el("path",{class:"ftier",stroke:`var(--t-${p.t})`,
+        d:`M${fpt(r1-3,a0+.006)} A${r1-3},${r1-3} 0 0 1 ${fpt(r1-3,a1-.006)}`}));
+      if(p){ fanText(sg,p,g,r0,r1,a0,a1); sg.append(el("title",{}, p.n.replace(/^❓ /,"")+(life(p)?" · "+life(p):"")+(hyp?" · rodzice wpięci hipotetycznie":"")));
+        sg.addEventListener("click",ev=>{ ev.stopPropagation(); if(moved) return; if(relPick(id)) return; go(id); }); }
+      g0.append(sg);
+    }
+  }
+  g0.append(el("text",{class:"fcap",x:0,y:28},"Przodkowie: "+pc.n.replace(/^❓ /,"")+" · linia ojca po lewej, matki po prawej"));
+  miniBuild([],0,0); apply();
+}
+
+/* ---------- TIMELINE: each life as a bar on a year axis ----------
+   Who: the centre person's ancestors and descendants — or, while a search is active, its results.
+   Unknown year of death: a dashed extension; born in the last 100 years with no death date — bar to today.
+   Diamonds = weddings. Click = card, double click = family view. */
+const TL_PX=6, TL_ROW=22, TL_BAR=13, TL_NOW=new Date().getFullYear();
+const TL_BANDS=[[1914,1918,"I wojna światowa"],[1939,1945,"II wojna światowa"]];
+function tlPeople(){
+  if(FIND) return [...FIND.ids].filter(id=>P[id] && P[id].t!=="luka");
+  const s=ancLine(focusId), q=[focusId];
+  while(q.length){ for(const c of kids(q.pop())) if(!s.has(c) && vis(c)){ s.add(c); q.push(c); } }
+  return [...s].filter(id=>P[id] && P[id].t!=="luka" && vis(id));
+}
+function renderTime(){
+  vp.replaceChildren(); POS={};
+  const ids=tlPeople();
+  const rows=ids.filter(id=>+P[id].by).sort((a,b)=>(+P[a].by)-(+P[b].by) || P[a].n.localeCompare(P[b].n,"pl"));
+  const noDate=ids.length-rows.length;
+  const cap=(FIND ? `Oś czasu — wyniki wyszukiwania „${FIND.q}”` : `Oś czasu — przodkowie i potomkowie: ${P[focusId].n.replace(/^❓ /,"")}`)
+    +` (${rows.length}${noDate ? `; bez roku urodzenia: ${noDate}` : ""})`;
+  if(!rows.length){ vp.append(el("text",{class:"tlcap",x:0,y:0},cap)); miniBuild([],0,0); apply(); return; }
+  const y0=Math.floor((+P[rows[0]].by-5)/10)*10, y1=Math.ceil((TL_NOW+1)/10)*10;
+  const X=y=>(y-y0)*TL_PX, H=rows.length*TL_ROW+10;
+  const gB=el("g"), gA=el("g"), gR=el("g"); vp.append(gB,gA,gR);
+  for(const [a,b,lab] of TL_BANDS){ if(b<y0) continue;
+    gB.append(el("rect",{class:"tlband",x:X(a),y:-26,width:X(b+1)-X(a),height:H+26}));
+    gB.append(el("text",{class:"tlbl",x:X(a)+4,y:-30},lab)); }
+  for(let y=y0;y<=y1;y+=10){ gA.append(el("line",{class:"tlg"+(y%50===0?" m":""),x1:X(y),x2:X(y),y1:-20,y2:H}));
+    gA.append(el("text",{class:"tlx",x:X(y),y:-6},String(y))); }
+  gA.append(el("text",{class:"tlcap",x:0,y:-52},cap));
+  rows.forEach((id,i)=>{
+    const p=P[id], by=+p.by, dy=+p.dy||0, y=i*TL_ROW+TL_ROW/2;
+    const living=!dy && !p.dd && !p.bu && by>=TL_NOW-100, open=!dy && !living;
+    const end=dy || (living ? TL_NOW : by+1), tail=open ? Math.min(by+60, TL_NOW) : end;
+    const g=el("g",{class:"tlrow "+(p.s||"U")+(id===focusId?" focus":"")+(id===selId?" sel":"")
+      +(FIND ? (FIND.ids.has(id) ? " hit" : " nohit") : ""), transform:`translate(0,${y})`});
+    if(open) g.append(el("rect",{class:"tlq",x:X(by),y:-TL_BAR/2,width:X(tail)-X(by),height:TL_BAR,rx:4}));
+    g.append(el("rect",{class:"tlb",x:X(by),y:-TL_BAR/2,width:Math.max(5,X(end)-X(by)),height:TL_BAR,rx:4}));
+    if(p.t && p.t!=="luka") g.append(el("rect",{x:X(by),y:-TL_BAR/2,width:3,height:TL_BAR,fill:`var(--t-${p.t})`}));
+    for(const s of spouses(id)){ const my=(s.md||"").match(/\d{4}/); if(!my) continue; const mx=X(+my[0]);
+      const dm=el("path",{class:"tlm",d:`M${mx},-5 l4.5,5 l-4.5,5 l-4.5,-5 z`});
+      dm.append(el("title",{},"ślub: "+P[s.sp].n+" — "+s.md)); g.append(dm); }
+    const label=p.n+(life(p) ? "   "+life(p) : "");
+    const inside=(X(end)-X(by)) > label.length*6.3+14;
+    g.append(el("text",{class:"tln",x:inside ? X(by)+8 : X(tail)+6,y:4},label));
+    g.append(el("title",{},label+(open ? " · rok zgonu nieznany" : "")));
+    g.addEventListener("click",ev=>{ ev.stopPropagation(); if(moved) return; if(relPick(id)) return; selId=id; side(id); render(); });
+    g.addEventListener("dblclick",ev=>{ ev.stopPropagation(); nav(()=>{ setMode("family"); go(id,true); }); });
+    gR.append(g); POS[id]={id,x:X(by),y};
+  });
+  miniBuild([],0,0); apply();
+}
+function fitTime(){
+  const b=vp.getBBox(), r=visRect();
+  const k=Math.max(.3, Math.min(1.1, (r.w-40)/Math.max(b.width,1)));
+  T.k=k; T.x=20-b.x*k;
+  const f=POS[focusId];
+  T.y=Math.min(f ? r.h/2-f.y*k : 1e9, 24-b.y*k); apply();
+}
+
+/* ---------- mini map: where am I in the whole drawing ---------- */
+let MB=null;
+function miniBuild(nodes, W, H){
+  const m=document.getElementById("mini"), gn=document.getElementById("mini-n");
+  gn.replaceChildren();
+  if(!nodes.length){ MB=null; return; }
+  const xs=nodes.map(n=>n.x), ys=nodes.map(n=>n.y);
+  MB={x:Math.min(...xs)-W/2, y:Math.min(...ys)-H/2, w:Math.max(...xs)-Math.min(...xs)+W, h:Math.max(...ys)-Math.min(...ys)+H};
+  const pad=Math.max(MB.w,MB.h)*0.04;
+  m.setAttribute("viewBox",`${MB.x-pad} ${MB.y-pad} ${MB.w+2*pad} ${MB.h+2*pad}`);
+  for(const n of nodes){
+    if(!vis(n.id)) continue;
+    gn.append(el("rect",{class:"n"+(n.id===focusId||n.id===selId?" f":"")+(FIND&&FIND.ids.has(n.id)?" h":""),x:n.x-W/2,y:n.y-H/2,width:W,height:H,rx:Math.min(W,H)*0.25}));
+  }
+}
+function miniUpdate(){
+  const m=document.getElementById("mini"); if(!MB || MODE==="grid"){ m.classList.remove("on"); return; }
+  const r=visRect(), vx=-T.x/T.k, vy=-T.y/T.k, vw=r.w/T.k, vh=r.h/T.k;
+  const v=document.getElementById("mini-v");
+  v.setAttribute("x",vx); v.setAttribute("y",vy); v.setAttribute("width",vw); v.setAttribute("height",vh);
+  m.classList.toggle("on", vw<MB.w*0.7 || vh<MB.h*0.7);
+}
+function markSel(){
+  document.querySelectorAll("#vp .node").forEach(g=>g.classList.remove("sel"));
+  const t=[...document.querySelectorAll("#vp .node")].find(g=>g.__id===selId);
+  if(t && selId!==focusId) t.classList.add("sel");
+  markLine();
+}
+/* DIRECT LINE: the centre person (on the whole-tree map, the selected one) and their ancestors are joined by a
+   thick accent line, so it is clear which way to scroll to parents and grandparents. A kinship path, when shown,
+   takes precedence. */
+function ancLine(id){
+  const s=new Set([id]), q=[id];
+  while(q.length){ const {f,m}=par(q.pop()); for(const y of [f,m]) if(y && !s.has(y)){ s.add(y); q.push(y); } }
+  return s;
+}
+function markLine(){
+  const own = MODE==="all" ? selId : focusId;
+  const L = (!pathSet.size && own && P[own]) ? ancLine(own) : null;
+  const top = vp.querySelector("g.lnTop");
+  for(const pth of vp.querySelectorAll("path.link")){
+    const on = !!L && (pth.__sp ? (L.has(pth.__sp[0]) && L.has(pth.__sp[1]))
+                                : (!!pth.__c && L.has(pth.__c) && pth.__p.some(x=>L.has(x))));
+    pth.classList.toggle("anc", on);
+    if(on && top) top.append(pth);          // on top of the ordinary lines
+  }
+}
+function apply(){
+  vp.setAttribute("transform",`translate(${T.x},${T.y}) scale(${T.k})`);
+  const l=T.k<.35?0:T.k<.8?1:2;
+  if(l!==LOD){ LOD=l; svg.classList.remove("lod0","lod1","lod2"); svg.classList.add("lod"+l); }
+  svg.style.setProperty("--inv",(1/T.k).toFixed(4));
+  miniUpdate();
+  ptrUpdate();
+}
+/* When the centre person's parents are off screen, a button at the edge in their direction says
+   “← Rodzice: <given names>”; a click pans to them (together with the direct line it shows which way to go). */
+function ptrUpdate(){
+  const b=document.getElementById("ptr"); if(!b) return;
+  const off=()=>b.classList.remove("on");
+  if(MODE!=="family" || HOME || !POS[focusId]) return off();
+  const {f,m}=par(focusId);
+  const ps=[f,m].filter(x=>x && POS[x] && P[x] && P[x].t!=="luka");
+  if(!ps.length) return off();
+  const r=visRect(), M=24;
+  const pts=ps.map(x=>({x:POS[x].x*T.k+T.x, y:POS[x].y*T.k+T.y}));
+  if(pts.some(q=>q.x>M && q.x<r.w-M && q.y>M && q.y<r.h-M)) return off();
+  const cx=pts.reduce((a,q)=>a+q.x,0)/pts.length, cy=pts.reduce((a,q)=>a+q.y,0)/pts.length;
+  const first=x=>esc(P[x].n.replace(/^❓ /,"").split(" ")[0]);
+  const lab = ps.length===2 ? "Rodzice: "+first(ps[0])+" i "+first(ps[1])
+            : (P[ps[0]].s==="F" ? "Matka: " : "Ojciec: ")+first(ps[0]);
+  const ang=Math.atan2(cy-r.h/2, cx-r.w/2)*180/Math.PI;      // the arrow points towards the parents
+  if(b.__lab!==lab){ b.__lab=lab; b.innerHTML=BARR+"<span>"+lab+"</span>"; b.title="Pokaż rodziców — "+lab.replace(/<[^>]*>/g,""); }
+  b.firstChild.style.transform="rotate("+(ang+180).toFixed(0)+"deg)";   // while panning only the angle changes
+  b.classList.add("on");
+  const bw=b.offsetWidth, bh=b.offsetHeight, PAD=12;
+  const clamp=(v,a,z)=>Math.max(a,Math.min(z,v));
+  /* the edge where the line from the screen centre to the parents leaves the screen */
+  const ex = cx<0 ? 0 : cx>r.w ? r.w : null, ey = cy<0 ? 0 : cy>r.h ? r.h : null;
+  let x, y, side;
+  if(ex!==null && (ey===null || Math.abs(cx-r.w/2)/r.w > Math.abs(cy-r.h/2)/r.h)){
+    side = ex===0 ? "L" : "R";  x = ex===0 ? PAD : r.w-bw-PAD;  y = clamp(cy-bh/2, PAD, r.h-bh-PAD);
+  } else {
+    side = ey===0 ? "T" : "B";  y = ey===0 ? PAD : r.h-bh-PAD;  x = clamp(cx-bw/2, PAD, r.w-bw-PAD);
+  }
+  /* keep clear of the mini map, zoom buttons, legend and “← Back” — slide along the edge */
+  const st=document.getElementById("stage").getBoundingClientRect();
+  const fg=[...vp.querySelectorAll(".node")].find(g=>g.__id===focusId);   // the centre person's tile is avoided too
+  const obs=[...["mini","zoomctl","fback","legend"].map(id=>document.getElementById(id))
+    .filter(e=>e && e.offsetParent!==null && getComputedStyle(e).display!=="none"), ...(fg?[fg]:[])]
+    .map(e=>{ const q=e.getBoundingClientRect(); return {l:q.left-st.left, t:q.top-st.top, r:q.right-st.left, b:q.bottom-st.top}; })
+    .sort((a,c)=>a.t-c.t);
+  for(let i=0;i<6;i++){
+    const o=obs.find(o=>x<o.r+6 && x+bw>o.l-6 && y<o.b+6 && y+bh>o.t-6); if(!o) break;
+    if(side==="B") y=o.t-bh-8;
+    else if(side==="T") y=o.b+8;
+    else { const down=o.b+8; y = down+bh<=r.h-PAD ? down : o.t-bh-8; }
+  }
+  b.style.left=Math.round(x)+"px"; b.style.top=Math.round(Math.max(PAD,y))+"px";
+}
+function panSmooth(tx,ty){
+  const x0=T.x, y0=T.y, t0=performance.now(), D=340;
+  try{ if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ T.x=tx; T.y=ty; apply(); return; } }catch(e){}
+  const step=t=>{ const a=Math.min(1,(t-t0)/D), e=1-Math.pow(1-a,3);
+    T.x=x0+(tx-x0)*e; T.y=y0+(ty-y0)*e; apply(); if(a<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+/* Visible part of the stage: on phones the bottom sheet (person card) covers the bottom. */
+const PHONE = () => window.innerWidth<=820;
+function visRect(){
+  const r=svg.getBoundingClientRect(); let h=r.height;
+  if(PHONE()){ const s=document.getElementById("side");
+    if(s.classList.contains("peek")||s.classList.contains("full")) h=Math.max(160, r.height-window.innerHeight*0.34); }
+  return {w:r.width,h};
+}
+/* Whole-tree map: fit everything (with LOD this makes sense — dots and family names). */
+function fitAll(){
+  const b=vp.getBBox(), r=visRect();
+  const k=Math.min(MODE==="all"?1:1.35, Math.min((r.w-60)/Math.max(b.width,1),(r.h-60)/Math.max(b.height,1)));
+  T.k=k; T.x=r.w/2-(b.x+b.width/2)*k; T.y=r.h/2-(b.y+b.height/2)*k; apply();
+}
+/* Family view: never “fit everything” — show the person with parents, spouse and children at a
+   readable scale (>= KFOCUS); the rest is scrolled to. */
+const KFOCUS = window.innerWidth<=820 ? .85 : 1;
+function focusFit(){
+  const r=visRect(), W=MODE==="all"?ANW:NW, H=MODE==="all"?ANH:NH;
+  const ids=new Set([focusId]); const sp0=spouses(focusId).find(s=>POS[s.sp]);
+  for(const s of spouses(focusId)) if(PAIR&&POS[s.sp]) ids.add(s.sp);
+  for(const id of [...ids]){ const {f,m}=par(id); for(const p of [f,m]) if(p&&POS[p]) ids.add(p); }
+  for(const c of kids(focusId)) if(POS[c]) ids.add(c);
+  if(!POS[focusId]){ fitAll(); return; }
+  const box=set=>{ const pts=[...set].map(i=>POS[i]).filter(Boolean);
+    return {x0:Math.min(...pts.map(p=>p.x))-W/2, x1:Math.max(...pts.map(p=>p.x))+W/2,
+            y0:Math.min(...pts.map(p=>p.y))-H/2, y1:Math.max(...pts.map(p=>p.y))+H/2}; };
+  const fitsK=b=>Math.min(1.25,(r.w-36)/(b.x1-b.x0),(r.h-36)/(b.y1-b.y0));
+  let b=box(ids), k=fitsK(b);
+  if(k<KFOCUS){ /* parents too far to the side — fit at least the couple with their children */
+    const core=new Set([focusId]); if(sp0&&ids.has(sp0.sp)) core.add(sp0.sp);
+    for(const c of kids(focusId)) if(POS[c]) core.add(c);
+    b=box(core); k=fitsK(b); }
+  k=Math.max(k,KFOCUS);
+  const nParts=spouses(focusId).filter(s=>POS[s.sp]).length;
+  const fx=POS[focusId], mate=(nParts===1&&sp0&&ids.has(sp0.sp))?POS[sp0.sp]:null;   // with 2+ partners the centre is the person
+  const cx=((b.x1-b.x0)*k<=r.w-36) ? (b.x0+b.x1)/2 : (mate?(fx.x+mate.x)/2:fx.x);
+  T.k=k; T.x=r.w/2-cx*k; T.y=r.h/2-(b.y0+b.y1)/2*k; apply();
+}
+function view(){ if(MODE==="all" || MODE==="fan") fitAll(); else if(MODE==="time") fitTime(); else focusFit(); }
+function panTo(id){ const n=POS[id]; if(!n) return; const r=visRect(); T.x=r.w/2-n.x*T.k; T.y=r.h/2-n.y*T.k; apply(); }
+function zoomTo(id,k){ const n=POS[id]; if(!n) return; const r=visRect();
+  T.k=Math.min(KMAX,Math.max(KMIN,k)); T.x=r.w/2-n.x*T.k; T.y=r.h/2-n.y*T.k; apply(); }
+/* double click / double tap on a tile: on the map zoom to it, in the family view put it in the centre */
+function nodeDbl(id){
+  if(MODE!=="all" && (id===focusId || Date.now()-NAVAT<450)) return;
+  if(MODE==="all"){ selId=id; side(id); markSel(); if(HILITE) render(); zoomTo(id, Math.max(T.k,1)); }
+  else go(id);
+}
+/* ---------- history ----------
+   Every move — another person in the centre, Family / Map / List / Start, a choice of line — is a separate
+   step in the BROWSER history (pushState). So the phone's back gesture, the browser back button, Alt+←,
+   the mouse side button and the two-finger trackpad swipe return to the previous view, zoom included.
+   Only replacing the URL (replaceState) made “back” leave the tree altogether.
+   nav(fn): saves the current view in the current step, runs fn and, if the view changed, adds a step.
+   Nested calls (go inside setMode etc.) and replaying a step (NAVQ) add nothing. */
+let NAVSEQ=0, NAVD=0, NAVQ=true;
+const navKey=()=>[HOME?1:0, MODE, focusId, BRF||""].join("|");
+function navState(){ return {dz:1, seq:NAVSEQ, home:HOME, mode:MODE, id:focusId, sel:selId, br:BRF||"",
+  t:{x:T.x, y:T.y, k:T.k}}; }
+const navUrl=s=> s.home ? location.pathname+location.search : "#"+s.id.replace(/@/g,"");
+function navSave(){
+  if(NAVQ) return;
+  const s=navState(), c=history.state;
+  if(c && c.dz && c.seq===NAVSEQ) s.pv=c.pv||null;
+  try{ history.replaceState(s,"",navUrl(s)); }catch(e){}
+}
+function nav(fn){
+  if(NAVQ || NAVD) return fn();
+  navSave(); const pv=navState(), k0=navKey();
+  NAVD++; try{ fn(); } finally{ NAVD--; }
+  if(navKey()!==k0){
+    NAVSEQ++; const s=navState(); s.pv={home:pv.home, mode:pv.mode, id:pv.id};
+    try{ history.pushState(s,"",navUrl(s)); }catch(e){}
+  } else navSave();
+  navUi();
+}
+function navBack(){ if(NAVSEQ>0) history.back(); }
+const BARR='<svg class="barr" viewBox="0 0 16 16" aria-hidden="true"><path d="M14.5 8H3.6M8.2 3.2 3.4 8l4.8 4.8" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';   // thick arrow — the same in the header and in the phone button
+/* the button says WHERE it goes back to: “← Start”, “← Lista”, “← Mapa całości” or the previous person's name */
+function navUi(){
+  const can=NAVSEQ>0, c=history.state, pv=(c && c.dz && c.pv) || null;
+  const hb=document.getElementById("back"); hb.disabled=!can;
+  let lab="Wstecz";
+  if(pv){
+    if(pv.home) lab="Start";
+    else if(pv.mode==="grid") lab="Lista";
+    else if(pv.mode!==MODE) lab = {all:"Mapa całości", fan:"Wachlarz", time:"Oś czasu"}[pv.mode] || "Rodzina";
+    else if(pv.id!==focusId && P[pv.id]) lab=P[pv.id].n.replace(/^❓ /,"");
+  }
+  hb.title = can ? "Wróć: "+lab : "Wróć do poprzedniego widoku";
+  const b=document.getElementById("fback");
+  b.innerHTML=BARR+"<span>"+esc(lab)+"</span>"; b.title="Wróć: "+lab; b.setAttribute("aria-label","Wróć: "+lab);
+  b.classList.toggle("on", can && !HOME && MODE!=="grid");
+}
+/* a remembered framing comes back only if that view's person is still on screen (after changing the
+   number of generations or rotating the phone the layout may differ — then the usual framing) */
+function setT(tr, id){
+  if(!tr || !(tr.k>0)) return false;
+  if(id){ const n=POS[id]; if(!n) return false;
+    const r=visRect(), sx=n.x*tr.k+tr.x, sy=n.y*tr.k+tr.y;
+    if(sx<0 || sx>r.w || sy<0 || sy>r.h) return false; }
+  T.x=tr.x; T.y=tr.y; T.k=tr.k; apply(); return true;
+}
+/* replaying a history step (back / forward / page reload) */
+function navRestore(s){
+  NAVQ=true;
+  try{
+    NAVSEQ=s.seq||0;
+    closeMenu();
+    BRF=s.br||null;                                   // narrowing of the list
+    const id=(P[s.id] && vis(s.id)) ? s.id : (anchorOf()||ROOT);
+    const mode=["all","grid","fan","time"].includes(s.mode) ? s.mode : "family";
+    if(s.home){
+      if(MODE==="grid") setMode("family");
+      if(focusId!==id){ focusId=id; selId=id; render(); }
+      homeView();
+    } else if(mode==="grid"){
+      if(HOME) hideHome();
+      focusId=id; selId=(s.sel && P[s.sel]) ? s.sel : null;
+      if(MODE!=="grid") setMode("grid"); else gridView(q.value);
+      if(selId) side(selId);
+    } else {
+      if(HOME) hideHome();
+      if(MODE!==mode){ focusId=id; setMode(mode); }
+      go(id, true, s.t);
+      if(MODE==="all" && s.sel && s.sel!==id && P[s.sel]){ selId=s.sel; side(s.sel); markSel(); }
+    }
+  } finally { NAVQ=false; }
+  navUi();
+}
+/* an address typed by hand (#I123) — the browser already added a step, we only show the person */
+function navHash(t){
+  NAVQ=true;
+  try{ if(HOME) hideHome(); if(MODE!=="family") setMode("family"); go(t,true); } finally { NAVQ=false; }
+  NAVSEQ++; navSave(); navUi();
+}
+function go(id, nohist, tr){
+  if(!P[id]) return;
+  if(!nohist && !NAVQ && !NAVD) return nav(()=>go(id,true));
+  if(HOME) hideHome();
+  const old = (MODE!=="all" && id!==focusId) ? snapPos() : null;
+  focusId=id; selId=id; side(id);
+  if(MODE==="all"){ if(HILITE) render(); else markSel(); if(!setT(tr,null)) zoomTo(id, Math.max(T.k,1)); }
+  else { render(); if(!setT(tr,id)){ if(MODE==="fan" || MODE==="time") view(); else focusFit(); } animateFrom(old); }
+  if(!NAVD) navSave();
+}
+/* smooth transition after a new centre person: tiles move from old to new places, new ones fade in,
+   lines come back a moment later. Off with prefers-reduced-motion. */
+let NAVAT=0;
+function snapPos(){ const o={}; for(const id in POS){ const n=POS[id]; o[id]={x:n.x*T.k+T.x, y:n.y*T.k+T.y}; } return o; }
+function animateFrom(old){
+  if(!old) return;
+  try{ if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return; }catch(e){}
+  const items=[];
+  for(const g of vp.querySelectorAll(".node")){
+    const n=POS[g.__id], o=old[g.__id]; if(!n) continue;
+    if(o){ const dx=(o.x-T.x)/T.k-n.x, dy=(o.y-T.y)/T.k-n.y;
+      if(Math.abs(dx)>.5||Math.abs(dy)>.5) items.push({g,n,dx,dy}); }
+    else { g.style.opacity="0"; items.push({g,n,fade:true}); }
+  }
+  if(!items.length) return;
+  vp.classList.add("anim");
+  const t0=performance.now(), D=380, ease=t=>1-Math.pow(1-t,3);
+  const step=now=>{ const t=Math.min(1,(now-t0)/D), e=ease(t);
+    for(const it of items){
+      if(it.fade) it.g.style.opacity=String(e);
+      else it.g.setAttribute("transform",`translate(${it.n.x+it.dx*(1-e)},${it.n.y+it.dy*(1-e)})`); }
+    if(t<1) requestAnimationFrame(step);
+    else { for(const it of items) if(it.fade) it.g.style.opacity=""; vp.classList.remove("anim"); } };
+  requestAnimationFrame(step);
+}
+
+function kinLine(id){
+  if(ME===id) return `<span class="kin me" title="Osoba wskazana jako „to ja”">to ja</span>`
+    +`<button type="button" class="mebtn" data-me="">to nie ja</button>`;
+  const k=ME?kinship(ME,id):null;
+  return (k?`<span class="kin" title="pokrewieństwo względem osoby wskazanej jako „to ja” (${esc(P[ME].n)})">${esc(k)}</span>`:"")
+    +(P[id].t==="luka"?"":`<button type="button" class="mebtn" data-me="${id}" title="Od tej chwili każda karta pokaże, kim ta osoba jest dla Ciebie">${ME?"to ja":"to ja — pokaż pokrewieństwa"}</button>`);
+}
+/* ---------- side panel ---------- */
+function bloodOf(id){
+  const anc=new Set([id]); let q=[id];
+  while(q.length){ const x=q.pop(); const {f,m}=par(x);
+    for(const p of [f,m]) if(p&&!anc.has(p)&&P[p]?.t!=="luka"){ anc.add(p); q.push(p); } }
+  const blo=new Set(anc); q=[...anc];
+  while(q.length){ const x=q.pop();
+    for(const c of kids(x)) if(!blo.has(c)){ blo.add(c); q.push(c); } }
+  return blo;
+}
+let BLOOD=new Set();
+function ancDepth(id){
+  let d=0, lvl=[id], seen=new Set([id]);
+  while(lvl.length && d<20){
+    const nx=[];
+    for(const x of lvl){ const {f,m}=par(x);
+      for(const p of [f,m]) if(p && !seen.has(p) && P[p]?.t!=="luka"){ seen.add(p); nx.push(p); } }
+    if(!nx.length) break; d++; lvl=nx;
+  }
+  return {d, n:seen.size-1};
+}
+const TIER={akt:["AKT","potwierdzone dokumentem: aktem, sygnaturą archiwalną, skanem albo kartą grobu"],
+            praw:["PRAWDOPODOBNE","mocna poszlaka — indeks, rejestr cmentarny albo przekaz rodzinny; samego aktu brak"],
+            hip:["HIPOTEZA","trop do sprawdzenia; nie traktować jako ustalonego faktu"],
+            luka:["ŚCIANA","tego nie wiemy — tutaj kończy się obecny stan wiedzy"]};
+let LASTV=null;
+function sheet(st){ const s=document.getElementById("side"); s.classList.remove("peek","full"); if(st!=="close") s.classList.add(st); }
+function closeMenu(){ const m=document.getElementById("menu"); m.classList.remove("on"); document.getElementById("menubtn").classList.remove("on"); }
+/* Bottom sheet on phones: the grip drags between peek / full / closed. */
+function gripInit(g){
+  if(!g) return; const s=document.getElementById("side"); let y0=null, base=0;
+  g.addEventListener("pointerdown",e=>{ if(e.target.closest("#closeside")) return;
+    y0=e.clientY; base=s.getBoundingClientRect().height; s.classList.add("dragging"); g.setPointerCapture(e.pointerId); });
+  g.addEventListener("pointermove",e=>{ if(y0===null) return;
+    const h=Math.max(40, Math.min(window.innerHeight*0.82, base+(y0-e.clientY))); s.style.height=h+"px"; });
+  const end=e=>{ if(y0===null) return; const d=y0-e.clientY, wasFull=s.classList.contains("full");
+    s.style.height=""; s.classList.remove("dragging"); y0=null;
+    if(Math.abs(d)<8) sheet(wasFull?"peek":"full");
+    else if(d>60) sheet("full");
+    else if(d<-60) sheet(wasFull?"peek":"close"); };
+  g.addEventListener("pointerup",end); g.addEventListener("pointercancel",end);
+}
+function paint(h){
+  const s=document.getElementById("side");
+  s.innerHTML='<div class="grip"><button id="closeside" title="Zamknij">&#10005;</button></div>'+h;
+  s.querySelector("#closeside").onclick=()=>sheet("close");
+  gripInit(s.querySelector(".grip"));
+  s.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{ const id=e.dataset.go;
+    if(MODE==="family") go(id);
+    else { selId=id; side(id); markSel(); if(MODE==="all"){ if(HILITE) render(); panTo(id); } } });
+  s.querySelectorAll("[data-fam]").forEach(e=>e.onclick=()=>nav(()=>{ const id=e.dataset.fam;
+    if(MODE!=="family") setMode("family"); go(id); }));
+  s.querySelectorAll("[data-me]").forEach(e=>e.onclick=()=>{ setMe(e.dataset.me||null);
+    const cur=s.querySelector(".phd")?.parentNode; const id=selId||focusId; if(id&&P[id]) side(id); });
+  s.querySelectorAll("[data-big]").forEach(e=>e.onclick=()=>{ const lb=document.getElementById("lb");
+    lb.querySelector("img").src=IMG.b[e.dataset.big]||e.src; lb.classList.add("on"); });
+  s.querySelectorAll("[data-roster]").forEach(e=>e.onclick=()=>setMode("grid"));
+  s.querySelectorAll("[data-akt]").forEach(e=>e.onclick=ev=>{ ev.stopPropagation();
+    const t=document.getElementById("akt-"+e.dataset.akt); if(!t) return;
+    if(PHONE()) sheet("full");
+    t.scrollIntoView({behavior:"smooth",block:"start"}); t.classList.add("flash"); setTimeout(()=>t.classList.remove("flash"),1400); });
+  s.querySelectorAll("[data-walls]").forEach(e=>e.onclick=()=>wallsView());
+  s.querySelectorAll("[data-docs]").forEach(e=>e.onclick=()=>docsView());
+  s.querySelectorAll("[data-br]").forEach(e=>e.onclick=()=>openLine(e.dataset.br));
+  s.scrollTop=0; closeMenu();
+  if(PHONE() && !s.classList.contains("full") && !s.classList.contains("peek")) sheet("peek");
+}
+document.getElementById("lb").onclick=()=>document.getElementById("lb").classList.remove("on");
+
+/* “Source” section: the full transcription of the register entry + the scan crop
+   + a button opening the whole page. All paths are RELATIVE (the scans folder),
+   so the package can be moved or uploaded to a server unchanged. */
+function aktBox(k, rola){
+  const a=A[k]; if(!a) return "";
+  return `<div class="zrd" id="akt-${k}">`
+   +`<div class="ah">${esc(a.t)}</div>`
+   +(a.d?`<div class="ad">${esc(a.d)}</div>`:"")
+   +(rola?`<div class="ar">W tym akcie: <b>${esc(rola)}</b></div>`:"")
+   +dwBox(a)
+   +(a.c?`<a href="${a.c}" target="_blank" rel="noopener"><img src="${a.c}" alt="${esc(a.t)}" loading="lazy"></a>`
+        +`<div class="cap">wycinek ze skanu &middot; klik powi\u0119ksza</div>`:"")
+   +`<pre>${esc(a.x)}</pre>`
+   +(a.p?`<details><summary>t\u0142umaczenie i co z tego wynika</summary><div class="tr">${esc(a.p).replace(/\n/g,"<br>")}</div></details>`:"")
+   +`<div class="sg">${esc(a.s)}${a.z?"<br>"+esc(a.z):""}</div>`
+   +`<a class="go" href="${a.i}" target="_blank" rel="noopener">Otw\u00f3rz ca\u0142\u0105 stron\u0119 ksi\u0119gi &#8599;</a>`
+   +`</div>`;
+}
+/* what an act proves — computed by the builder from the roles in the act and the links the tree already has */
+const dwBox = a => (a.w && a.w.length) ? `<div class="dw"><b>Co ten akt potwierdza:</b><ul>${a.w.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+function aktySekcja(p){
+  if(!p.sd || !p.sd.length) return "";
+  return `<h3>\u0179r\u00f3d\u0142o \u2014 akta, w kt\u00f3rych ta osoba wyst\u0119puje `
+    +`<span style="color:var(--dim);font-weight:400">(${p.sd.length})</span></h3>`
+    +p.sd.map(x=>aktBox(x[0],x[1])).join("");
+}
+function docsView(){
+  LASTV=null;
+  const ks=Object.keys(A);
+  let h=`<h2>Dokumenty</h2><div class="sub">${ks.length} akt\u00f3w przepisanych w ca\u0142o\u015bci, `
+    +`ka\u017cdy ze skanem</div>`
+    +`<p class="lead">To s\u0105 wpisy z ksi\u0105g metrykalnych i odpisy parafialne, na kt\u00f3rych opiera si\u0119 `
+    +`ta cz\u0119\u015b\u0107 drzewa. Przy ka\u017cdym: transkrypcja \u0142aci\u0144skiego orygina\u0142u, t\u0142umaczenie, `
+    +`sygnatura archiwalna i skan.</p>`;
+  const who={};
+  for(const p of Object.values(P)) for(const x of (p.sd||[])) (who[x[0]]=who[x[0]]||[]).push(p);
+  for(const k of ks){
+    const a=A[k], ppl=(who[k]||[]).map(x=>esc(x.n)).join(" &middot; ");
+    h+=`<div class="zrd"><div class="ah">${esc(a.t)}</div>`
+      +(a.d?`<div class="ad">${esc(a.d)}</div>`:"")
+      +(a.c?`<a href="${a.c}" target="_blank" rel="noopener"><img src="${a.c}" alt="${esc(a.t)}" loading="lazy"></a>`:"")
+      +(ppl?`<div class="ar" style="margin-top:7px">Osoby: ${ppl}</div>`:"")
+      +dwBox(a)
+      +`<div class="sg">${esc(a.s)}</div>`
+      +`<a class="go" href="${a.i}" target="_blank" rel="noopener">Otw\u00f3rz ca\u0142\u0105 stron\u0119 ksi\u0119gi &#8599;</a></div>`;
+  }
+  paint(h);
+}
+
+const escA = s => esc(s).replace(/"/g,"&quot;");
+/* evidence: E.ur / E.zm = this person's birth and death acts; E.rd / E.dz / E.sl / E.zw = {person: [acts]}
+   for parents, children, wedding and marriage. A fact without an act gets no mark — that does NOT mean “uncertain”. */
+const evTitle = ids => "Potwierdza: " + ids.map(k=>A[k]?A[k].t:k).join(" · ");
+const evm = ids => (ids && ids.length) ? `<button type="button" class="ev" data-akt="${escA(ids[0])}" title="${escA(evTitle(ids))}">akt</button>` : "";
+const evc = ids => (ids && ids.length) ? ` · <span class="evc" title="${escA(evTitle(ids))}">✓ akt</span>` : "";
+const stCls = s => "s-" + fold((s||"").split(/[\s:,(]/)[0]);
+function cfBox(p){
+  return (p.cf||[]).map(c=>`<div class="cfx"><b>Źródła podają różnie: ${esc(c.f)}</b><table>`
+    +c.v.map(([src,val])=>`<tr><td>${esc(src)}</td><td>${esc(val)}</td></tr>`).join("")
+    +`</table><div class="cfs${/^rozstrzygni/.test(c.s)?" ok":""}">${esc(c.s)}</div></div>`).join("");
+}
+function hyBox(p){
+  return (p.hy||[]).map(h=>`<div class="hyx"><b>${esc(h.q)}</b><div class="hv">`
+    +h.v.map(v=>`<div class="${stCls(v.s)}"><span class="st">${esc(v.s)}</span>${esc(v.o)}${v.u?`<span class="u">${esc(v.u)}</span>`:""}</div>`).join("")
+    +`</div>${h.r?`<div class="hyr">Rozstrzygnie: ${esc(h.r)}</div>`:""}</div>`).join("");
+}
+function side(id){
+  LASTV=null;
+  const p=P[id];
+  const {f,m}=par(id);
+  const ti=TIER[p.t];
+  const E=p.ev||{};
+  const chip=(pid,lab,alt,ev)=>{ const x=P[pid]; if(!x) return "";
+    return `<button type="button" class="chip ${x.s||"U"}${x.hp?" hp":""}" data-go="${pid}"><b>${esc(x.n.replace(/^❓ /,""))}</b>`
+      +`<i>${alt!=null?esc(alt):(life(x)||(x.t==="luka"?"ściana — tego nie wiemy":"—"))+(lab?" · "+lab:"")}${ev||""}</i></button>`; };
+  const kidsOf=fid=>(F[fid]?.c||[]).filter(c=>P[c]).map(c=>P[c].n.replace(/^❓ /,"")+(P[c].by?", "+P[c].by:"")).join("; ");
+  const crow=(lab,arr)=>arr.length?`<div class="crow"><span class="clab">${lab}</span>${arr.join("")}</div>`:"";
+  const ini=(p.n.replace(/^❓ /,"").replace(/^\(.*?\)\s*/,"").trim()[0]||"?").toUpperCase();
+  const sp=spouses(id), kk=kids(id), sb=sibs(id);
+  let h=`<div class="phd">`
+    +(IMG.b[id]?`<img src="${IMG.t[id]||IMG.b[id]}" alt="" data-big="${id}" title="Powiększ zdjęcie">`
+               :`<div class="ph-ph ${p.s||"U"}">${esc(ini)}</div>`)
+    +`<div style="min-width:0"><h2>${esc(p.n)}</h2>`
+    +(p.t==="luka"?"":`<div class="sub">${life(p)||"daty nieznane"}${p.mn?" · po mężu "+esc(p.mn):""}</div>`)
+    +(ti?`<span class="pill ${p.t}">${ti[0]}</span>`:"")
+    +kinLine(id)
+    +`</div></div>`
+    +crow("Rodzice"+(p.hp?' <span style="color:var(--t-hip)">— hipoteza</span>':""),[f,m].filter(Boolean).map(x=>chip(x,"",null,evc(E.rd&&E.rd[x]))))
+    +(()=>{ const ma=sp.filter(x=>!x.um), um=sp.filter(x=>x.um);
+       return crow(ma.length>1?"Małżonkowie":"Małżonek",ma.map(x=>chip(x.sp,x.md?"ślub "+x.md:"",null,evc((E.sl&&E.sl[x.sp])||(E.zw&&E.zw[x.sp])))))
+             +crow("Dziecko z",um.map(x=>chip(x.sp,"",kidsOf(x.fid)||"wspólne dziecko"))); })()
+    +crow("Dzieci"+(kk.length>1?" ("+kk.length+")":""),kk.map(c=>chip(c,"",null,evc(E.dz&&E.dz[c]))))
+    +crow("Rodzeństwo"+(sb.length>1?" ("+sb.length+")":""),sb.map(c=>chip(c)))
+    +(ti?`<div style="font-size:11px;color:var(--dim);margin:8px 0 10px;line-height:1.5">${esc(ti[1])}</div>`
+        :`<div style="font-size:11px;color:var(--dim);margin:8px 0 10px;line-height:1.5">${(p.no&&p.no.length) ? "pewne — z drzewa rodzinnego albo z relacji rodziny; szczegóły w „Źródła i uwagi” niżej" : "bez notatki źródłowej — dane pochodzą z drzewa rodzinnego"}</div>`)
+    +(p.br?`<div style="font-size:11px;color:var(--dim);margin:-6px 0 12px">${esc(p.br)}${p.wn?" · nad osobą: "+esc(p.wn):""}</div>`:"")
+    +(p.w?`<div class="wallbox"><b>Co jest następnym krokiem</b>${esc(p.w)}</div>`:"")
+    +(p.hw?`<div class="hypbox"><b>Dlaczego to hipoteza, a nie fakt</b><br>${esc(p.hw)}</div>`:"")
+    +hyBox(p)+cfBox(p)
+    +`<dl>`;
+  const add=(k,v,x)=>{ if(v) h+=`<dt>${k}</dt><dd>${esc(v)}${x||""}</dd>`; };
+  add("Ur.", [p.bd,p.bp].filter(Boolean).join(" · "), evm(E.ur));
+  add("Zm.", [p.dd,p.dp].filter(Boolean).join(" · "), evm(E.zm));
+  add("Pochów.", p.bu); add("Zawód", p.oc); add("Mieszk.", p.re); add("Gałąź", p.br);
+  if(p.t!=="luka") add("Też jako", snOthers(p.sn).join(", "));
+  h+="</dl>";
+  if(p.t!=="luka"){ const a=ancDepth(id);
+    h+=`<div style="font-size:11.5px;color:var(--dim);margin:-6px 0 12px">`
+      +`Przodków w bazie: <b style="color:var(--ink)">${a.n}</b> · najgłębiej <b style="color:var(--ink)">${a.d}</b> pokoleń wstecz</div>`; }
+  h+=aktySekcja(p);
+  if(p.no.length){ h+="<h3>Źródła i uwagi</h3>"+p.no.map(n=>`<div class="note">${esc(n)}</div>`).join(""); }
+  h+='<div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap">'
+    +(MODE==="family"&&id===focusId?"":`<button type="button" data-fam="${id}" style="font-size:11.5px;padding:4px 9px">Pokaż w widoku rodziny</button>`)
+    +'<button type="button" data-roster style="font-size:11.5px;padding:4px 9px">Lista wszystkich osób</button></div>';
+  paint(h);
+}
+
+/* ---------- walls and gaps ---------- */
+function wallsView(){
+  LASTV=wallsView;
+  const L=Object.values(P).filter(p=>p.t==="luka");
+  const by={};
+  for(const p of L) (by[p.br||"pozostałe"]=by[p.br||"pozostałe"]||[]).push(p);
+  const HIP=Object.values(P).filter(p=>p.hp);
+  let h=`<h2>Ściany i luki</h2><div class="sub">${L.length} miejsc, w których wiedza się kończy`
+       +` &middot; klik = karta z następnym krokiem</div>`;
+  for(const k of Object.keys(by).sort()){
+    h+=`<h3>${esc(k)} <span style="color:var(--dim);font-weight:400">(${by[k].length})</span></h3>`;
+    h+=by[k].sort((a,b)=>(a.wg||0)-(b.wg||0)||a.n.localeCompare(b.n,"pl"))
+        .map(p=>`<div class="rel" data-go="${p.id}">${esc(p.n.replace(/^❓ /,""))} `
+                +`<i>pokolenie ${p.wg||"?"} &middot; nad: ${esc(p.wn||"")}</i></div>`).join("");
+  }
+  if(HIP.length){
+    h+=`<h3>Pokrewieństwa przypuszczalne <span style="color:var(--dim);font-weight:400">(${HIP.length})</span></h3>`
+      +`<div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">Gałęzie wpięte do drzewa`
+      +` na poszlace. Na wykresie łączy je linia przerywana.</div>`
+      +HIP.map(p=>`<div class="rel" data-go="${p.id}">${esc(p.n)} <i>${life(p)||"—"}</i></div>`).join("");
+  }
+  paint(h);
+}
+
+/* ---------- start screen: one card per line ---------- */
+let HOME=false;
+const plGal = n => n===1 ? "gałąź" : (n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20)) ? "gałęzie" : "gałęzi";
+const plural = sn => { sn=(sn||"").trim(); if(!sn) return "Rodzina";
+  if(/ska$/.test(sn)) return sn.replace(/ska$/,"scy");
+  if(/cka$/.test(sn)) return sn.replace(/cka$/,"ccy");
+  if(/ski$/.test(sn)) return sn.replace(/ski$/,"scy");
+  if(/cki$/.test(sn)) return sn.replace(/cki$/,"ccy");
+  if(/io$/.test(sn)) return sn.replace(/io$/,"iowie");
+  if(/ek$/.test(sn)) return sn.replace(/ek$/,"kowie");
+  if(/a$/.test(sn)) return sn.replace(/a$/,"owie");
+  return sn+"owie"; };
+/* line photos: the anchor, then ancestors breadth-first, then others of the line — max 4 */
+function branchFaces(br, anchor){
+  const out=[], seen=new Set();
+  const take=id=>{ if(id && !seen.has(id) && IMG.t[id]){ seen.add(id); out.push(id); } };
+  take(anchor);
+  let lvl=[anchor]; const vs=new Set([anchor]);
+  while(lvl.length && out.length<4){ const nx=[];
+    for(const x of lvl){ const {f,m}=par(x); for(const q of [f,m]) if(q && !vs.has(q)){ vs.add(q); nx.push(q); take(q); } }
+    lvl=nx; }
+  if(out.length<4) for(const p of Object.values(P).filter(p=>p.br===br && IMG.t[p.id]).sort((a,b)=>(a.by||"0")<(b.by||"0")?1:-1)){ take(p.id); if(out.length>=4) break; }
+  return out.slice(0,4);
+}
+function homeView(){
+  if(!NAVQ && !NAVD) return nav(()=>homeView());
+  HOME=true;
+  const h=document.getElementById("homescr");
+  const real=Object.values(P).filter(x=>x.t!=="luka");
+  const cnt={}; for(const x of real) if(x.br) cnt[x.br]=(cnt[x.br]||0)+1;
+  const brs=Object.keys(LINES).filter(k=>LINES[k][0]);
+  let html=`<div class="hwrap"><h2>${esc(TITLE)}</h2>`
+    +`<div class="hsub">${real.length} osób · ${Object.keys(F).length} rodzin · ${Object.keys(A).length} aktów ze skanem. `
+    +`Wybierz rodzinę, żeby zobaczyć ją w drzewie — z przodkami, dziećmi i wnukami — albo poszukaj osoby po nazwisku.</div><div class="hcards">`;
+  for(const br of brs){
+    const a=LINES[br][0], ap=P[a]; if(!ap) continue;
+    const faces=branchFaces(br,a);
+    const av=faces.length?faces.map(id=>`<img src="${IMG.t[id]}" alt="">`).join(""):`<span>${esc((ap.sn||"?")[0])}</span>`;
+    html+=`<button type="button" class="hcard" data-hbr="${esc(br)}"><div class="hav">${av}</div>`
+      +`<div><b>${esc(plural(ap.sn))}</b><br><i>${esc(br)}</i><br><i>${cnt[br]||0} osób w drzewie</i></div></button>`;
+  }
+  html+=`</div><div class="hlinks"><button type="button" data-hact="search">&#128269; Szukaj osoby</button>`
+    +`<button type="button" data-hact="all">Mapa całości</button><button type="button" data-hact="list">Lista wszystkich</button>`
+    +`<button type="button" data-hact="about">O drzewie</button></div>`
+    +`<div class="hfoot">${brs.length} ${plGal(brs.length)} — każda liczona od jednej osoby w górę drzewa. Kolorowa krawędź kafelka mówi, na czym opiera się wpis — od aktu z sygnaturą po hipotezę; przerywane pola to ściany, czyli miejsca, w których wiedza się kończy.</div></div>`;
+  h.innerHTML=html; h.classList.add("on");
+  h.querySelectorAll("[data-hbr]").forEach(b=>b.onclick=()=>openLine(b.dataset.hbr));
+  h.querySelectorAll("[data-hact]").forEach(b=>b.onclick=()=>{ const k=b.dataset.hact;
+    if(k==="search"){ nav(()=>hideHome()); q.focus(); return; }
+    if(k==="about"){ introView(); return; }
+    nav(()=>{ hideHome(); setMode(k==="all"?"all":"grid"); }); if(k==="all") coach(); });
+}
+function hideHome(){ HOME=false; document.getElementById("homescr").classList.remove("on"); }
+function coach(){
+  if(!PHONE()) return;
+  let seen=false; try{ seen=localStorage.getItem("drzewo.coach")==="1"; }catch(e){}
+  if(seen) return;
+  const c=document.getElementById("coach"); c.classList.add("on");
+  document.getElementById("coachok").onclick=()=>{ c.classList.remove("on"); try{ localStorage.setItem("drzewo.coach","1"); }catch(e){} };
+}
+/* ---------- welcome card ---------- */
+function introView(){
+  LASTV=introView;
+  const vs   = Object.values(P).filter(x=>vis(x.id));
+  const real = vs.filter(x=>x.t!=="luka");
+  const lk   = vs.length - real.length;
+  const akt  = real.filter(x=>x.t==="akt").length;
+  const old  = real.filter(x=>x.by && +x.by>1500 && kids(x.id).length)
+                   .sort((a,b)=>+a.by-+b.by).slice(0,10);
+  const ls={}; for(const x of real) if(x.br) ls[x.br]=(ls[x.br]||0)+1;
+  let h=`<h2>${esc(TITLE)}</h2>`
+   +`<div class="sub">${esc(META.subtitle || [...new Set(Object.values(LINES).filter(l=>l[0] && P[l[0]]).map(l=>plural(P[l[0]].sn)))].join(" · "))}</div>`
+   +`<div class="big"><div><b>${real.length}</b><i>osób</i></div>`
+   +`<div><b>${Object.values(F).filter(f=>vis(f.h)||vis(f.w)).length}</b><i>rodzin</i></div>`
+   +`<div><b>${akt}</b><i>z aktem</i></div>`
+   +`<div><b>${lk}</b><i>ścian</i></div></div>`
+   +`<p class="lead">Widać tu cały zebrany dotąd materiał — <b>razem z tym, czego jeszcze nie wiemy</b>.`
+   +` Przerywane szare pola to <b>ściany</b>: miejsca, w których wiedza się kończy. Karta takiego pola`
+   +` mówi, jaki dokument albo archiwum byłoby następnym krokiem.</p>`
+   +`<p class="lead">Kolorowa krawędź z lewej strony kafelka mówi, na czym opiera się wpis: od aktu`
+   +` z sygnaturą po hipotezę do sprawdzenia. Linia przerywana w górę oznacza pokrewieństwo`
+   +` <b>przypuszczalne</b> — cały ród wpięty na poszlace, nie na dokumencie.</p>`
+   +`<p class="lead">Klik w kafelek w widoku <b>Rodzina</b> ustawia tę osobę w środku — z małżonkami, dziećmi i przodkami po obu stronach — i otwiera jej kartę; przyciski <b>Rodzice · Małżonek · Dzieci · Rodzeństwo</b>`
+   +` w karcie prowadzą dalej. <b>Rodzina</b> pokazuje jedną osobę z najbliższymi, <b>Mapa całości</b>`
+   +` — wszystkich naraz (przybliż, żeby zobaczyć nazwiska, potem kafelki), <b>Lista</b> — spis według nazwisk.`
+   +` Znak <b>?</b> w rogu otwiera legendę. Lista <b>Przejdź do</b> ustawia w środku jedną z osób, od których liczą się gałęzie — z całą rodziną, a <b>Filtry</b> chowają ściany i gałęzie hipotetyczne.</p>`
+   +`<p class="lead"><b>Wachlarz</b> pokazuje przodków osoby w środku na półkolu — linię ojca po lewej, matki po prawej;`
+   +` puste pola to miejsca, gdzie wiedza się kończy, a klik w pole ustawia tę osobę w środku. <b>Oś czasu</b> pokazuje`
+   +` życie przodków i potomków (albo wyników wyszukiwania) jako paski na osi lat; romb to ślub, przerywany koniec — nieznany rok śmierci.</p>`
+   +`<p class="lead"><b>Szukaj</b> po imieniu i nazwisku (w każdej pisowni z ksiąg${VARG.length && VARG[0][1] ? `, np. „${esc(VARG[0][1])}” znajdzie też „${esc(VARG[0][0])}”` : ""}), po miejscowości`
+   +` (urodzenia, zgonu, pochówku, ślubu) i po roku (<i>1880</i>) albo latach (<i>1850-1870</i>); słowa można łączyć,`
+   +` np. <i>Jan Kraków 1850-1900</i>. <b>Pokaż wszystkie</b> podświetla wyniki w drzewie.</p>`
+   +`<p class="lead"><b>Ścieżka do mnie:</b> w karcie własnej osoby kliknij <b>to ja</b> — od tej chwili każda karta`
+   +` pokaże, kim dana osoba jest dla Ciebie (np. <i>prababcia</i>, <i>brat dziadka</i>). Ustawienie zostaje w tej przeglądarce.</p>`
+   +`<h3>Przodkowie &mdash; ${plGal(Object.keys(ls).length)} (${Object.keys(ls).length})</h3>`
+   +`<div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">Klik ustawia tę osobę w środku drzewa &mdash; z przodkami u góry i dziećmi, wnukami oraz ich rodzinami na dole.</div>`
+   +Object.keys(ls).sort((a,b)=>{const o=Object.keys(LINES); const i=o.indexOf(a),j=o.indexOf(b); return (i<0?99:i)-(j<0?99:j);}).map(k=>`<div class="rel" data-br="${esc(k)}">${esc(k)} <i>${ls[k]} osób</i></div>`).join("")
+   +`<h3>Najstarsi znani przodkowie</h3>`
+   +old.map(x=>`<div class="rel" data-go="${x.id}">${esc(x.n)} <i>${life(x)}${x.bp?" &middot; "+esc(x.bp):""}</i></div>`).join("")
+   +`<h3>Dokąd dalej</h3>`
+   +`<div class="rel" data-docs>Dokumenty <i>${Object.keys(A).length} aktów z transkrypcją i skanem</i></div>`
+   +(META.book ? `<div class="rel"><a href="${esc(META.book)}" target="_blank" rel="noopener" style="color:inherit">Księga rodzinna</a> <i>do druku (PDF): przodkowie gałąź po gałęzi, akty, indeks osób</i></div>` : "")
+   +`<div class="rel" data-walls>Ściany i luki <i>${lk} miejsc z opisem następnego kroku</i></div>`
+   +`<div class="rel" data-roster>Spis wszystkich osób <i>alfabetycznie, po nazwiskach</i></div>`
+   +`<h3>Legenda</h3><div style="font-size:11.5px;color:var(--dim);line-height:1.75">`
+   +`<span style="color:var(--m)">&#9632;</span> mężczyzna &nbsp; `
+   +`<span style="color:var(--f)">&#9632;</span> kobieta<br>`
+   +`<b style="color:var(--t-akt)">&#9612; AKT</b> — jest dokument: sygnatura, skan albo karta grobu<br>`
+   +`<b style="color:var(--t-praw)">&#9612; PRAWDOPODOBNE</b> — indeks, rejestr lub przekaz rodzinny, bez aktu<br>`
+   +`<b style="color:var(--t-hip)">&#9612; HIPOTEZA</b> — trop do sprawdzenia<br>`
+   +`<b style="color:var(--t-luka)">&#9633; ŚCIANA</b> — pole przerywane: tu wiedza się kończy<br>`
+   +`<span style="color:var(--acc)">- - -</span> linia przerywana w górę = pokrewieństwo `
+   +`<b>przypuszczalne</b>, nie udowodnione<br>`
+   +`<span style="color:var(--acc)">&#9670;</span> ma zapisane źródło / uwagi<br>`
+   +`<b style="color:var(--t-akt)">akt</b> w karcie przy dacie, <b style="color:var(--t-akt)">✓ akt</b> przy krewnym — jest przepisany akt, który to potwierdza; fakt bez tego znaku pochodzi z drzewa rodzinnego albo z relacji rodziny<br>`
+   +`ramka <b>Źródła podają różnie</b> — dwa źródła, dwie wersje, obok siebie; ramka z pytaniem — kilka możliwych odpowiedzi, każda ze stanem</div>`;
+  paint(h);
+}
+
+/* ---------- list of all people ---------- */
+function gridView(filter){
+  const el=document.getElementById("grid");
+  const by={};
+  const f=(filter||"").trim();
+  const FQ=f?parseQ(f):null;
+  for(const p of Object.values(P)){
+    if(p.t==="luka" || !vis(p.id)) continue;
+    if(BRF && p.br!==BRF) continue;          // line buttons narrow the list only
+    if(FQ && !hitOf(IDXBY[p.id],FQ)) continue;
+    const k=snKey(p.sn) ? snLabel(snKey(p.sn)) : "(bez nazwiska)";   // one family = one heading, every spelling
+    (by[k]=by[k]||[]).push(p);
+  }
+  const ph=s=>s.startsWith("(");
+  const keys=Object.keys(by).sort((a,b)=>(ph(a)-ph(b))||a.localeCompare(b,"pl"));
+  const cnt=keys.reduce((s,k)=>s+by[k].length,0);
+  const letters=[...new Set(keys.filter(k=>!ph(k)).map(k=>k[0].toUpperCase()))];
+  const brs=Object.keys(LINES).filter(k=>LINES[k][0]);
+  let h=`<div class="bar"><b style="color:var(--ink)">${cnt}</b> osób · ${keys.length} nazwisk`
+       +(f?` · filtr: „${esc(f)}"`:"")+` · klik = karta, dwuklik = widok rodziny`
+       +`<div class="bch">`+["",...brs].map(k=>`<button type="button" data-bch="${esc(k)}" class="${(BRF||"")===k?"on":""}">${k?"przodkowie "+esc(shortBr(k)):"wszyscy"}</button>`).join("")+`</div>`
+       +(letters.length>1?`<div class="abc">`+letters.map(l=>`<button type="button" data-abc="${esc(l)}">${esc(l)}</button>`).join("")+`</div>`:"")
+       +`</div>`;
+  for(const k of keys){
+    const g=by[k].sort((a,b)=>(ph(a.n)-ph(b.n))||(a.by||"9999").localeCompare(b.by||"9999")||a.n.localeCompare(b.n,"pl"));
+    const ex=snExtra(g[0].sn);
+    h+=`<h3 data-l="${ph(k)?"":esc(k[0].toUpperCase())}">${esc(k)} <span style="color:var(--dim);font-weight:400;text-transform:none">(${g.length})</span>`
+      +(ex.length?` <i class="var">w księgach też: ${esc(ex.join(", "))}</i>`:"")+`</h3><div class="cards">`;
+    for(const p of g){
+      const av=IMG.t[p.id]?`<img src="${IMG.t[p.id]}" alt="">`
+                          :`<div class="ph">${esc((p.n.trim()[0]||"?").toUpperCase())}</div>`;
+      h+=`<div class="card ${p.s||"U"}" data-id="${p.id}">${av}<div style="min-width:0">`
+        +`<b>${esc(p.n)}</b><i>${life(p)||"—"}</i>`
+        +(p.no.length?' <span class="src">&#9670;</span>':"")+`</div></div>`;
+    }
+    h+="</div>";
+  }
+  el.innerHTML=h;
+  el.querySelectorAll(".card").forEach(c=>{
+    c.onclick=()=>{ if(relPick(c.dataset.id)) return;
+      selId=c.dataset.id; side(c.dataset.id);
+      el.querySelectorAll(".card.sel").forEach(x=>x.classList.remove("sel")); c.classList.add("sel"); };
+    c.ondblclick=()=>nav(()=>{ setMode("family"); go(c.dataset.id); });
+  });
+  el.querySelectorAll("[data-abc]").forEach(b=>b.onclick=()=>{
+    const t=el.querySelector(`h3[data-l="${b.dataset.abc}"]`); if(t) el.scrollTo({top:t.offsetTop-84,behavior:"smooth"}); });
+  el.querySelectorAll("[data-bch]").forEach(b=>b.onclick=()=>nav(()=>{ BRF=b.dataset.bch||null; gridView(q.value); }));
+}
+function roster(){
+  const by={};
+  for(const p of Object.values(P)){
+    if(p.t==="luka" || !vis(p.id)) continue;
+    const k=(p.sn||"(bez nazwiska)").trim()||"(bez nazwiska)";
+    (by[k]=by[k]||[]).push(p);
+  }
+  const keys=Object.keys(by).sort((a,b)=>a.localeCompare(b,"pl"));
+  const tot=Object.values(P).filter(x=>x.t!=="luka" && vis(x.id)).length;
+  let h=`<h2>Spis osób</h2><div class="sub">${tot} osób &middot; ${keys.length} nazwisk &middot; klik = karta</div>`;
+  for(const k of keys){
+    const g=by[k].sort((a,b)=>(a.by||"9999").localeCompare(b.by||"9999")||a.n.localeCompare(b.n,"pl"));
+    h+=`<h3>${esc(k)} <span style="color:var(--dim);font-weight:400">(${g.length})</span></h3>`;
+    h+=g.map(p=>`<div class="rel" data-go="${p.id}">${esc(p.n)} <i>${life(p)||"—"}</i></div>`).join("");
+  }
+  paint(h);
+}
+
+/* ---------- search: name (in every spelling), place, year or years ----------
+   All words must match (AND); each one the name or one of the places: birth, death, burial, residence,
+   wedding. A year “1880” or years “1850-1870” = born or died in those years. */
+const norm = fold;
+const placesOf = p => { const out=[];
+  if(p.bp) out.push(["ur.",p.bp]); if(p.dp) out.push(["zm.",p.dp]); if(p.bu) out.push(["pochów.",p.bu]);
+  if(p.re) out.push(["mieszk.",p.re]);
+  for(const s of spouses(p.id)) if(s.mp) out.push([s.um?"":"ślub",s.mp]);
+  return out.map(([lab,v])=>[lab,v,fold(v)]); };
+const IDX = Object.values(P).map(p=>({id:p.id, n:p.n, l:life(p), by:+p.by||0, dy:+p.dy||0,
+  k:fold([p.n, p.mn, ...snSpellings(p.sn), ...snSpellings(p.mn)].join(" ")), pl:placesOf(p)}));
+const IDXBY = Object.fromEntries(IDX.map(x=>[x.id,x]));
+function parseQ(raw){
+  const yrs=[], words=[];
+  for(const t of fold(raw).split(/[\s,;]+/).filter(Boolean)){
+    const m=t.match(/^(\d{4})(?:[-–](\d{4}))?$/);
+    if(m){ const a=+m[1], b=m[2]?+m[2]:a; yrs.push([Math.min(a,b),Math.max(a,b)]); }
+    else words.push(t);
+  }
+  return {yrs, words};
+}
+/* null = no match; otherwise {why: places it matched on, byName: how many words matched the name} */
+function hitOf(x,Q){
+  if(!x) return null;
+  for(const [a,b] of Q.yrs) if(!((x.by && x.by>=a && x.by<=b) || (x.dy && x.dy>=a && x.dy<=b))) return null;
+  const why=[]; let byName=0;
+  for(const w of Q.words){
+    if(x.k.includes(w)){ byName++; continue; }
+    const pl=x.pl.find(z=>z[2].includes(w)); if(!pl) return null;
+    if(!why.includes(pl)) why.push(pl);
+  }
+  return {why, byName};
+}
+function findAll(raw){
+  const Q=parseQ(raw); if(!Q.words.length && !Q.yrs.length) return [];
+  const out=[];
+  for(const x of IDX){ if(!vis(x.id)) continue; const h=hitOf(x,Q); if(h) out.push({x,h}); }
+  out.sort((a,b)=>(b.h.byName-a.h.byName) || ((a.x.by||9999)-(b.x.by||9999)) || a.x.n.localeCompare(b.x.n,"pl"));
+  return out;
+}
+const whyTxt = h => h.why.map(([lab,v])=>(lab?lab+" ":"")+v).join(" · ");
+const q=document.getElementById("q"), sug=document.getElementById("sug");
+let selIdx=-1, cur=[], curAll=0;
+const sugRows = () => sug.querySelectorAll("div[data-all],div[data-i]");
+q.addEventListener("input",()=>{
+  const raw=q.value.trim();
+  if(!raw){ sug.style.display="none"; cur=[]; curAll=0; if(MODE==="grid") gridView(""); return; }
+  if(MODE==="grid"){ gridView(q.value); }
+  const all=findAll(raw); cur=all.slice(0,40); curAll=all.length>1?all.length:0; selIdx=-1;
+  sug.innerHTML=(curAll?`<div data-all class="all">Pokaż wszystkie (${curAll}) w drzewie</div>`:"")
+    +cur.map((r,i)=>`<div data-i="${i}">${esc(r.x.n)}<span>${r.x.l}${r.h.why.length?" · "+esc(whyTxt(r.h)):""}</span></div>`).join("")
+    || '<div><span>brak wyników</span></div>';
+  sug.style.display="block";
+  sug.querySelectorAll("[data-i]").forEach(e=>e.onclick=()=>{go(cur[e.dataset.i].x.id);sug.style.display="none";q.blur();});
+  sug.querySelectorAll("[data-all]").forEach(e=>e.onclick=()=>{sug.style.display="none";q.blur();setFind(raw);});
+});
+q.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){sug.style.display="none";q.blur();}
+  if(!cur.length) return;
+  const n=cur.length+(curAll?1:0);
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault();
+    selIdx=(selIdx+(e.key==="ArrowDown"?1:-1)+n)%n;
+    sugRows().forEach((d,i)=>d.classList.toggle("on",i===selIdx));
+    sugRows()[selIdx]?.scrollIntoView({block:"nearest"}); }
+  if(e.key==="Enter"){ e.preventDefault(); sug.style.display="none"; q.blur();
+    if(curAll && selIdx===0){ setFind(q.value.trim()); return; }
+    const i=selIdx<0 ? 0 : selIdx-(curAll?1:0); go(cur[Math.max(0,i)].x.id); }
+});
+
+/* ---------- search results highlighted in the tree ----------
+   “Show all” goes to the whole-tree map, highlights the hits, dims the rest and frames the hits.
+   The highlight stays in every view until “Clear”. */
+let FIND=null;               // {q: query text, ids: Set}
+const plOs = n => n===1 ? "osoba" : (n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20)) ? "osoby" : "osób";
+function setFind(raw){
+  const r=findAll(raw); if(!r.length) return;
+  FIND={q:raw, ids:new Set(r.map(x=>x.x.id))}; findBar();
+  if(MODE==="grid"){ gridView(raw); return; }
+  nav(()=>{ if(HOME) hideHome();
+    if(MODE==="time"){ render(); view(); return; }          // the timeline then shows the results only
+    if(MODE!=="all") setMode("all"); else render(); fitHits(); });
+}
+function clearFind(){ FIND=null; findBar(); if(MODE!=="grid") render(); }
+function findBar(){
+  const b=document.getElementById("findbar");
+  if(!FIND){ b.classList.remove("on"); b.innerHTML=""; return; }
+  const n=FIND.ids.size;
+  b.innerHTML=`<span>Wyszukiwanie <b>„${esc(FIND.q)}”</b>: ${n} ${plOs(n)}, podświetlone w drzewie</span>`
+    +`<button type="button" data-fl>Lista</button><button type="button" data-fx>&#10005; Wyczyść</button>`;
+  b.classList.add("on");
+  b.querySelector("[data-fl]").onclick=()=>{ q.value=FIND.q;
+    nav(()=>{ if(HOME) hideHome(); if(MODE!=="grid") setMode("grid"); else gridView(q.value); }); };
+  b.querySelector("[data-fx]").onclick=clearFind;
+}
+function fitHits(){
+  const pts=[...FIND.ids].map(id=>POS[id]).filter(Boolean); if(!pts.length){ view(); return; }
+  const W=MODE==="all"?ANW:NW, H=MODE==="all"?ANH:NH, r=visRect();
+  const x0=Math.min(...pts.map(p=>p.x))-W/2, x1=Math.max(...pts.map(p=>p.x))+W/2;
+  const y0=Math.min(...pts.map(p=>p.y))-H/2, y1=Math.max(...pts.map(p=>p.y))+H/2;
+  const k=Math.max(KMIN, Math.min(1, (r.w-60)/Math.max(x1-x0,1), (r.h-60)/Math.max(y1-y0,1)));
+  T.k=k; T.x=r.w/2-(x0+x1)/2*k; T.y=r.h/2-(y0+y1)/2*k; apply();
+}
+document.addEventListener("keydown",e=>{ if(e.key==="/"&&document.activeElement!==q){e.preventDefault();q.focus();q.select();} });
+document.addEventListener("click",e=>{ if(!sug.contains(e.target)&&e.target!==q) sug.style.display="none"; });
+
+/* ---------- pan / zoom (mouse, wheel, drag, pinch on touch, +/− buttons) ---------- */
+const stage=document.getElementById("stage");
+let drag=null, moved=false;
+const PTS=new Map(); let pinch=null;
+const KMIN=.02, KMAX=2.4;
+function zoomAt(k,mx,my){
+  k=Math.min(KMAX,Math.max(KMIN,k));
+  T.x=mx-(mx-T.x)*(k/T.k); T.y=my-(my-T.y)*(k/T.k); T.k=k; apply();
+}
+/* +/− buttons and + − keys: a smooth ×1.25 step around the centre of the visible part (on phones above
+   the card); quick repeated presses add up to one target instead of fighting each other */
+let ZANIM=0, ZTGT=1;
+function zoomStep(f){
+  const r=visRect(), base=ZANIM ? ZTGT : T.k;
+  const k1=Math.min(KMAX,Math.max(KMIN,base*f)); ZTGT=k1;
+  let reduce=false; try{ reduce=window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}
+  if(reduce){ zoomAt(k1, r.w/2, r.h/2); return; }
+  const k0=T.k, t0=performance.now(), D=180, id=++ZANIM;
+  const step=t=>{ if(id!==ZANIM) return;
+    const a=Math.min(1,(t-t0)/D), e=1-Math.pow(1-a,3);
+    zoomAt(k0*Math.pow(k1/k0,e), r.w/2, r.h/2);
+    if(a<1) requestAnimationFrame(step); else ZANIM=0; };
+  requestAnimationFrame(step);
+}
+/* mouse: a drag started on the tree must not start a text selection (also in the card, if the pointer gets there) */
+stage.addEventListener("mousedown",e=>{
+  if(e.button!==0 || e.target.closest("#grid,input,select,textarea")) return;
+  e.preventDefault();
+  const a=document.activeElement; if(a && a!==document.body && !stage.contains(a)) a.blur();   // e.g. the search field
+});
+stage.addEventListener("pointerdown",e=>{
+  ZANIM=0;                                   // a drag interrupts the smooth zoom step
+  PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(PTS.size===2){
+    const [a,b]=[...PTS.values()]; const r=stage.getBoundingClientRect();
+    pinch={d:Math.hypot(a.x-b.x,a.y-b.y), mx:(a.x+b.x)/2-r.left, my:(a.y+b.y)/2-r.top};
+    drag=null; moved=true; stage.classList.add("drag"); return;
+  }
+  if(PTS.size>2) return;
+  drag={x:e.clientX-T.x,y:e.clientY-T.y,sx:e.clientX,sy:e.clientY}; moved=false;
+});
+window.addEventListener("pointermove",e=>{
+  if(PTS.has(e.pointerId)) PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch && PTS.size>=2){
+    const [a,b]=[...PTS.values()]; const r=stage.getBoundingClientRect();
+    const d=Math.hypot(a.x-b.x,a.y-b.y), mx=(a.x+b.x)/2-r.left, my=(a.y+b.y)/2-r.top;
+    if(d>0 && pinch.d>0){
+      const k=Math.min(KMAX,Math.max(KMIN,T.k*(d/pinch.d)));
+      T.x=mx-(pinch.mx-T.x)*(k/T.k); T.y=my-(pinch.my-T.y)*(k/T.k); T.k=k; apply();
+    }
+    pinch={d,mx,my}; return;
+  }
+  if(!drag) return;
+  if(!moved && Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>4){ moved=true; stage.classList.add("drag");
+    try{ const sel=window.getSelection(); if(sel && !sel.isCollapsed) sel.removeAllRanges(); }catch(_){} }
+  if(moved){ T.x=e.clientX-drag.x; T.y=e.clientY-drag.y; apply(); }
+});
+let lastTap=null, dblAt=0;
+function ptrEnd(e){
+  PTS.delete(e.pointerId);
+  if(pinch){
+    if(PTS.size<2){ pinch=null; drag=null; stage.classList.remove("drag"); setTimeout(()=>{moved=false;},0); }
+    lastTap=null; return;
+  }
+  const wasDrag=!!drag, wasMoved=moved;
+  drag=null; stage.classList.remove("drag");
+  if(moved) setTimeout(()=>{moved=false;},0);
+  /* double tap (Safari sends no dblclick for touch): tile → zoom / centre, background → 2× */
+  if(e.pointerType==="touch" && wasDrag && !wasMoved && e.target instanceof Element && stage.contains(e.target) && !e.target.closest("#zoomctl,#legend,#grid")){
+    const now=Date.now();
+    if(lastTap && now-lastTap.t<320 && Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<24){
+      lastTap=null; dblAt=now;
+      const g=document.elementFromPoint(e.clientX,e.clientY)?.closest?.(".node");
+      if(g && g.__id) nodeDbl(g.__id);
+      else { const r=stage.getBoundingClientRect(); zoomAt(T.k*2, e.clientX-r.left, e.clientY-r.top); }
+    } else lastTap={t:now,x:e.clientX,y:e.clientY};
+  }
+}
+stage.addEventListener("dblclick",e=>{
+  if(Date.now()-dblAt<600 || e.target.closest(".node,#zoomctl,#legend,#grid")) return;
+  const r=stage.getBoundingClientRect(); zoomAt(T.k*2, e.clientX-r.left, e.clientY-r.top);
+});
+window.addEventListener("pointerup",ptrEnd);
+window.addEventListener("pointercancel",ptrEnd);
+/* wheel / trackpad: zoom PROPORTIONAL to the scroll amount. A fixed ×1.12 per event made the trackpad
+   (and smooth-scrolling mice, which send dozens of events per gesture) jump by orders of magnitude.
+   One wheel notch (~100 px) ≈ 7 %; trackpad pinch (wheel + ctrlKey, small deltas) has its own sensitivity. */
+const WHEEL_SENS=0.0007, PINCH_SENS=0.006;
+stage.addEventListener("wheel",e=>{
+  e.preventDefault(); ZANIM=0; const r=stage.getBoundingClientRect();
+  let d=e.deltaY*(e.deltaMode===1 ? 33 : e.deltaMode===2 ? 400 : 1);   // lines / pages → pixels
+  d=Math.max(-120,Math.min(120,d));
+  zoomAt(T.k*Math.exp(-d*(e.ctrlKey ? PINCH_SENS : WHEEL_SENS)), e.clientX-r.left, e.clientY-r.top);
+},{passive:false});
+/* + and − keys (without Cmd/Ctrl — those stay with the browser's page zoom) */
+document.addEventListener("keydown",e=>{
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  const a=document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  if(HOME || MODE==="grid") return;
+  if(e.key==="+" || e.key==="="){ e.preventDefault(); zoomStep(1.25); }
+  else if(e.key==="-" || e.key==="_"){ e.preventDefault(); zoomStep(1/1.25); }
+});
+for(const [id,f] of [["zin",1.25],["zout",1/1.25]]){
+  const b=document.getElementById(id);
+  b.addEventListener("pointerdown",e=>e.stopPropagation());
+  b.addEventListener("click",e=>{ e.stopPropagation(); zoomStep(f); });
+}
+for(const id of ["fit","help"]) document.getElementById(id).addEventListener("pointerdown",e=>e.stopPropagation());
+{ const m=document.getElementById("mini"); let mdrag=false;
+  const jump=e=>{ const pt=m.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const p=pt.matrixTransform(m.getScreenCTM().inverse()); const r=visRect();
+    T.x=r.w/2-p.x*T.k; T.y=r.h/2-p.y*T.k; apply(); };
+  m.addEventListener("pointerdown",e=>{ e.stopPropagation(); mdrag=true; m.setPointerCapture(e.pointerId); jump(e); });
+  m.addEventListener("pointermove",e=>{ if(mdrag) jump(e); });
+  const end=()=>{ mdrag=false; };
+  m.addEventListener("pointerup",end); m.addEventListener("pointercancel",end);
+  m.addEventListener("dblclick",e=>e.stopPropagation()); }
+document.getElementById("legend").addEventListener("pointerdown",e=>e.stopPropagation());
+document.getElementById("help").addEventListener("click",e=>{ e.stopPropagation();
+  const on=document.getElementById("legend").classList.toggle("on");
+  document.getElementById("help").classList.toggle("on",on); });
+document.addEventListener("click",e=>{ const l=document.getElementById("legend");
+  if(l.classList.contains("on") && !l.contains(e.target) && !e.target.closest("#help")){
+    l.classList.remove("on"); document.getElementById("help").classList.remove("on"); } });
+
+/* ---------- kinship of any two people ---------- */
+function relClear(){
+  PICK=null; pathSet=new Set(); pathArr=null;
+  const bar=document.getElementById("pathbar");
+  bar.style.display="none"; bar.innerHTML="";
+  document.getElementById("relbtn").classList.remove("on");
+}
+function relStart(){
+  LASTV=null;
+  const bar=document.getElementById("pathbar");
+  if(PICK || pathSet.size){ relClear(); render(); return; }
+  PICK={a: (selId && P[selId]) ? selId : null};
+  document.getElementById("relbtn").classList.add("on");
+  bar.style.display="block";
+  bar.innerHTML = PICK.a
+    ? "<b>Pokrewieństwo.</b> Pierwsza osoba: <b>"+esc(P[PICK.a].n)+"</b>. Kliknij teraz drugą — na drzewie albo na liście."
+    : "<b>Pokrewieństwo.</b> Kliknij pierwszą osobę, potem drugą. Ponowny klik w przycisk anuluje.";
+}
+function relPick(id){
+  if(!PICK) return false;
+  const bar=document.getElementById("pathbar");
+  if(!PICK.a){
+    PICK.a=id;
+    bar.innerHTML="<b>Pokrewieństwo.</b> Pierwsza osoba: <b>"+esc(P[id].n)+"</b>. Teraz wskaż drugą.";
+    return true;
+  }
+  if(id===PICK.a){ bar.innerHTML="<b>Pokrewieństwo.</b> To ta sama osoba — wskaż inną."; return true; }
+  const pa=bestPath(PICK.a, id);
+  PICK=null;
+  document.getElementById("relbtn").classList.remove("on");
+  if(!pa){
+    pathSet=new Set(); pathArr=null;
+    bar.innerHTML="<b>Te dwie osoby nie są w tym drzewie połączone.</b>";
+    render(); return true;
+  }
+  pathArr=pa; pathSet=new Set(pa);
+  bar.innerHTML="<b>"+(pa.length-1)+(pa.length-1===1?" krok:":(pa.length-1<5?" kroki:":" kroków:"))+"</b> "
+    +pa.map((x,k)=>(k?` <i style="color:var(--dim);font-style:normal">${relLabel(pa[k-1],x)}</i> `:"")
+      +`<span class="rel" style="display:inline" data-go="${x}">${esc(P[x].n)}</span>`).join("");
+  bar.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>go(e.dataset.go));
+  render();
+  return true;
+}
+
+/* ---------- buttons ---------- */
+const $ = id => document.getElementById(id);
+
+function setMode(m){
+  if(!NAVQ && !NAVD) return nav(()=>setMode(m));
+  MODE=m; if(HOME) hideHome();
+  $("grid").classList.toggle("on", m==="grid");
+  svg.style.display = m==="grid" ? "none" : "";
+  $("zoomctl").style.display = m==="grid" ? "none" : "";
+  if(m==="grid"){ $("legend").classList.remove("on"); $("help").classList.remove("on"); }
+  for(const [id,mm] of [["mode","family"],["all","all"],["list","grid"],["fan","fan"],["time","time"]]) $(id).classList.toggle("on", m===mm);
+  $("genwrap").style.display = (m==="family" || m==="fan") ? "" : "none";
+  closeMenu();
+  if(m==="grid"){ if(PHONE()) sheet("close"); gridView(q.value); return; }
+  render(); view();
+}
+
+$("back").onclick=navBack;
+$("fback").onclick=e=>{ e.stopPropagation(); navBack(); };
+$("ptr").onclick=e=>{ e.stopPropagation();
+  const {f,m}=par(focusId); const ps=[f,m].filter(x=>x && POS[x]); if(!ps.length) return;
+  const mx=ps.reduce((a,x)=>a+POS[x].x,0)/ps.length, my=ps.reduce((a,x)=>a+POS[x].y,0)/ps.length, r=visRect();
+  panSmooth(r.w/2-mx*T.k, r.h/2-my*T.k); };
+["pointerdown","mousedown","touchstart","dblclick"].forEach(t=>$("ptr").addEventListener(t,e=>e.stopPropagation()));
+$("fit").onclick=()=>view();
+$("start").onclick=()=>nav(()=>{
+  relClear(); selId=null;
+  if(MODE==="grid") setMode("family"); else markSel();
+  introView();
+});
+$("list").onclick=()=>nav(()=>{ if(MODE!=="grid") setMode("grid"); else closeMenu(); });
+$("all").onclick=()=>nav(()=>{ if(MODE!=="all") setMode("all"); else { fitAll(); closeMenu(); } });
+/* the fan and the timeline start from the centre person — if nobody is chosen, from the default person */
+for(const m of ["fan","time"]) $(m).onclick=()=>nav(()=>{
+  if(MODE===m){ view(); closeMenu(); return; }
+  const cand=[selId, focusId, ROOT].find(x=>x && P[x] && P[x].t!=="luka" && vis(x));
+  focusId=cand || ROOT; setMode(m); if(selId!==focusId){ selId=focusId; side(focusId); }
+});
+$("mode").onclick=()=>nav(()=>{
+  if(MODE==="family"){ focusFit(); closeMenu(); return; }
+  const cand=[selId, focusId, ROOT].find(x=>x && P[x] && P[x].t!=="luka" && vis(x));
+  focusId = cand || ROOT;
+  setMode("family"); go(focusId, true);
+});
+$("home").onclick=()=>nav(()=>{ closeMenu(); if(MODE==="grid") setMode("family"); homeView(); });
+function tabs(){
+  const on=(id,c)=>$(id).classList.toggle("on",c);
+  on("tb-home",HOME); on("tb-tree",!HOME&&MODE!=="grid"); on("tb-list",!HOME&&MODE==="grid");
+  on("tb-more",$("menu").classList.contains("on"));
+}
+$("tb-home").onclick=()=>{ nav(()=>{ closeMenu(); if(MODE==="grid") setMode("family"); homeView(); }); tabs(); };
+$("tb-tree").onclick=()=>{ nav(()=>{ closeMenu(); if(HOME) hideHome(); if(MODE==="grid") setMode("family"); else { sheet("close"); view(); } }); tabs(); };
+$("tb-list").onclick=()=>{ nav(()=>{ closeMenu(); if(HOME) hideHome(); if(MODE!=="grid") setMode("grid"); }); tabs(); };
+$("tb-more").onclick=e=>{ e.stopPropagation(); const on=$("menu").classList.toggle("on"); $("menubtn").classList.toggle("on",on); tabs(); };
+new MutationObserver(()=>tabs()).observe($("menu"),{attributes:true,attributeFilter:["class"]});
+new MutationObserver(()=>tabs()).observe($("homescr"),{attributes:true,attributeFilter:["class"]});
+new MutationObserver(()=>tabs()).observe($("grid"),{attributes:true,attributeFilter:["class"]});
+$("menubtn").onclick=e=>{ e.stopPropagation();
+  const on=$("menu").classList.toggle("on"); $("menubtn").classList.toggle("on",on); };
+document.addEventListener("click",e=>{ const m=$("menu");
+  if(m.classList.contains("on") && !m.contains(e.target) && !e.target.closest("#menubtn,#tb-more")) closeMenu(); });
+$("wallbtn").onclick=()=>wallsView();
+$("relbtn").onclick=relStart;
+
+const genlab=()=>$("gen").textContent=UP+" / "+DN;
+$("more").onclick=()=>{ if(UP<9){ UP++; DN++; genlab(); render(); view(); } };
+$("less").onclick=()=>{ if(UP>1){ UP--; DN--; genlab(); render(); view(); } };
+
+/* ---------- filters ---------- */
+function cnt(){
+  const vs=Object.values(P).filter(x=>vis(x.id));
+  const real=vs.filter(x=>x.t!=="luka").length;
+  const wall=Object.values(P).filter(x=>x.t==="luka").length;
+  $("cnt").textContent=" · "+real+" osób"+(vs.length-real ? " · "+(vs.length-real)+" ścian" : "");
+  $("wallbtn").textContent="Ściany i luki ("+wall+")";
+}
+/* When a filter hides the person the view stands on, move to the OLDEST known ancestor of what is
+   left — not to the first person in object order (which landed on someone random). */
+function anchorOf(){
+  /* The anchor of the chosen line stands at ITS BOTTOM — only from there does the family view unfold the
+     whole line of ancestors upwards. The earliest-born person is by definition a dead end of the line. */
+  const ka = BRF && LINES[BRF] && LINES[BRF][0];
+  if(ka && vis(ka)) return ka;
+  let best=null, bn=-1, bby=-1;
+  for(const x of Object.values(P)){
+    if(x.t==="luka" || !vis(x.id)) continue;
+    const n=ancDepth(x.id).n, y=x.by?+x.by:0;
+    if(n>bn || (n===bn && y>bby)){ bn=n; bby=y; best=x.id; }
+  }
+  return best;
+}
+function refilter(){
+  $("filtbtn").classList.toggle("act", !SHOWL || !SHOWH || SIDEK);
+  cnt();
+  if(LASTV) LASTV();
+  if(MODE==="grid") gridView(q.value);
+  else {
+    if(!vis(focusId)){ const c=anchorOf(); if(c){ focusId=c;
+      pathSet=new Set(); pathArr=null; $("pathbar").style.display="none"; } }
+    render(); view();
+  }
+  if(!NAVD) navSave();
+}
+$("filtbtn").onclick=e=>{ e.stopPropagation();
+  const f=$("filt"); f.classList.toggle("on");
+  $("filtbtn").classList.toggle("on", f.classList.contains("on")); };
+document.addEventListener("click",e=>{ const f=$("filt");
+  if(f.classList.contains("on") && !f.contains(e.target) && e.target!==$("filtbtn")){
+    f.classList.remove("on"); $("filtbtn").classList.remove("on"); } });
+$("f-luka").onchange=e=>{ SHOWL=e.target.checked; refilter(); };
+$("f-hip").onchange =e=>{ SHOWH=e.target.checked; refilter(); };
+/* Choosing a line — a start-screen card, the “Przejdź do” list in the menu, the line list in “O drzewie”:
+   that person in the centre of the WHOLE tree, ancestors above, children, grandchildren and their spouses
+   below. Nothing is hidden. */
+function openLine(br){
+  const a = LINES[br] && LINES[br][0];
+  if(!a || !P[a]) return;
+  nav(()=>{ closeMenu(); relClear(); pathSet=new Set(); pathArr=null; $("pathbar").style.display="none";
+    if(HOME) hideHome(); if(MODE!=="family") setMode("family"); go(a,true); });
+  coach();
+}
+$("f-br").onchange  =e=>{ const v=e.target.value; e.target.value=""; if(v) openLine(v); };
+$("f-side").onchange=e=>nav(()=>{ SIDEK=e.target.checked;
+  if(MODE==="all") setMode("family");        // side relatives only make sense in the family view
+  else refilter(); });
+$("f-hi").onchange  =e=>{ HILITE=e.target.checked; if(MODE!=="grid") render(); };
+const shortBr = s => (LINES[s] && LINES[s][1]) || s;
+{ const sel=$("f-br"), ls={};
+  for(const x of Object.values(P)) if(x.br && x.t!=="luka") ls[x.br]=(ls[x.br]||0)+1;
+  const ord=Object.keys(LINES);
+  const ks=Object.keys(ls).sort((a,b)=>{ const i=ord.indexOf(a), j=ord.indexOf(b);
+    return (i<0?99:i)-(j<0?99:j) || a.localeCompare(b,"pl"); });
+  for(const k of ks){
+    const a=LINES[k] && LINES[k][0]; if(!a || !P[a]) continue;
+    const o=document.createElement("option");
+    o.value=k; o.title=k+" ("+ls[k]+" osób)"; o.textContent=P[a].n.replace(/^❓ /,""); sel.append(o); } }
+
+/* ---------- start ---------- */
+window.addEventListener("resize",()=>{ if(MODE!=="grid") view(); });
+const fromHash=()=>{ const h=location.hash.slice(1); return (h && P["@"+h+"@"]) ? "@"+h+"@" : null; };
+window.addEventListener("popstate",e=>{ const s=e.state;
+  if(s && s.dz){ navRestore(s); return; }
+  const t=fromHash(); if(t && t!==focusId) navHash(t); });
+window.addEventListener("hashchange",()=>{ const t=fromHash(); if(t && t!==focusId) navHash(t); });
+try{ history.scrollRestoration="manual"; }catch(e){}
+genlab(); cnt();
+{ const s=history.state, t=fromHash();
+  if(s && s.dz && (!t || t===s.id)){ navRestore(s); if(t) coach(); }      // page reload: the same view
+  else if(t){ setMode("family"); go(t,true); coach(); }
+  else  { setMode("family"); go(ROOT,true);
+    if(PHONE()) sheet("close"); else introView();
+    homeView(); } }
+NAVQ=false; navSave(); navUi();
+</script></body></html>
