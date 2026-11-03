@@ -416,7 +416,8 @@ def build(cfg_path, template=None, out=None, quiet=False):
     if get("BOOK", ""): meta["book"] = get("BOOK", "")
     db = {"people": people, "fams": fams, "acts": acts, "lines": LINES, "var": get("VARIANTS", []), "meta": meta}
     j = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    page = open(template or TEMPLATE, encoding="utf-8").read()
+    with open(template or TEMPLATE, encoding="utf-8") as f:
+        page = f.read()
     for ph in ("__DB__", "__IMG__", "__TITLE__", "__H1__"):
         if page.count(ph) != 1: raise SystemExit(f"template: {ph} must occur exactly once")
     page = (page.replace("const DB = __DB__;", "const DB = " + j(db) + ";")
