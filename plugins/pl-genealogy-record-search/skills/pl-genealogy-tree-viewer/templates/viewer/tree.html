@@ -621,7 +621,8 @@ for(const grp of VARG){ const g=SNGROUP[fold(grp[0])]; if(!g) continue;
   const have=new Set([...g.sp.keys()].map(fold)); g.extra=grp.filter(v=>!have.has(fold(v))); }
 const snLabel = k => { const g=SNGROUP[k]; return g ? [...g.sp.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]).join(" · ") : k; };
 const snSpellings = sn => { const g=sn && SNGROUP[snKey(sn)]; return g ? [...g.sp.keys(), ...g.extra] : (sn ? [sn] : []); };
-const snOthers = sn => { const own=fold(sn); return [...new Set(snSpellings(sn))].filter(v=>fold(v)!==own); };
+const gform = s => fold(s).replace(/(s|c|dz)k[ai]$/, "$1k_");     // Kowalski = Kowalska for "also spelled"
+const snOthers = sn => { const own=gform(sn); return [...new Set(snSpellings(sn))].filter(v=>gform(v)!==own); };
 const snExtra = sn => (sn && SNGROUP[snKey(sn)]?.extra) || [];
 
 /* The person the family view starts from when nobody is chosen. Picked from the data — the one
