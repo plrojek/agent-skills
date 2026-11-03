@@ -1,9 +1,9 @@
 ---
 name: pl-genealogy-record-search
-description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, reading Latin and Greek-Catholic registers, and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
+description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, which parish a village belonged to, reading Latin and Greek-Catholic registers with a blind second reading of decisive cells, a research log of every search (nothing-found included), and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
 license: MIT
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # Polish genealogy: record matching
@@ -33,11 +33,23 @@ All scripts are in `scripts/`, Python 3.10+ standard library only, except
 | `caak.py pages / page / crop` | IIIF diocesan archive (Kraków), native-resolution crops |
 | `contact_sheet.py sheet / crop` | year map of many scans; magnified crops |
 | `crossmatch.py tree.json index.json` | tree people vs saved index rows |
+| `search_log.py check / add / lesson / calibrate / where` | research log: every search and its result, per-book notes, page to scan |
 | `validate_ged.py tree.ged` | references, duplicates, trailer position after a patch |
 
 Be a good guest on these sites. Most are run by volunteers (PTG runs Geneteka, Skanoteka
-and metryki) or small public offices. The scripts identify themselves, wait a second between
-requests to a host, and cache Geneteka answers in `~/.cache/pl-genealogy-record-search`.
+and metryki) or small public offices. The scripts identify themselves and keep to each site's
+robots.txt: nothing it disallows is requested, and its `Crawl-delay` is the wait between two
+requests, held across separate runs of the scripts. Geneteka asks for **120 seconds**,
+Skanoteka and Metryki for 60; a site that publishes no delay gets one second. So:
+
+- A Geneteka search costs two minutes for every page of 50 rows after the first, and **one
+  command can outlast a shell tool's default timeout**. Run Geneteka and sweep commands with
+  a long timeout (ten minutes) or in the background; a sweep of several surnames and record
+  types runs for hours.
+- The scripts print how long they will wait. Don't kill and restart them: the wait carries
+  over to the next run anyway.
+- Cached Geneteka answers (`~/.cache/pl-genealogy-record-search`, 30 days) cost nothing.
+
 Query narrowly (a parish, a surname, a year range) instead of sweeping whole provinces, and
 never work around a block, a captcha or bot protection.
 
@@ -48,6 +60,28 @@ never work around a block, a captcha or bot protection.
 If the project keeps a research log (its CLAUDE.md or the user will say where), read it
 before re-deriving anything: parish coverage, acts already found, rejected leads. Sweeps
 are slow and the indexes change little from month to month; extend, don't repeat.
+
+**The research log.** Set `GENEALOGY_LOG` to a file next to the research notes (otherwise
+it is `~/.local/share/pl-genealogy-record-search/searches.jsonl`; every write prints the path).
+`geneteka.py search` and `sweep_all.py` write every answer to it on their own. Everything
+searched another way (a book read page by page, a search in the user's browser) goes in by
+hand, with exactly what was covered, **nothing found included**:
+
+```
+python3 scripts/search_log.py add --source skanoteka --where "AP 35/1234 sy 12, births 1870-1885" \
+    --surname Kowal --years 1870-1885 --pages 40-69 --result negative --note "index pages read too"
+```
+
+Before any search, check it: the most expensive mistake in this work is searching the same
+book twice.
+
+```
+python3 scripts/search_log.py check --surname Kowal --years 1860-1880
+```
+
+`check` also says what a logged zero does not cover: a Geneteka zero covers only that index's
+years and that spelling, a zero older than six months may be out of date, and an
+`inconclusive` answer (the pooled fallback, a site that was down) counts as not searched.
 
 Ask whose ancestors are the target (the `--root` person, or a couple's children, who carry
 all four lines) and how far sideways to go. Default: direct ancestors first; their siblings
@@ -134,7 +168,9 @@ same couple's children two years apart; parents' names and the village decide, n
 
 Other mechanics:
 
-- Province-wide search: leave out `--rid`. The API returns 50 rows per call; the script pages.
+- Province-wide search: leave out `--rid`. The API returns 50 rows per call; the script pages,
+  two minutes a page, up to `--max-rows` (default 250), and says before it starts how long that
+  will take. Narrow the query rather than raise the limit.
 - The remarks are in the **last** column, often only in `title=` tooltips; `strip()` reads
   them. They carry `mąż/żona/wdowa po ...` and the exact date: the most valuable field.
 - Some parishes are **bare indexes**: year, act number, name, village, no parents in any row.
@@ -207,7 +243,9 @@ one project, a month apart, both times with a matching name and birth year. Ask 
 
 `scripts/sweep_all.py <Surname> [...]` with the sources switched on by flag
 (`--przemysl`, `--grobonet HOST`, `--repressions`, `--geneteka WOJ`). It adds female forms,
-keeps going when one source fails, and stops Geneteka at the first answer that is not real.
+keeps going when one source fails, stops Geneteka at the first answer that is not real, and
+writes every answer to the research log. With Geneteka switched on it runs for hours: run
+`search_log.py check` for the surnames first, then start it in the background.
 
 ### Scans before letters to archives
 
@@ -223,6 +261,12 @@ A negative from six months ago is worthless.
 
 How to download from each host, how to find a year in a 400-scan volume in minutes, and how
 to read the hands and the Latin: **`references/scans.md`**. Read it before opening a book.
+
+What one book teaches you goes into the log under the book's signature, so the next session
+opening it starts from there: measured page-to-scan pairs (`search_log.py calibrate --book
+<signature> --page 112 --scan 57`, then `where --book <signature> --page 130`), and quirks such
+as two years per page or a hand that writes 7 like 1 (`search_log.py lesson add --book
+<signature> "..."`). Run `search_log.py lesson list --book <signature>` before opening a book.
 
 What one act gives, so you budget for it:
 
@@ -270,6 +314,30 @@ absence from the rite you have been searching.
 | Kresy parish before 1900 | | AGAD fond 301, CDIAL Lviv fond 618 |
 | Anders' Army soldier in no index | no complete public index exists | WBH-CAW (card with photo), Sikorski Institute, TNA `WO 315`, UdSKiOR |
 
+### Which parish a village belonged to
+
+Search the parish the village belonged to **at the time**, never the one its municipality
+(gmina) has today. Villages moved between parishes, a hamlet's acts are in a neighbouring
+village's book, and in the east the Greek-Catholic church of a village often stood in another
+village than its Roman-Catholic parish.
+
+1. **Słownik geograficzny Królestwa Polskiego** (1880-1914; the whole former Commonwealth,
+   Galicia and the Kresy included). An entry names the parishes (`par. rz.-kat. w ...`,
+   `gr.-kat. w ...`), the district and the number of houses and people. Full-text search:
+   `https://dir.icm.edu.pl/?find_in=fulltext&volume_id=1&find_text=<name>&search_volume=all`.
+   Hits "in the index" are the village's own entry pages (`/Slownik_geograficzny/Tom_XIII/319`);
+   hits "in the text" are mentions in other entries, often the parish's own entry listing its
+   villages. The abbreviations are explained at the start of volume I.
+2. **Diocesan schematisms**, the yearly lists of a diocese's parishes with the villages of
+   each, give the answer for one year. Look for them in the digital libraries listed in
+   `references/sources.md`.
+3. **PRNG** (`prng.geoportal.gov.pl`), the state register of geographic names: today's
+   official names of villages and their parts, with other names in use. It tells same-named
+   villages apart and places a hamlet; it says nothing about parishes.
+
+A place read uncertainly off a scan is a lead, not a place: don't open another parish's
+books on it until the gazetteer or a second reading settles it.
+
 Addresses, endpoints and what each source needs, including how to search FamilySearch and
 Gesher Galicia in the user's browser: `references/sources.md`.
 
@@ -292,6 +360,28 @@ the married surname, both spouses in marriage rows. It gives candidates. Grade e
   probable in the note and in the GEDCOM `NOTE`.
 - **Hypothesis**: plausible, one link missing. Don't enter it. Write down which act would settle it.
 - **Rejected**: say why, in the note. A ruled-out lead stops the next session re-chasing it.
+
+### A second, blind reading of the cell that decides
+
+Old handwriting is read by the strongest model available, never a faster, cheaper pass: a
+misread surname sends the search to the wrong village. A conclusion that rests on **one
+hard-to-read cell** (a maiden name, a house number, an age, a first name) gets a second,
+independent reading before it is graded confirmed or written into the tree as from an act:
+
+1. Crop the cell at full resolution (`contact_sheet.py crop`, or `caak.py crop` at the host's
+   native resolution). One cell, not the whole page again.
+2. Give the crop to a reader that knows nothing of the research. In Claude Code that is a
+   **fresh subagent** (`general-purpose`, the same model, no cheaper override), never a fork,
+   which inherits the whole conversation and isn't blind. Its prompt is the image path and one
+   neutral question: *"Transcribe exactly what is written here. Mark letters you cannot read
+   with [?]. Do not guess."* Never the expected value, the name hoped for, the place or why it
+   matters. Without subagents the user reads the crop, or a second session with no context.
+3. The readings agree: grade on the evidence and say in the note that two readers agreed.
+   They differ: look again at exactly that spot. If it stays open, record **both readings** as a
+   conflict in the note and in the GEDCOM `NOTE`, and don't pick one. "Illegible" beats a guess.
+
+A transcription the user made is never overwritten: read the cell blind yourself and record
+the agreement or the conflict next to it.
 
 Index rows without parents (a death entry with no parents, say) are verified on the scan
 before they are used. One such row looked like a founding couple's infant daughter and would
@@ -329,7 +419,10 @@ every act as *year / act number / parish* with the archive signature and scan nu
 confidence grade of each finding, the rejected leads with reasons, and a prioritised list of
 what to order from which archive. Cite institutions with signatures, not just names. Save
 the scan crop of an act **when you find it**, not in a later "transcription round": locating
-the row again costs more than saving it now.
+the row again costs more than saving it now. Transcribe every column the first time you open
+the entry (ages, house number, godparents, witnesses, midwife, margin notes): opening the page
+again later costs more than writing it down now. Searches that found nothing go into the
+research log as they happen, every ten scans or each finished year, not all at the end.
 
 Family-facing documents are written in the third person ("X's great-grandfather"); don't
 guess how the user addresses their relatives, and check the direction of every kinship term.
@@ -357,8 +450,8 @@ A plain GEDCOM export has no `OBJE` records. An export with the **photo album op
 but its `FILE` lines are signed CDN links that expire after about a week: download the
 photos immediately and rewrite the paths. `_POSITION x y w h` is the face rectangle.
 
-**Privacy**: a tree contains living people. Keep GEDCOMs, scans of recent acts and research
-notes out of public repositories and public pages; publish only people who are dead, and
+**Privacy**: a tree contains living people. Keep GEDCOMs, scans of recent acts, the research
+log and research notes out of public repositories and public pages; publish only people who are dead, and
 never addresses or the details of anyone living.
 
 ---

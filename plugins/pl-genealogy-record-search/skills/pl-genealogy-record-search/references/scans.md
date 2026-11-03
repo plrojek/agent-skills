@@ -18,6 +18,10 @@ zoom in coarse steps and pan badly, while a local JPEG can be cropped and magnif
 - Scans are 3000-4000 px wide, 0.4-1.2 MB. The image host throws 502s and truncates
   downloads; the script retries and rejects anything that isn't a whole JPEG.
 - Skanoteka's front page lists newly added fonds; PTG adds them weekly.
+- Skanoteka's and Metryki's pages ask for 60 s between requests (robots.txt), so listing a
+  volume and reading its image credentials takes a minute or two. The images come from the
+  `metbox` hosts, which publish no delay, so they download at about one a second after that.
+  Download the scans you will read, not whole volumes "just in case".
 
 ### CAAK and other IIIF hosts (`caak.py`)
 
@@ -64,7 +68,9 @@ in the wrong village all afternoon.
    (`--y 0 0.13`; landscape birth books `--y 0.12 0.24 --x 0.13 0.62`). One image read gives
    the block boundaries, register types and years. The year is printed in the table header,
    and also written mid-page as an `Annus 186x` banner. Write the scan-to-year table into the
-   research note: it is the expensive part and it never changes.
+   research note: it is the expensive part and it never changes. Measured page-to-scan pairs
+   go into the research log (`search_log.py calibrate --book <signature> --page P --scan N`), so
+   `search_log.py where` can aim at a page next time.
 2. Then a second sheet over the target block to pin the year and month.
 3. **Jump and magnify**: `contact_sheet.py crop` on a half page (`--x 0.04 0.49` or
    `0.49 0.96`, `--y 0.03 0.53` or `0.50 0.99`) at 2x makes entries legible; one row at 3x
@@ -76,7 +82,9 @@ Exact dates from court probate files or cemetery cards land you on the right sca
 Numbering traps:
 
 - The handwritten page number is not the portal's scan number (cover frames shift it by several
-  frames). An index citing "skan 116" may mean either: try both.
+  frames). An index citing "skan 116" may mean either: try both. Measure the offset on an image
+  (never guess it) and log it with `search_log.py calibrate`; a quirk of the book goes in with
+  `search_log.py lesson add --book <signature> "..."`.
 - Microfilmed units contain **duplicate frames**. Don't read the year cadence as "one page per
   year" without checking.
 - Pencil renumbering next to the ink numbers can shift acts by one.
@@ -88,6 +96,9 @@ Numbering traps:
   showed it covered one filial village only. Open the unit list and read each title.
 
 ## Reading the registers
+
+Read from a full-resolution crop, never from a reduced whole page. A cell a conclusion rests on
+(a maiden name, a house number, an age) gets a blind second reading: SKILL.md, Phase 3.
 
 Transcribe the **whole row**, not just the names: house number (`Numerus domus`, the era's
 address, and what tells two same-named families apart and links a marriage to the children's

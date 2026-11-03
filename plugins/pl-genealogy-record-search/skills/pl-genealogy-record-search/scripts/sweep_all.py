@@ -15,6 +15,11 @@ Female forms are asked for too (-ski/-cki/-dzki -> -ska/-cka/-dzka and back).
 A source that fails does not stop the others. If Geneteka gives an answer that is not
 real (see geneteka.sanity_reasons), the rows are dropped and Geneteka is skipped for the
 rest of the run: repeating requests is what gets a network flagged.
+
+Every site's robots.txt delay is kept (Geneteka: 120 s between requests), so a sweep of
+several surnames and record types runs for hours: start it in the background and check
+`search_log.py check` first, so nothing already searched is asked again. Each source's
+answer goes into the research log (search_log.py); --no-log skips that.
 """
 import argparse
 import os
@@ -23,6 +28,17 @@ import sys
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import search_log  # noqa: E402
+
+LOG = True
+
+
+def log(source, where, surname, total, rtype="", note="", failed=False):
+    if not LOG:
+        return
+    result = "inconclusive" if failed else ("found" if total else "negative")
+    search_log.record(source, where, surname, result, rtype=rtype, count=None if failed else total,
+                      note=note, by="sweep_all.py")
 
 
 def variants(surname):
@@ -42,6 +58,7 @@ def przemysl(names):
     import cmentarze_przemysl as C
     header("PRZEMYŚL MUNICIPAL CEMETERIES - birth dates from grave cards")
     rs = C.people(names)
+    log("przemysl-cemeteries", "Przemyśl municipal cemeteries", ", ".join(names), len(rs))
     for r in sorted(rs, key=lambda x: (x["surname"], x["born"] or "9999")):
         print(f"  {r['given']:<24}{r['surname']:<24} b. {r['born'] or '?':<11} d. {r['died'] or '?':<11} "
               f"{r['cemetery']} {r['section']}/{r['row']}/{r['grave']}")
@@ -54,6 +71,7 @@ def grobonet(names, hosts):
         header(f"GROBONET - {host}")
         for sn in names:
             total, rows = G.search(host, sn)
+            log("grobonet", f"Grobonet {host}", sn, total)
             if not total:
                 continue
             print(f"  -- {sn} -> {total}")
@@ -67,6 +85,7 @@ def repressions(names):
     header("INDEKS REPRESJONOWANYCH - deportations and repression")
     for sn in names:
         total, rows = I.query(100, last_name=sn, exact_last_name="1")
+        log("indeks-represjonowanych", "Indeks Represjonowanych (surname)", sn, total)
         print(f"  -- {sn} -> {total}" + (f" (first {len(rows)}; narrow it with indeks_repr.py)" if total > len(rows) else ""))
         for uid, t in rows:
             print(f"     {t[:80]}  {I.B}/szczegoly/{uid}")
@@ -82,7 +101,11 @@ def geneteka(names, wojs, types):
                     total, rows, _, problems = G.search(w, bdm, sn, max_rows=200)
                 except Exception as e:
                     print(f"  {w} {sn} [{bdm}] error: {e!r}"[:120])
+                    log("geneteka", f"{G.WOJ.get(w, w)} ({w}) whole province", sn, 0, bdm,
+                        note=f"error: {e!r}"[:200], failed=True)
                     continue
+                if LOG:
+                    G.log_search(w, bdm, sn, "", None, "", "", total, problems)
                 if problems:
                     print(f"  {w} {sn} [{bdm}] DROPPED, not a real answer: {'; '.join(problems)}")
                     print("  Stopping Geneteka for this run. Check with `geneteka.py check` later.")
@@ -104,7 +127,10 @@ def main(argv=None):
     ap.add_argument("--repressions", action="store_true")
     ap.add_argument("--geneteka", default="", help="province codes, e.g. 06mp,09pk")
     ap.add_argument("--types", default="BSD", help="Geneteka record types, subset of BSD")
+    ap.add_argument("--no-log", action="store_true", help="don't write the answers to the research log")
     o = ap.parse_args(argv)
+    global LOG
+    LOG = not o.no_log
     names = list(dict.fromkeys(v for s in o.surnames for v in variants(s)))
     jobs = []
     if o.przemysl:

@@ -1,12 +1,13 @@
 # Sources, endpoints and archives
 
-Checked October 2026. Sites change their markup; if a script returns nothing for a query
+Checked October and November 2026. Sites change their markup; if a script returns nothing for a query
 that should have hits, open the page in a browser before trusting the zero.
 
 ## Geneteka (geneteka.genealodzy.pl)
 
 Parish indexes compiled by PTG volunteers. Index years grow every month: re-run
-`geneteka.py parishes <woj>` before a big search.
+`geneteka.py parishes <woj>` before a big search. Its robots.txt asks for `Crawl-delay: 120`
+(Skanoteka and Metryki: 60; checked 3 November 2026), and the scripts keep to it.
 
 Province codes: `01ds` dolnośląskie · `02kp` kujawsko-pomorskie · `03lb` lubelskie ·
 `04ls` lubuskie · `05ld` łódzkie · `06mp` małopolskie · `07mz` mazowieckie · `71wa` Warszawa ·
@@ -93,6 +94,30 @@ Others, no script: `mogily.pl`, `polskie-cmentarze.pl`, `ecmentarze.pl`.
 | `caak.upjp2.edu.pl` | Kraków archdiocese books, IIIF (`caak.py`) |
 | `jri-poland.org` | Jewish vital records; the route for a mixed-marriage lead |
 
+## Places: gazetteer and names register
+
+| | |
+|---|---|
+| Słownik geograficzny, full text | `https://dir.icm.edu.pl/?find_in=fulltext&volume_id=1&find_text=<name>&search_volume=all` |
+| Słownik geograficzny, a page | `https://dir.icm.edu.pl/Slownik_geograficzny/Tom_<I-XIV, XV_cz.1, XV_cz.2>/<page>` |
+| PRNG, state register of geographic names | `prng.geoportal.gov.pl`; the data can also be downloaded from `geoportal.gov.pl` |
+
+The search answer lists hits "in the index" (the entry's own pages) and "in the text"
+(mentions elsewhere). How to use them for the parish question: SKILL.md, "Which parish a
+village belonged to".
+
+## More indexes and scans, no script
+
+Search these in the user's browser; there is no script for them.
+
+| Source | What it holds |
+|---|---|
+| BaSIA (`basia.famula.pl`) | Wielkopolska and the west, 18th-20th century: baptisms, marriages, deaths and banns from civil registers and Catholic and Evangelical parishes, over 7 million entries from more than 700 places. Search by surname, given name, place (with a radius in km) and years; the surname match is fuzzy unless a percentage is given. Rows link to scans; the units with scans are on szukajwarchiwach. |
+| Genealogia w Archiwach (`genealogiawarchiwach.pl`) | an index started by the state archives in Toruń and Bydgoszcz in 2015; a JavaScript application, so only in the browser |
+| `metrikai.lt` | Lithuanian parish-book records, parish by parish (`RKB` = Roman-Catholic parish), about 1.1 million in November 2026 |
+| TsDIAL, Lviv (`tsdial.archives.gov.ua`) | blocks automated access: open it in the browser. Metrical books in fond 618 (Roman-Catholic) and fond 201 op. 4a (Greek-Catholic); its inventories are PDFs on the site |
+| Digital libraries: Polona (`polona.pl`, the National Library), Śląska (`sbc.org.pl`), Małopolska (`mbc.malopolska.pl`), Wielkopolska (`wbc.poznan.pl`); FBC (`fbc.pionier.net.pl`) searches all dLibra libraries at once | old printed material: look there for diocesan schematisms (the parishes and their villages, year by year), address books and newspapers |
+
 ## Need a real browser or an account
 
 | Source | Why | Worth it for |
@@ -161,7 +186,8 @@ members. Checked October 2026.
 
 - **AP** (state archives) signatures look like `56/1639/0/-/8` (archive/fond/series/unit).
 - **Diocesan archives** use plain volume numbers (`21/T. 10`).
-- **AGAD fond 301**: Kresy parish books before ~1900. **CDIAL Lviv fond 618**: Eastern Galicia.
+- **AGAD fond 301**: Kresy parish books before ~1900. **CDIAL (TsDIAL) Lviv**: Eastern Galicia,
+  fond 618 Roman-Catholic, fond 201 op. 4a Greek-Catholic metrical books.
 - **USC Warszawa-Śródmieście**: Kresy books after ~1900 (*księgi zabużańskie*).
 - Civil registry offices (USC) keep recent books until they are old enough to pass to the
   state archive; ask the USC of the place for anything more recent than the AP holds.
