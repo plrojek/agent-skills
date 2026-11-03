@@ -4,7 +4,7 @@
   geneteka.py parishes <woj> [--grep TEXT]
       rid per record type and indexed years for every parish in a province
   geneteka.py search <woj> <B|S|D> <surname> [--name X] [--rid N] [--from Y] [--to Y]
-                     [--max-rows 1000] [--json out.json] [--links] [--no-cache]
+                     [--max-rows 250] [--json out.json] [--links] [--no-cache] [--no-log]
   geneteka.py check <woj> <B|S|D> <rid> <surname> <expected_total>
       control query: run a search whose answer you already know
 
@@ -14,9 +14,15 @@ Every record type of a parish has its OWN rid (data-b / data-s / data-d). A wron
 not fail: it returns another table under misleading headers. Take rids from `parishes`.
 Without --rid the search covers the whole province.
 
-The API returns at most 50 rows per call; the script pages through, one call per second.
-If the answer looks like Geneteka's pooled "Archiwum" fallback (see sanity()), the script
-stops paging, does not cache it, and prints why the rows must be discarded.
+The API returns at most 50 rows per call; the script pages through. Geneteka's robots.txt
+asks for 120 s between requests and the scripts keep to it (see _net.py), so every page
+after the first costs two minutes: query narrowly, and lower --max-rows rather than raise it.
+Cached answers cost nothing. If the answer looks like Geneteka's pooled "Archiwum" fallback
+(see sanity()), the script stops paging, does not cache it, and prints why the rows must be
+discarded.
+
+Every search run from the command line is written to the research log (search_log.py):
+found, zero or untrustworthy, with the query. --no-log skips that.
 """
 import argparse
 import html
@@ -28,6 +34,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _net  # noqa: E402
+import search_log  # noqa: E402
 
 BASE = "https://geneteka.genealodzy.pl"
 POOLED_TOTAL = 3000   # no sensible single-parish or rare-surname query has more
@@ -108,7 +115,7 @@ def _fetch(params, use_cache=True):
 
 
 def search(woj, bdm, lastname="", name="", rid=None, frm="", to="", exact=True,
-           max_rows=1000, use_cache=True):
+           max_rows=250, use_cache=True):
     """Returns (total, rows, raw_rows, problems). rows are stripped text cells."""
     rid = rid or bdm
     raw, start, total, problems = [], 0, 0, []
@@ -127,6 +134,7 @@ def search(woj, bdm, lastname="", name="", rid=None, frm="", to="", exact=True,
             if problems:
                 raw = batch
                 break
+            _announce_pages(total, len(batch), max_rows)
         if not batch:
             break
         raw += batch
@@ -134,6 +142,36 @@ def search(woj, bdm, lastname="", name="", rid=None, frm="", to="", exact=True,
         if start >= total or len(raw) >= max_rows:
             break
     return total, [[strip(c) for c in r] for r in raw], raw, problems
+
+
+def _announce_pages(total, first, max_rows):
+    """Say up front how long the paging will take at the site's requested delay."""
+    want = min(total, max_rows)
+    pages = -(-(want - first) // 50) if want > first else 0
+    if not pages:
+        return
+    wait = _net.delay_for(BASE + "/api/getAct.php")
+    if wait > _net.ANNOUNCE_WAIT:
+        print(f"  {total} rows: {pages} more page(s) of 50 to read, up to {pages * wait / 60:.0f} min "
+              f"({wait:g} s between requests; cached pages are instant). "
+              f"Stop earlier with --max-rows {first}.", file=sys.stderr, flush=True)
+
+
+def log_search(woj, bdm, surname, name, rid, frm, to, total, problems):
+    """One line in the research log for one search."""
+    where = f"{WOJ.get(woj, woj)} ({woj}) " + (f"rid {rid}" if rid else "whole province")
+    years = "-".join(x for x in (frm, to) if x)
+    if problems:
+        result, note = "inconclusive", "not a real answer: " + "; ".join(problems)
+    else:
+        result, note = ("found" if total else "negative"), ""
+    query = {"woj": woj, "bdm": bdm, "rid": rid or "", "from": frm, "to": to}
+    for e in search_log.entries("search")[-300:]:      # the same query asked again today
+        if (e.get("date") == search_log._today() and e.get("query") == query and e.get("surname") == surname
+                and e.get("given", "") == name and e.get("result") == result and e.get("count") == total):
+            return
+    search_log.record("geneteka", where, surname, result, rtype=bdm, given=name, years=years,
+                      count=total, note=note, query=query, by="geneteka.py")
 
 
 def sanity_reasons(d, lastname, rid=None):
@@ -197,10 +235,12 @@ def main(argv=None):
     s.add_argument("--from", dest="frm", default="")
     s.add_argument("--to", default="")
     s.add_argument("--loose", action="store_true", help="drop the exact-match flag")
-    s.add_argument("--max-rows", type=int, default=1000)
+    s.add_argument("--max-rows", type=int, default=250,
+                   help="stop after this many rows (each 50 more = one request, 120 s apart)")
     s.add_argument("--json", help="also write the rows to this file (input for crossmatch.py)")
     s.add_argument("--links", action="store_true", help="print scan links found in raw cells")
     s.add_argument("--no-cache", action="store_true")
+    s.add_argument("--no-log", action="store_true", help="don't write this search to the research log")
     c = sub.add_parser("check")
     for k in ("woj", "bdm", "rid", "surname"):
         c.add_argument(k)
@@ -224,6 +264,8 @@ def main(argv=None):
     total, rows, raw, problems = search(o.woj, o.bdm, o.surname, o.name, o.rid, o.frm, o.to,
                                         not o.loose, o.max_rows, not o.no_cache)
     warn(problems)
+    if not o.no_log:
+        log_search(o.woj, o.bdm, o.surname, o.name, o.rid, o.frm, o.to, total, problems)
     if problems:
         return 2
     show(total, rows, o.bdm, f"{o.surname} {o.name} in {WOJ.get(o.woj, o.woj)}".replace("  ", " "))

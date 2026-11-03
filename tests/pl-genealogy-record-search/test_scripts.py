@@ -18,6 +18,7 @@ SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(TESTS)), "plugins", "pl-g
                        "skills", "pl-genealogy-record-search", "scripts")
 sys.path.insert(0, SCRIPTS)
 os.environ["GENEALOGY_CACHE_DIR"] = tempfile.mkdtemp(prefix="genealogy-test-cache-")
+os.environ["GENEALOGY_LOG"] = os.path.join(tempfile.mkdtemp(prefix="genealogy-test-log-"), "searches.jsonl")
 
 import audit_tree      # noqa: E402
 import crossmatch      # noqa: E402
