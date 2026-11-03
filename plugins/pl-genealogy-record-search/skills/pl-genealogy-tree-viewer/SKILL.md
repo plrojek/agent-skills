@@ -126,5 +126,6 @@ The reasons behind each of these, and the layout and phone rules the viewer foll
 ## Requirements
 
 Python 3.10+. Pillow only for scan pages and photos (`uv run --with pillow==11.3.0 …`). Google Chrome or
-Chromium for `check_tree.py` and the book PDF (`CHROME=/path` if it isn't on the usual paths). The
+Chromium for `check_tree.py` and the book PDF (`CHROME=/path` if it isn't on the usual paths; inside a
+Linux container Chrome may also need `--no-sandbox`, which the scripts don't add for you). The
 page itself needs nothing: no server code, no external requests, no fonts or scripts from the web.
