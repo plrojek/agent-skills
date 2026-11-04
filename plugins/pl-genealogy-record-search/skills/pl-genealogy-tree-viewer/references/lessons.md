@@ -150,6 +150,39 @@ follow them; they are here so a change to either doesn't undo one.
   frames of a centre change don't run, so new tiles stay invisible and old ones where they were.
   For a screenshot, set the centre person and call `render()` and `view()` directly instead of `go()`.
 
+## The family book
+
+- **One book per family, not one book for everyone.** Relatives read their own lines: the whole
+  tree's book given to one side of a couple is mostly the other side's family. `--lines` picks the
+  chapters, and the appendix keeps only the acts that name someone in them (the index likewise);
+  without that filter a two-line book carried every act of the tree.
+- **Say what a generation is to the reader.** Chapters count from the anchor, who is normally the
+  reader's parent, so "Dziadkowie" in a chapter are the reader's great-grandparents and every header
+  had to be translated in the reader's head. With `--reader` each header says both ("Dziadkowie · dla
+  Tomasza: pradziadkowie") and the anchor is "ojciec Tomasza".
+- **A fan of every known ancestor, not of a fixed number of generations.** A six-generation fan with
+  a field for every possible ancestor left out the 7th–9th generations a tree had reached and spent
+  most of its area on empty fields. Only a known ancestor gets an angle, as much as their name needs;
+  a branch with no further ancestors simply ends; a half circle when that fits, otherwise a full
+  circle; letters shrink to 0.7 rather than names being cut, and grow to 1.25 when there is room.
+- **Measure the fan against the page.** A full circle taller than a landscape page's content area
+  moved to the next page and left an empty one: the fan's height has a cap per page type.
+- **The fan's centre needs two lines.** "Tomasz i Ewa" cut to "Tomasz i…" in one line; a label with
+  " i " is split, the second line starting with "i".
+- **Paper has no links.** The print edition gives page numbers in the contents, in the index and next
+  to every reference to another chapter. A number makes a line longer and can move a page break, so
+  the book goes through Chrome until the numbers stop changing (two passes usually, at most four),
+  read back from the PDF's named destinations. It also gets a wider margin on the binding side and
+  the front fans on landscape pages. The screen edition keeps the links and no page numbers.
+- **`break-inside: avoid` on a whole act put one act per page** when a transcription was long. Only
+  the act's header and its scan crop are kept together; the transcription may break.
+- **Children known only from a count are one phrase.** Three children recorded without given names
+  printed as "Kowal, Kowal, Kowal"; they are "3 dzieci o nieznanych imionach".
+- **Place strings exported from tree sites carry litter**: "---, ", a postcode, "X / X Voivodeship,
+  Poland". The book prints the place itself.
+- **Three act marks are enough after one fact.** A parent proven by many acts drowned the line in
+  marks; the book shows three and "+N" (every act in the appendix still lists its people).
+
 ## Publishing
 
 - **noindex is a request, not a lock.** The page needs access control on the server; see publishing.md.

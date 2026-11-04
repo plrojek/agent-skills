@@ -1,9 +1,9 @@
 ---
 name: pl-genealogy-tree-viewer
-description: "Turn a GEDCOM and the research behind it into a private family-tree website and a printable family book: a family view with couples side by side, each grandparent's line on its own background, a whole-tree map, an ancestor fan, a timeline, a list, kinship between any two people and a path bar from the reader to whoever is in the centre, search by every spelling of a surname, by place and by years, the evidence for each fact (a transcribed act with its scan crop next to a date or a parent), walls with the next step, hypotheses and conflicting sources side by side, a downloadable ancestor picture (fan or tree, PNG/JPG/SVG), a living-people filter and a book PDF. Static files, no server code; works offline and on phones. Add-on to pl-genealogy-record-search: use it when the user has a tree (GEDCOM, research notes, acts) and wants to show it to family, put it on a private page, print it, or asks for a tree 'like a website'. Trigger phrases: 'drzewo na stronę', 'drzewo genealogiczne online', 'pokaż drzewo rodzinie', 'strona z drzewem', 'księga rodzinna', 'wydrukuj drzewo', 'wachlarz przodków', 'oś czasu przodków', 'obraz przodków', 'family tree website', 'family book PDF', 'ancestor chart picture', 'publish my family tree privately'."
+description: "Turn a GEDCOM and the research behind it into a private family-tree website and a printable family book: a family view with couples side by side, each grandparent's line on its own background, a whole-tree map, an ancestor fan, a timeline, a list, kinship between any two people and a path bar from the reader to whoever is in the centre, search by every spelling of a surname, by place and by years, the evidence for each fact (a transcribed act with its scan crop next to a date or a parent), walls with the next step, hypotheses and conflicting sources side by side, a downloadable ancestor picture (fan or tree, PNG/JPG/SVG), a living-people filter, and family books (the whole tree or one family's lines, for its readers, with a fan of every known ancestor) as a screen PDF and a print edition with page numbers. Static files, no server code; works offline and on phones. Add-on to pl-genealogy-record-search: use it when the user has a tree (GEDCOM, research notes, acts) and wants to show it to family, put it on a private page, print it, or asks for a tree 'like a website'. Trigger phrases: 'drzewo na stronę', 'drzewo genealogiczne online', 'pokaż drzewo rodzinie', 'strona z drzewem', 'księga rodzinna', 'księga dla rodziny', 'księga do druku', 'wersja do druku', 'wydrukuj drzewo', 'wachlarz przodków', 'oś czasu przodków', 'obraz przodków', 'family tree website', 'family book PDF', 'print the family book', 'ancestor chart picture', 'publish my family tree privately'."
 license: MIT
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # Family tree page and family book
@@ -23,7 +23,8 @@ out/tree.html + out/scans/             one page, data and photos inside, scans b
         │  scripts/check_tree.py      (headless Chrome: every card, every layout)
         │  scripts/publish.py         (noindex, 11-digit numbers masked, --living YEAR)
         ▼
-publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzinna.pdf
+publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzinna.pdf   (screen: links)
+                                                       --print →  Ksiega-rodzinna-druk.pdf  (paper: page numbers)
 ```
 
 ## What the page does
@@ -44,7 +45,7 @@ publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzin
 | Obraz przodków | a picture of one person's ancestors to download or share: fan or tree, 1–7 generations, dates, places, photos, empty fields for unknown ancestors, certainty colours, light, print or dark theme, PNG/JPG (2000–4000 px) or SVG; no dates or places of people presumed living by default |
 | Tiers | the left edge of a tile: act, probable, hypothesis; (?) after the surname only for research-level doubt |
 | Phone | bottom sheet, tab bar, pinch zoom, back gesture through the browser history |
-| Book | a chapter per line in pedigree numbering, act marks, walls, hypotheses, an appendix of acts, an index |
+| Book | the whole tree or chosen lines (`--lines`); a contents page; a fan of every known ancestor at the front (`--fan`) and at each chapter; a chapter per line in pedigree numbering, its generation headers also counted from the reader (`--reader`); act marks, walls, hypotheses, an appendix of the chapters' acts, an index; a print edition (`--print`) |
 
 ## Phase 0: what to collect
 
@@ -56,7 +57,8 @@ publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzin
 - Photos, named by xref (`I30.jpg`).
 - Who the tree is for: each line is the ancestors of one person, normally the parents of the people the
   tree is made for (four lines for a couple: both of each one's parents). That person goes into `ME`,
-  where the path bar starts.
+  where the path bar starts. For books: who gets one, which lines are theirs, and how their names go
+  in the genitive ("dla Tomasza").
 - Anything a certain act has replaced (a parent's name, a date): the old value and the acts that
   decided it, for a resolved conflict and a change note (Phase 1).
 
@@ -115,6 +117,41 @@ published page: a PDF can't be filtered afterwards. Set `BOOK = "Ksiega-rodzinna
 `tree_data.py` to put the link on the welcome card. Hosting it privately (access control, caching,
 checks): **`references/publishing.md`**.
 
+### Books for one family, and the print edition
+
+One book of every line suits the person the tree is for; each side of the family wants its own
+lines. Ask who gets a book, which lines are theirs and the readers' names in the genitive, then:
+
+```
+python3 scripts/build_book.py publication/index.html --lines "Andrzeja Jaworskiego,Teresy Kos" \
+    --title "Księga rodzinna Tomasza" --out publication/Ksiega-rodzinna-Tomasz.html \
+    --reader "Jaworskiego,Kos=Tomasza" --fan "Tomasz"
+```
+
+- `--lines`: fragments of the `LINES` labels; the book keeps those chapters, the acts naming their
+  people and an index of them. An unknown fragment is refused with the list of lines.
+- `--reader FRAGMENTS=GENITIVE`: the chapters of those lines are read by a child of their anchor; the
+  headers say what each generation is to the reader ("Rodzice · dla Tomasza: dziadkowie"). For a
+  couple's book give it twice, his lines for him and hers for her.
+- `--fan [WHO=]LABEL`: a fan of every known ancestor at the front, LABEL in its centre ("Jan i
+  Michał"). Without WHO the centre is the nearest person descending from every chapter's anchor (a
+  child of the couple), which also works on a page where living people's names are redacted; WHO is
+  an xref or `Given Surname|year`. Each chapter starts with its own fan anyway. Hypothetical links are
+  dashed in every fan.
+
+For paper, add `--print` and run it with pypdf: the output is `…-druk.html/.pdf`, with page numbers in
+the contents, the index and every reference to another chapter, a wider margin on the binding side
+and the front fans on landscape pages. Page numbers change the text, so Chrome prints it two to four
+times until they stop moving; the summary says when they did.
+
+```
+uv run --with pillow==11.3.0 --with pypdf==6.20.1 python3 scripts/build_book.py publication/index.html \
+    --lines "…" --reader "…" --fan "…" --print
+```
+
+The print edition is for the printer; the page links the screen edition (its links work on screen).
+Open the PDF and look at the contents page, one landscape fan and one cross-reference before sending it.
+
 ## Phase 4: keep it current
 
 | Change | Where |
@@ -141,7 +178,8 @@ The reasons behind each of these, and the layout and phone rules the viewer foll
 
 ## Requirements
 
-Python 3.10+. Pillow only for scan pages and photos (`uv run --with pillow==11.3.0 …`). Google Chrome or
+Python 3.10+. Pillow only for scan pages and photos (`uv run --with pillow==11.3.0 …`); pypdf only for
+the print edition's page numbers (`--with pypdf==6.20.1`). Google Chrome or
 Chromium for `check_tree.py` and the book PDF (`CHROME=/path` if it isn't on the usual paths; inside a
 Linux container Chrome may also need `--no-sandbox`, which the scripts don't add for you). The
 page itself needs nothing: no server code, no external requests, no fonts or scripts from the web.
