@@ -53,7 +53,7 @@ class GedcomTest(unittest.TestCase):
         self.assertEqual(len(P), 5)
         self.assertEqual(len(F), 2)
         self.assertEqual(P["@I2@"]["surn"], "Kowal")          # taken from /Kowal/
-        self.assertEqual(P["@I2@"]["givn"], "Piotr")
+        self.assertEqual(P["@I2@"]["givn"], "Protazy")
         self.assertEqual(P["@I4@"]["marnm"], "Kowal")
         self.assertEqual(P["@I5@"]["notes"], ["First line of a note\nsecond line continued"])
         self.assertEqual(F["@F2@"]["marr"], ["1925", "Wola Zielona"])
@@ -99,7 +99,7 @@ class GedcomTest(unittest.TestCase):
 
     def test_crossmatch_marriage_matches_both_spouses(self):
         index = os.path.join(self.tmp, "s.json")
-        row = ["1925", "12", "Jan", "Kowal", "Piotr, Anna", "Maria", "Lis", "Józef, Ewa",
+        row = ["1925", "12", "Jan", "Kowal", "Protazy, Anna", "Maria", "Lis", "Józef, Ewa",
                "Wola Zielona", "~ 12.05.1925"]
         with open(index, "w", encoding="utf-8") as f:
             json.dump({"bdm": "S", "rows": [row]}, f)
@@ -123,7 +123,7 @@ class GenetekaTest(unittest.TestCase):
 
     def test_pooled_answer_is_rejected(self):
         pooled = {"recordsTotal": 31544, "parishes": [],
-                  "data": [["1850", "3", "Jan", "Wiśniewski", "", "", "", "Karniewo", "", ""]]}
+                  "data": [["1850", "3", "Jan", "Kaczmarski", "", "", "", "Karniewo", "", ""]]}
         reasons = geneteka.sanity_reasons(pooled, "Nowak", "7602")
         self.assertEqual(len(reasons), 3, reasons)
 
@@ -161,7 +161,7 @@ class OtherSourcesTest(unittest.TestCase):
             "cemetery": "Cmentarz Parafialny", "sector": "F", "row": "1", "grave": "24"}])
 
     def test_female_variants(self):
-        self.assertEqual(sweep_all.variants("Zawadzki"), ["Zawadzki", "Zawadzka"])
+        self.assertEqual(sweep_all.variants("Borowski"), ["Borowski", "Borowska"])
         self.assertEqual(sweep_all.variants("Wilecka"), ["Wilecka", "Wilecki"])
         self.assertEqual(sweep_all.variants("Nowak"), ["Nowak"])
 

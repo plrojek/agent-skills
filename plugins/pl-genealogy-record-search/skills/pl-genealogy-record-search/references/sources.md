@@ -98,7 +98,7 @@ Others, no script: `mogily.pl`, `polskie-cmentarze.pl`, `ecmentarze.pl`.
 
 | | |
 |---|---|
-| Słownik geograficzny, full text | `https://dir.icm.edu.pl/?find_in=fulltext&volume_id=1&find_text=<name>&search_volume=all` |
+| Słownik geograficzny, full text | `https://dir.icm.edu.pl/?find_in=fulltext&volume_id=1&find_text=<name>&search_volume=all` (in November 2026 behind a bot check: the user's browser) |
 | Słownik geograficzny, a page | `https://dir.icm.edu.pl/Slownik_geograficzny/Tom_<I-XIV, XV_cz.1, XV_cz.2>/<page>` |
 | PRNG, state register of geographic names | `prng.geoportal.gov.pl`; the data can also be downloaded from `geoportal.gov.pl` |
 
@@ -115,8 +115,36 @@ Search these in the user's browser; there is no script for them.
 | BaSIA (`basia.famula.pl`) | Wielkopolska and the west, 18th-20th century: baptisms, marriages, deaths and banns from civil registers and Catholic and Evangelical parishes, over 7 million entries from more than 700 places. Search by surname, given name, place (with a radius in km) and years; the surname match is fuzzy unless a percentage is given. Rows link to scans; the units with scans are on szukajwarchiwach. |
 | Genealogia w Archiwach (`genealogiawarchiwach.pl`) | an index started by the state archives in Toruń and Bydgoszcz in 2015; a JavaScript application, so only in the browser |
 | `metrikai.lt` | Lithuanian parish-book records, parish by parish (`RKB` = Roman-Catholic parish), about 1.1 million in November 2026 |
-| TsDIAL, Lviv (`tsdial.archives.gov.ua`) | blocks automated access: open it in the browser. Metrical books in fond 618 (Roman-Catholic) and fond 201 op. 4a (Greek-Catholic); its inventories are PDFs on the site |
+| TsDIAL, Lviv (`tsdial.archives.gov.ua`) | the archive's site; its inventories are PDFs there. The metrical books themselves are online in ARCHIUM, below |
 | Digital libraries: Polona (`polona.pl`, the National Library), Śląska (`sbc.org.pl`), Małopolska (`mbc.malopolska.pl`), Wielkopolska (`wbc.poznan.pl`); FBC (`fbc.pionier.net.pl`) searches all dLibra libraries at once | old printed material: look there for diocesan schematisms (the parishes and their villages, year by year), address books and newspapers |
+
+## TsDIAL Lviv: ARCHIUM (archium.tsdial.archives.gov.ua)
+
+The Central State Historical Archive in Lviv shows its digitized files in ARCHIUM: free, no login,
+scans about 2000 px wide. For Eastern Galicia it is the first place to look before any letter to Lviv.
+It refuses requests from scripts (HTTP 403): use it in the user's browser like the other sites in
+the next section. Checked November 2026.
+
+| | |
+|---|---|
+| Roman-Catholic metrical books | fond 618 opis 2, ~4 000 units, inventory id **1446** |
+| Greek-Catholic metrical books | fond 201 opis 4a, inventory id **666**: the parishes' books and the consistory's copies ("Копії") of them; a few Roman-Catholic communities' deaths are in it too |
+| a whole inventory at once | `/api/v1/inventories/<id>?Limit=5000&Page=1`, then `Page=2` and on while pages come back full (unit numbers in 201/4a run past 10 000): JSON whose `View` field is the inventory as HTML rows (unit number, title, years, link to the files) |
+| a unit's scans | `/file-viewer/<files id>`; the images are the `img[data-observe-src]` elements, in viewer order, each `/static/files/<id // 1000>/<id>.jpg` |
+| from Geneteka | `search --links` rows for parishes in Ukraine often point at `/file-viewer/<files id>#file-<image id>`: that image is the act |
+
+- **Read the whole inventory and filter it yourself.** The site's search box matches fragments of
+  words and shows five results a page. One inventory URL opened in a tab gives every unit; read its
+  `View` rows and search them locally.
+- **The titles are in Ukrainian.** Village names are transliterated (Polish `Dębina` might stand as
+  `Дембіна`), and a parish's units list its villages as "… з приналежними до парафії селами …"
+  ("with the villages belonging to the parish …"). Search for the Ukrainian form of the village,
+  for the parish seat, and for the neighbouring villages: a village's books are usually filed under
+  its parish seat, not under its own name.
+- **Listed is not digitized.** A unit in the inventory can open to "page not found" or to a viewer
+  with no images. Log it as not online, with the signature, for a letter later.
+- **The years in a title are the unit's range**, not a promise that every year is inside: map the
+  volume before reading (`scans.md`).
 
 ## Need a real browser or an account
 
@@ -187,7 +215,8 @@ members. Checked October 2026.
 - **AP** (state archives) signatures look like `56/1639/0/-/8` (archive/fond/series/unit).
 - **Diocesan archives** use plain volume numbers (`21/T. 10`).
 - **AGAD fond 301**: Kresy parish books before ~1900. **CDIAL (TsDIAL) Lviv**: Eastern Galicia,
-  fond 618 Roman-Catholic, fond 201 op. 4a Greek-Catholic metrical books.
+  fond 618 Roman-Catholic, fond 201 op. 4a Greek-Catholic metrical books; many of them on ARCHIUM
+  (above).
 - **USC Warszawa-Śródmieście**: Kresy books after ~1900 (*księgi zabużańskie*).
 - Civil registry offices (USC) keep recent books until they are old enough to pass to the
   state archive; ask the USC of the place for anything more recent than the AP holds.

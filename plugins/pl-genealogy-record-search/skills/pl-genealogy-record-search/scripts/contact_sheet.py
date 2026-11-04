@@ -9,9 +9,9 @@
       them into one image. The top ~13 % of a register page carries the year (and often the
       month and act numbers), so one sheet of 12 strips maps a dozen scans in one read.
       Birth books in landscape: try --y 0.12 0.24 --x 0.13 0.62.
-  contact_sheet.py crop <scan> <out.jpg> --x 0.04 0.49 --y 0.03 0.53 [--scale 2]
+  contact_sheet.py crop <scan> <out.jpg> --x 0.04 0.49 --y 0.03 0.53 [--scale 2] [--autocontrast]
       One region, upscaled with LANCZOS. Half a page at 2x makes entries legible; one row
-      at 3x settles a surname.
+      at 3x settles a surname. --autocontrast (greyscale, stretched) for dark microfilm copies.
 
 Coordinates are fractions of the image width and height.
 """
@@ -19,7 +19,7 @@ import argparse
 import os
 import sys
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
 def _box(img, xs, ys):
@@ -56,9 +56,11 @@ def sheet(out, scans, xs, ys, width, per_sheet):
     return written
 
 
-def crop(src, out, xs, ys, scale):
+def crop(src, out, xs, ys, scale, autocontrast=False):
     with Image.open(src) as im:
         c = im.convert("RGB").crop(_box(im, xs, ys))
+    if autocontrast:
+        c = ImageOps.autocontrast(c.convert("L"), cutoff=1)
     if scale != 1:
         c = c.resize((int(c.width * scale), int(c.height * scale)), Image.LANCZOS)
     c.save(out, quality=92)
@@ -81,6 +83,7 @@ def main(argv=None):
     c.add_argument("--x", nargs=2, type=float, required=True)
     c.add_argument("--y", nargs=2, type=float, required=True)
     c.add_argument("--scale", type=float, default=2.0)
+    c.add_argument("--autocontrast", action="store_true", help="greyscale and stretch the contrast (dark microfilm)")
     o = ap.parse_args(argv)
     for pair in (o.x, o.y):
         if not (0 <= pair[0] < pair[1] <= 1):
@@ -89,7 +92,7 @@ def main(argv=None):
         for name in sheet(o.out, o.scans, o.x, o.y, o.width, o.per_sheet):
             print(name)
     else:
-        print(crop(o.scan, o.out, o.x, o.y, o.scale))
+        print(crop(o.scan, o.out, o.x, o.y, o.scale, o.autocontrast))
     return 0
 
 

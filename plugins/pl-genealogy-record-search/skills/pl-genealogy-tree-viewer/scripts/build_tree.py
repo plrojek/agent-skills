@@ -4,8 +4,9 @@
     python3 build_tree.py path/to/tree_data.py [--template tree.html] [--out tree.html]
     uv run --with pillow==11.3.0 python3 build_tree.py tree_data.py     # when there are photos or scan pages
 
-tree_data.py is plain Python next to the GEDCOM: the title, the lines (one anchor person per
-branch), tiers, walls, hypotheses, acts with transcriptions, variants, conflicts. Every key that
+tree_data.py is plain Python next to the GEDCOM: the title, the person the tree is for (ME), the
+lines (one anchor person per branch; each splits into its grandparents' lines), tiers, walls,
+hypotheses, acts with transcriptions, variants, conflicts. Every key that
 names a person is "Given Surname|birth-year", "Given Surname" or an xref like "@I12@" looked up
 right before it was typed; a key that matches no one or several people is printed, never guessed.
 The format is in references/data-model.md; templates/example/tree_data.py uses all of it.
@@ -49,6 +50,14 @@ NOT_FAMILY = re.compile(r"^(świadek|swiadek|pierwszy świadek|drugi świadek|ch
 BIRTH_ROLE = re.compile(r"^(dziecko|child)", re.I)
 DEATH_ROLE = re.compile(r"^(zmarł|zmarl|deceased)", re.I)
 COUPLE_ROLE = re.compile(r"^(pan młody|panna młoda|pan mlody|panna mloda|groom|bride)", re.I)
+
+
+# ---------------------------------------------------------------- grandparents' lines: hues
+# One entry per LINES anchor, in order: ((father's line, mother's line), the line's own side), HSL hues.
+# The father's side cool, the mother's warm; kept away from the sex colours (213, 340) and the tier
+# colours (127, 38). Lines past the fourth reuse the palette: two couples' parents never meet in one
+# person's ancestors, so a repeat is only ambiguous across the two halves of the tree.
+DEFAULT_LINE_HUES = [((195, 160), 178), ((8, 52), 30), ((250, 290), 270), ((105, 68), 86)]
 
 
 def act_kind(title):
@@ -258,6 +267,46 @@ def build(cfg_path, template=None, out=None, quiet=False):
     LINES = {lab: [a, sh] for a, lab, sh in BR}
     if counts.get(DEFBR): LINES[DEFBR] = [None, DEFSHORT]
 
+    # ---------------------------------------------------------- grandparents' lines (background bands)
+    # Each line splits into the line of its anchor's FATHER and the line of its anchor's MOTHER, each on
+    # its own background in the family view, the map, the fan, the minimap and the path bar.
+    #   in the blood of exactly one grandparent        -> that grandparent's line   (ln = their xref)
+    #   in the blood of both grandparents of ONE line  -> that line's side          (ln = the anchor's xref)
+    #   in the lines of two different anchors          -> none (the people the tree is for, their children)
+    # A married-in spouse takes the partner's line; nobody else gets one (as with lines: no one lands in
+    # someone else's line only because the algorithm didn't reach them).
+    LND, lnof = {}, {}
+    if get("GRANDPARENT_LINES", True):
+        hues = get("LINE_HUES", None) or DEFAULT_LINE_HUES
+        lnblood, multi = {}, set()
+        for i, (a, _lab, _sh) in enumerate(BR):
+            (hf, hm), hs = hues[i % len(hues)]
+            LND[a] = [people[a]["n"], hs, 0]
+            for g, h in zip(parents(a), (hf, hm)):
+                if g and g in people and people[g]["t"] != "luka":
+                    LND[g] = [people[g]["n"], h, 1]
+                    lnblood[g] = (a, blood(g))
+        for x in people:
+            keys = [g for g, (_a, b) in lnblood.items() if x in b]
+            if not keys: continue
+            sides = {lnblood[g][0] for g in keys}
+            if len(keys) == 1: lnof[x] = keys[0]
+            elif len(sides) == 1: lnof[x] = sides.pop()
+            else: multi.add(x)
+        ch = True
+        while ch:
+            ch = False
+            for f in fams.values():
+                h, w = f.get("h"), f.get("w")
+                if not (h and w): continue
+                for p1, p2 in ((h, w), (w, h)):
+                    if p1 in lnof and p2 not in lnof and p2 not in multi:
+                        lnof[p2] = lnof[p1]; ch = True
+        for x, g in lnof.items(): people[x]["ln"] = g
+    root = None
+    if get("ME", ""):
+        root = one(get("ME", ""), "ME")
+
     # ---------------------------------------------------------- walls above every ancestor without parents
     walls_by_id = {}
     for k, v in get("WALLS_BY_ID", {}).items():
@@ -281,6 +330,7 @@ def build(cfg_path, template=None, out=None, quiet=False):
         people[wid] = {"id": wid, "n": "❓ " + what, "s": "U", "sn": "— ŚCIANA —", "mn": "", "bd": "", "bp": "",
                        "by": "", "dd": "", "dp": "", "dy": "", "bu": "", "oc": "", "re": "", "no": [], "fc": [],
                        "fs": [wfid], "t": "luka", "w": how, "wf": x, "br": branch.get(x, DEFBR), "wn": p["n"], "wg": g}
+        if lnof.get(x): people[wid]["ln"] = lnof[x]
         fams[wfid] = {"id": wfid, "h": wid, "w": None, "c": [x], "md": "", "mp": ""}
         people[x]["fc"].append(wfid)
     for pp in people.values():
@@ -414,7 +464,9 @@ def build(cfg_path, template=None, out=None, quiet=False):
     meta = {"title": title}
     if get("SUBTITLE", ""): meta["subtitle"] = get("SUBTITLE", "")
     if get("BOOK", ""): meta["book"] = get("BOOK", "")
-    db = {"people": people, "fams": fams, "acts": acts, "lines": LINES, "var": get("VARIANTS", []), "meta": meta}
+    db = {"people": people, "fams": fams, "acts": acts, "lines": LINES, "var": get("VARIANTS", []), "meta": meta,
+          "lnd": LND}
+    if root: db["root"] = root
     j = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     with open(template or TEMPLATE, encoding="utf-8") as f:
         page = f.read()
@@ -431,6 +483,11 @@ def build(cfg_path, template=None, out=None, quiet=False):
     for p in real: tiers[p["t"] or "-"] = tiers.get(p["t"] or "-", 0) + 1
     say(f"{out}: {len(real)} people, {len(fams)} families, {nw} walls, {len(acts)} acts, {len(img['t'])} photos")
     say("lines:", ", ".join(f"{lab} {counts.get(lab, 0)}" for lab in LINES))
+    if LND:
+        lc = {}
+        for g in lnof.values(): lc[people[g]["n"]] = lc.get(people[g]["n"], 0) + 1
+        say("grandparents' lines:", ", ".join(f"{k} {v}" for k, v in lc.items()) or "none",
+            f"| path bar starts at: {people[root]['n'] if root else 'the person with most descendants (set ME)'}")
     say("tiers:", tiers, "| raised to akt by an act:", len(raised))
     say("evidence: births %(ur)d, deaths %(zm)d, weddings %(sl)d, parent-child %(rd)d, marriages %(zw)d" % tally)
     if missing: say(f"!! {len(missing)} walls without a description in WALLS:", ", ".join(missing[:12]) + (" …" if len(missing) > 12 else ""))

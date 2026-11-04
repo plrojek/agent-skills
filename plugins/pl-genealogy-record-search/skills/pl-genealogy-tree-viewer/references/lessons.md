@@ -24,6 +24,11 @@ follow them; they are here so a change to either doesn't undo one.
   great-great-grandfather's son".
 - **Conflicting sources are shown, not resolved by the tool.** Values verbatim from the notes, the
   status only what the evidence decided. A conflict never changes the tier or the value in the tree.
+- **When the acts win, the old value stays on the card.** Four acts gave a great-grandfather's father a
+  different given name than the family tree had. The tree now carries the acts' name, and the card
+  shows the old one twice: in a conflict marked "rozstrzygnięta według aktów" and in a `🔁 ZMIANA`
+  note naming the acts. A relative who remembers the old name finds why it changed instead of
+  thinking the page is wrong.
 
 ## Branches (lines)
 
@@ -54,6 +59,29 @@ follow them; they are here so a change to either doesn't undo one.
 - **A fact without an act mark is not uncertain.** Say so in the legend, or readers take every unmarked
   date as doubtful.
 
+## Lines and colours
+
+- **Give each grandparent's line its own background.** A line holds both of its anchor's parents'
+  families; with nothing but the line to go by, a reader can't tell the father's side from the
+  mother's in a deep tree. Each line splits into its anchor's father's and mother's lines, a band
+  behind each run of neighbouring tiles of one line, rows of one line joining into one field, and
+  the label "linia: …" pinned to the top-left of the visible part of the field.
+- **The people the tree is for get no band.** They are in two anchors' lines at once; colouring them
+  after either would be wrong.
+- **Hues stay away from the sex and tier colours**, or a band reads as "female" or "probable". The
+  father's side cool, the mother's warm. Two couples' parents can share hues: their ancestors never meet
+  in one person's tree.
+- **One colour language everywhere.** The same hue in the family view, the map, the fan, the minimap
+  and the path bar; a view in its own colours would have to be learned again.
+
+## Path bar
+
+- **Show the route, not only the kinship word.** "pradziadek" tells a reader what, the route
+  "me › father › grandfather › great-grandfather" tells them through whom, and each step is clickable.
+  It starts at the person the tree is for (`ME`) until a reader marks "to ja" on their own device.
+- **The bar keeps a constant height in every tree view**, so switching views doesn't make the drawing
+  jump; it hides on the List, the start screen and while the kinship path is open.
+
 ## Layout
 
 - **Couples stand together; spacing comes from contours.** Pulling each ancestor towards its child
@@ -66,7 +94,15 @@ follow them; they are here so a change to either doesn't undo one.
   readable scale; the rest is scrolled to. The whole-tree map is the one that fits everything, with
   level of detail (dots and family names → names → tiles).
 - **The direct line is drawn thicker**, and an edge hint points to parents that are off screen;
-  readers otherwise didn't know which way to scroll.
+  readers otherwise didn't know which way to scroll. At far zoom the thick lines merged into one
+  smear: thinner there.
+- **Far out, names instead of dots.** The map's dots told nobody anything. Names at a constant size on
+  screen, as many as fit without overlapping, the centre person, search hits and the direct line first;
+  computed a tenth of a second after the last movement, not every frame. The map's narrow tiles switch
+  to dots only below zoom 0.5: lower, their labels would be under 9 px.
+- **On a computer the card is a wide panel, not a column.** A narrow column cut the act transcriptions
+  into short lines. The panel opens on a click and closes with ✕ or Esc; the tree shifts by half the
+  width change so the person in the centre stays in the middle.
 - **Two-line labels when zoomed out use `dy` in `em`.** The label font grows as 1/zoom to keep its
   size on screen; a fixed `y` in SVG units lets the lines drift onto each other.
 
@@ -85,6 +121,18 @@ follow them; they are here so a change to either doesn't undo one.
   the card unreachable), a tab bar replaces the header buttons, the "More" menu needs a higher z-index
   than the start screen and the sheet, and a one-time gesture hint explains pinch and the sheet.
 
+## Ancestor picture
+
+- **Relatives want a picture they can print or send**, not a link to a page. It is built as an SVG
+  with explicit colours and fonts, because a saved file can't see the page's styles; PNG and JPG
+  are that SVG drawn on a canvas.
+- **Safari limits a canvas to about 16 million pixels and 16 000 px a side**, and sometimes draws the
+  photos inside an SVG only on the second pass: cap the size and draw twice.
+- **Sharing on a phone needs a fresh tap.** Preparing the file takes long enough that the browser no
+  longer counts the tap as the user's (`NotAllowedError`): keep the file and ask for one more tap.
+- **Hypothetical parents stay dashed in the picture too**, and dates and places of people presumed
+  living are off by default: the picture leaves the family's hands more easily than the page.
+
 ## The page and its code
 
 - **The builder writes the whole page from the template.** Hand edits go into your copy of
@@ -98,6 +146,9 @@ follow them; they are here so a change to either doesn't undo one.
 - **In a `@media` block the later rule wins**: add overrides at its end.
 - **Chrome caches `file://` pages.** After a rebuild, reload ignoring the cache. In Playwright a `goto`
   that only changes the `#hash` doesn't reload: go through `about:blank`.
+- **Headless screenshots catch the tiles mid-move.** Under `--virtual-time-budget` the animation
+  frames of a centre change don't run, so new tiles stay invisible and old ones where they were.
+  For a screenshot, set the centre person and call `render()` and `view()` directly instead of `go()`.
 
 ## Publishing
 
@@ -107,3 +158,8 @@ follow them; they are here so a change to either doesn't undo one.
 - **The family book is a PDF and can't be filtered afterwards.** Build it from the page you publish.
 - **A CDN can cache a page you meant to keep private.** Send `Cache-Control: private, no-store` and
   `CDN-Cache-Control: no-store`, then check with a request that has no credentials.
+- **A redacted name must go everywhere it is used.** A living person's name also labels a
+  grandparent's line; the redaction replaces it there too, and lines whose anchor is presumed living
+  are printed so their labels can be changed.
+- **Mask numbers in the data, not in the photos.** An 11-digit run can occur inside base64; masking it
+  breaks the photo. The photo line is left alone.
