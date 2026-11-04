@@ -151,6 +151,8 @@ uv run --with pillow==11.3.0 --with pypdf==6.20.1 python3 scripts/build_book.py 
 
 The print edition is for the printer; the page links the screen edition (its links work on screen).
 Open the PDF and look at the contents page, one landscape fan and one cross-reference before sending it.
+`BOOK` puts one book on the welcome card; link the other families' books from wherever relatives open
+the page (a short list next to it, or the message that sends them the link).
 
 ## Phase 4: keep it current
 
