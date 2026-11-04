@@ -24,6 +24,16 @@ LINES = [
     ("Dorota Dudziak|1962", "przodkowie Doroty Dudziak", "Doroty Dudziak"),
 ]
 
+# The person the tree is for: the path bar at the top starts here (route to the person in the centre,
+# with the kinship term) until a reader marks someone else "to ja" on their own device.
+ME = "Tomasz Jaworski|1985"
+
+# Each line splits into the lines of its anchor's father and mother, each on its own background
+# (family view, map, fan, minimap, path bar). Hues per LINES entry, in order:
+# ((father's line, mother's line), the line's own side). Leave it out for the default palette;
+# GRANDPARENT_LINES = False switches the backgrounds off.
+# LINE_HUES = [((195, 160), 178), ((8, 52), 30), ((250, 290), 270), ((105, 68), 86)]
+
 # Tier set by hand where the GEDCOM notes can't say it: akt / praw / hip / "" (certain, no badge).
 # Notes can carry "TIER: AKT | PEWNE | PRAWDOPODOBNE | HIPOTEZA" themselves (see Feliks Lis).
 TIER_OVERRIDE = {
@@ -66,16 +76,24 @@ VARIANTS = [
 ]
 
 # Two sources, two values. The status is what the evidence decided, or "otwarta".
+# When certain acts replace what the family tree said, the tree gets the act's value, the old value
+# stays here as a conflict "rozstrzygnięta według aktów" (shown green), and the person gets a GEDCOM
+# NOTE "🔁 ZMIANA według aktów: …" naming the acts (see Maciej Sowa in example.ged). Never silently.
 CONFLICTS = [
     dict(who="Grzegorz Pająk|1900", fact="rok urodzenia",
          versions=[("drzewo rodzinne", "1900"), ("rejestr cmentarza, Wola Brzozowa", "12.03.1899")],
          status="otwarta: w drzewie zostaje 1900; rozstrzygnie akt urodzenia"),
+    dict(who="Maciej Sowa", fact="imię ojca Marianny Sowy",
+         versions=[("drzewo rodzinne, przed poprawką", "Gerwazy"),
+                   ("akt ślubu, Olszyny 1885 nr 3", "Matthias (Maciej)"),
+                   ("akt chrztu wnuka Szymona, Olszyny 1890 nr 17", "Matthias (Maciej)")],
+         status="rozstrzygnięta według aktów: dwa akty zgodne, w drzewie jest już Maciej"),
 ]
 
 # A question with several answers; status przyjęty / otwarty / wykluczony.
 HYPOTHESES = [
     dict(who="Apolonia Kalita|1902", question="Która Apolonia Kalita wyszła za Feliksa Lisa?",
-         variants=[dict(text="córka Wojciecha i Zofii, ur. 1902 w Lipniku", status="otwarty",
+         variants=[dict(text="córka Hilarego i Bogumiły, ur. 1902 w Lipniku", status="otwarty",
                         notes="wiek zgodny z aktem zgonu 1979"),
                    dict(text="córka Jana i Marii, ur. 1904 w Zalesiu", status="wykluczony",
                         notes="zmarła w 1905")],

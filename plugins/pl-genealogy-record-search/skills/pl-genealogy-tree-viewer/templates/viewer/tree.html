@@ -2,6 +2,46 @@
 <html lang="pl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>__TITLE__</title>
+<style id="aimg-style">
+/* Ancestor portrait ("Obraz przodków") — the dialog with options and a live preview (code: ANCESTOR PORTRAIT in the script) */
+#aimg{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(18,14,8,.5)}
+#aimg.on{display:flex}
+#aimg .ai-box{width:min(1180px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;
+ background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+#aimg .ai-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px 10px 18px;border-bottom:1px solid var(--line)}
+#aimg h2{margin:0;font-size:16px;font-weight:650}
+#aimg .ai-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 310px;overflow:hidden}
+#aimg .ai-prev{min-height:0;overflow:auto;padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:8px}
+#aimg #ai-svg svg{position:static;display:block;width:100%;height:auto;border-radius:6px;box-shadow:var(--shadow)}
+#aimg #ai-info{margin:0;font-size:12px;color:var(--dim)}
+#aimg #ai-svg [data-ai=title]{cursor:text}
+#aimg .ai-opts{min-height:0;overflow:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px;border-left:1px solid var(--line)}
+#aimg .ai-f{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--dim);min-width:0}
+#aimg .ai-f input,#aimg .ai-f select{font:inherit;font-size:13.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+#aimg .ai-f select:disabled{opacity:.45}
+#aimg .ai-c{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.35;cursor:pointer}
+#aimg .ai-c input{margin:2px 0 0;accent-color:var(--acc)}
+#aimg .ai-row{display:flex;gap:8px}
+#aimg .ai-row .ai-f{flex:1}
+#aimg .ai-seg{display:flex;gap:6px}
+#aimg .ai-seg label{flex:1;position:relative}
+#aimg .ai-seg input{position:absolute;opacity:0;pointer-events:none}
+#aimg .ai-seg span{display:block;text-align:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer;background:var(--bg)}
+#aimg .ai-seg input:checked+span{border-color:var(--acc);color:var(--acc);background:var(--hi);font-weight:600}
+#aimg .ai-seg input:focus-visible+span{outline:2px solid var(--acc);outline-offset:1px}
+#aimg .ai-act{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
+#aimg #ai-msg{margin-right:auto;font-size:12px;color:var(--dim)}
+#aimg .ai-act button{font-size:13.5px;padding:7px 16px}
+@media (max-width:760px){
+ #aimg{padding:0}
+ #aimg .ai-box{height:100%;border-radius:0;border:0}
+ #aimg .ai-body{display:block;overflow:auto}
+ #aimg .ai-prev{max-height:42vh;padding:10px}
+ #aimg .ai-opts{overflow:visible;border-left:0;border-top:1px solid var(--line)}
+ #aimg .ai-f input,#aimg .ai-f select{font-size:16px}
+ #aimg .ai-act{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+}
+</style>
 <style>
 :root{
   --bg:#f6f4ef; --panel:#fffdf8; --ink:#241f1a; --dim:#7b7268; --line:#cfc6b8;
@@ -84,7 +124,7 @@ path.link.wall{stroke:var(--t-luka);stroke-dasharray:3 3;stroke-width:1.2;opacit
    lod0 (<0.35): coloured dots + family-name labels; lod1 (0.35–0.8): given name + surname; lod2: full tiles.
    The lod1 label is TWO lines in one <text>: the tspans use `dy` in `em`, so the gap scales with the font
    (the font grows as 1/k to keep a constant size on screen; a fixed `y` in SVG units would drift apart). */
-.node text.sn{display:none;font-size:min(calc(11px*var(--inv)),25px);font-weight:700;text-anchor:middle}
+.node text.sn{display:none;font-size:min(calc(11px*var(--inv)),28px);font-weight:700;text-anchor:middle}
 .node text.sn.lg{font-size:min(calc(10px*var(--inv)),18px)}
 .node text.sn tspan.gn{font-size:.8em;font-weight:500}
 text.cl{display:none;font-weight:800;fill:var(--ink);opacity:.72;text-anchor:middle;pointer-events:none;
@@ -104,6 +144,23 @@ svg.lod0 path.link{opacity:.45}
 svg.lod0 path.link.long{opacity:.12}
 svg.lod1 path.link.long{opacity:.1}
 svg.lod0 .band{display:none}
+/* --- background bands for the grandparents' lines + labels when zoomed far out ---
+   .lnreg: a band behind a run of tiles of one line (hue --lh from DB.lnd, computed by build_tree.py).
+   .lnlab: the line's label at the top of its field. text.zl: given name and surname at lod0, a constant
+   11 px on screen; as many as fit without overlapping (relabel). */
+.lnreg{fill:hsl(var(--lh) 62% 50% / .19);pointer-events:none}
+.lnlab{font-size:calc(10.5px*var(--inv));font-weight:700;letter-spacing:.02em;fill:hsl(var(--lh) 55% 30%);
+ pointer-events:none;paint-order:stroke;stroke:var(--bg);stroke-width:calc(3px*var(--inv));stroke-linejoin:round}
+text.zl{font-size:calc(11px*var(--inv));font-weight:700;text-anchor:middle;fill:var(--ink);cursor:pointer;
+ paint-order:stroke;stroke:var(--bg);stroke-width:calc(3.2px*var(--inv));stroke-linejoin:round}
+text.zl tspan.gn{font-size:.8em;font-weight:500}
+text.zl.me{fill:var(--acc)}
+svg:not(.lod0) text.zl{display:none}
+svg.lod0 path.link.anc{stroke-width:2}   /* from far away the thick direct-line edges merged into one brown smear */
+@media (prefers-color-scheme:dark){
+ .lnreg{fill:hsl(var(--lh) 50% 58% / .14)}
+ .lnlab{fill:hsl(var(--lh) 62% 74%)}
+}
 .pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;
  padding:2px 7px;border-radius:99px;border:1px solid currentColor;margin:0 0 8px}
 .pill.akt{color:var(--t-akt)} .pill.praw{color:var(--t-praw)}
@@ -189,6 +246,25 @@ aside h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(
 #pathbar{display:none;padding:8px 14px;background:var(--hi);border-bottom:1px solid var(--line);
  font-size:12.5px;flex:0 0 auto}
 #pathbar b{color:var(--acc)}
+/* --- path bar at the top: the route from "to ja" (by default DB.root, the person the tree is for) to the
+   person in the centre; each person in the colour of their grandparent's line, click = that person in the centre --- */
+#crumbs{display:none;align-items:center;gap:3px;padding:4px 12px;background:var(--panel);border-bottom:1px solid var(--line);
+ overflow-x:auto;white-space:nowrap;scrollbar-width:none;font-size:12.5px;flex:0 0 auto}
+#crumbs::-webkit-scrollbar{display:none}
+#crumbs.on{display:flex}
+#crumbs .cr{flex:0 0 auto;font:inherit;font-weight:600;color:var(--ink);margin:0;padding:1px 9px 1px 7px;border-radius:99px;
+ cursor:pointer;border:1px solid var(--line);border-left:4px solid var(--line);background:var(--bg);line-height:1.4}
+#crumbs .cr.ln{border-left-color:hsl(var(--lh) 58% 46%);background:color-mix(in srgb,hsl(var(--lh) 62% 50%) 14%,var(--panel))}
+#crumbs .cr:hover{border-color:var(--acc)}
+#crumbs .cr.cur{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+#crumbs .sep{flex:0 0 auto;color:var(--dim);font-size:12px;padding:0 1px;cursor:default}
+#crumbs .ckin{flex:0 0 auto;color:var(--dim);margin-left:7px}
+#crumbs .lead{flex:0 0 auto;color:var(--dim);font-size:11px;line-height:1;text-transform:uppercase;letter-spacing:.06em;margin-right:5px}
+#pathbar[style*="block"] ~ #crumbs{display:none}
+@media (prefers-color-scheme:dark){
+ #crumbs .cr.ln{border-left-color:hsl(var(--lh) 55% 62%);background:color-mix(in srgb,hsl(var(--lh) 50% 58%) 16%,var(--panel))}
+}
+@media(max-width:820px){ #crumbs{padding:4px 10px} #crumbs .lead{display:none} }
 /* --- filters --- */
 .fbox{position:relative}
 #filt{position:absolute;top:calc(100% + 7px);right:0;min-width:278px;background:var(--panel);
@@ -238,6 +314,18 @@ button.act{border-color:var(--acc);color:var(--acc)}
 .zrd .go:hover{border-color:var(--acc);color:var(--acc)}
 .grip{display:none}
 #closeside{position:absolute;right:8px;top:3px;padding:2px 8px;line-height:1.4}
+/* on a computer: the person card is a wide panel on the right, not a narrow column.
+   It appears when a person is clicked, ✕ or Esc closes it; the tree stays visible and clickable beside it. */
+@media(min-width:821px){
+  aside{display:none;width:clamp(440px,46vw,780px);margin:10px 10px 10px 0;padding:0 22px 22px;
+   border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.16)}
+  aside.peek,aside.full{display:block}
+  aside .sb{zoom:1.15}
+  .grip{display:flex;justify-content:flex-end;position:sticky;top:0;z-index:3;margin:0 -22px 0;padding:10px 10px 4px;
+   background:var(--panel)}
+  #closeside{position:static;width:36px;height:36px;padding:0;font-size:16px;line-height:1;border-radius:10px;cursor:pointer}
+  .chip b{max-width:380px}
+}
 /* --- tier as the tile's left edge (instead of a corner dot) --- */
 .node path.tier{fill:none;stroke-width:3;stroke-linecap:round}
 /* --- start screen: one card per line --- */
@@ -268,6 +356,7 @@ button.act{border-color:var(--acc);color:var(--acc)}
  top:auto;right:auto}
 #mini.on{display:block}
 #mini rect.n{fill:var(--u);opacity:.55}
+#mini rect.n.ln{fill:hsl(var(--lh) 58% 48%);opacity:.8}
 #mini rect.n.f{fill:var(--acc);opacity:1}
 #mini rect.v{fill:var(--acc);fill-opacity:.12;stroke:var(--acc);stroke-width:1.5;vector-effect:non-scaling-stroke}
 /* --- gesture help (phone, first visit) --- */
@@ -321,6 +410,8 @@ button.act{border-color:var(--acc);color:var(--acc)}
 .fseg > path:first-child{fill:var(--panel);stroke:var(--line);stroke-width:1.2;vector-effect:non-scaling-stroke}
 .fseg.M > path:first-child{fill:color-mix(in srgb,var(--m) 8%,var(--panel))}
 .fseg.F > path:first-child{fill:color-mix(in srgb,var(--f) 8%,var(--panel))}
+.fseg.ln > path:first-child{fill:color-mix(in srgb,hsl(var(--lh) 62% 50%) 22%,var(--panel))}   /* grandparent's line, as in the tree background */
+@media (prefers-color-scheme:dark){ .fseg.ln > path:first-child{fill:color-mix(in srgb,hsl(var(--lh) 50% 58%) 20%,var(--panel))} }
 .fseg:hover > path:first-child{fill:var(--hi)}
 .fseg.c > path:first-child{fill:var(--hi);stroke:var(--acc);stroke-width:2}
 .fseg.empty{cursor:default} .fseg.empty > path:first-child{fill:none;stroke-dasharray:3 4;opacity:.7}
@@ -464,6 +555,7 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
         <select id="f-br"><option value="">wybierz osobę…</option></select></label>
       <button id="wallbtn">Ściany i luki</button>
       <button id="relbtn">Pokrewieństwo</button>
+      <button id="imgbtn" title="Pobierz obraz przodków wybranej osoby: wachlarz albo drzewo, z opcjami">Obraz przodków</button>
       <div class="fbox">
         <button id="filtbtn">Filtry &#9662;</button>
         <div id="filt">
@@ -485,6 +577,7 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
 </header>
 <div id="pathbar"></div>
 <div id="findbar"></div>
+<nav id="crumbs" aria-label="Droga od osoby startowej do osoby w środku"></nav>
 <main>
   <div id="stage"><div id="grid"></div><svg id="svg" class="lod2"><g id="vp"></g></svg>
     <svg id="mini" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mini-n"></g><rect id="mini-v" class="v" x="0" y="0" width="0" height="0"/></svg>
@@ -508,7 +601,8 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
       <div class="lr"><svg viewBox="0 0 44 22"><path d="M4 11 H40" stroke="var(--f)" stroke-width="1.6" stroke-dasharray="4 3" fill="none"/></svg><span>linia kropkowana = małżeństwo</span></div>
       <div class="lr"><svg viewBox="0 0 44 22"><path d="M4 11 H40" stroke="var(--dim)" stroke-width="2.2" stroke-dasharray="1 6" stroke-linecap="round" fill="none"/></svg><span>rzadkie szare kropki = rodzice wspólnego dziecka, nie małżeństwo</span></div>
       <div class="lr"><svg viewBox="0 0 44 22"><text x="22" y="16" text-anchor="middle" font-size="13" fill="var(--acc)">&#9670;</text></svg><span>ma zapisane źródło lub uwagi</span></div>
-      <div class="gest">klik = ta osoba w środku (Rodzina) albo karta (Mapa) · dwuklik / podwójne dotknięcie = przybliż · przeciągnij = przesuń · kółko, szczypanie, przyciski albo klawisze + − = powiększenie · <b>/</b> = szukaj · wstecz w przeglądarce (Alt+&larr;) = poprzedni widok</div>
+      <div class="lr"><svg viewBox="0 0 44 22"><rect x="1" y="2" width="20" height="18" rx="4" fill="hsl(195 62% 50% / .32)"/><rect x="23" y="2" width="20" height="18" rx="4" fill="hsl(8 62% 50% / .32)"/></svg><span><b>tło</b> = linia jednego z dziadków (dziadka albo babci osoby, od której liczy się gałąź); podpis przy górze pola. Przy dużym oddaleniu imiona i nazwiska, ile się zmieści</span></div>
+      <div class="gest">klik = ta osoba w środku (Rodzina) albo karta (Mapa); karta otwiera się w oknie obok, ✕ albo Esc ją zamyka · dwuklik / podwójne dotknięcie = przybliż · przeciągnij = przesuń · kółko, szczypanie, przyciski albo klawisze + − = powiększenie · <b>/</b> = szukaj · wstecz w przeglądarce (Alt+&larr;) = poprzedni widok</div>
     </div>
   </div>
   <aside id="side"></aside>
@@ -529,7 +623,8 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
 <script>
 const DB = __DB__;
 const IMG = __IMG__;
-const P = DB.people, F = DB.fams, A = DB.acts || {}, LINES = DB.lines || {};
+const P = DB.people, F = DB.fams, A = DB.acts || {}, LINES = DB.lines || {}, LND = DB.lnd || {};
+const ME0 = (DB.root && P[DB.root]) ? DB.root : null;   // where the path bar starts until someone picks "to ja" (ME in tree_data.py)
 const META = DB.meta || {}, TITLE = META.title || "Drzewo rodzinne";
 const NW=186, NH=62, GX=20, GY=102;
 const AV=44;
@@ -679,7 +774,7 @@ function relLabel(a,b){ // label of the step a -> b
 
 /* ---------- “Path to me”: kinship relative to the person marked “this is me” ---------- */
 let ME=null; try{ const v=localStorage.getItem("drzewo.me"); if(v && P[v]) ME=v; }catch(e){}
-function setMe(id){ ME=id; try{ if(id) localStorage.setItem("drzewo.me",id); else localStorage.removeItem("drzewo.me"); }catch(e){} }
+function setMe(id){ ME=id; try{ if(id) localStorage.setItem("drzewo.me",id); else localStorage.removeItem("drzewo.me"); }catch(e){} if(typeof crumbsUpdate==="function") crumbsUpdate(); }
 const KIN={
   rodzic:{M:["ojciec","ojca"],F:["matka","matki"],U:["rodzic","rodzica"]},
   dziadek:{M:["dziadek","dziadka"],F:["babcia","babci"],U:["dziadek lub babcia","dziadka lub babci"]},
@@ -1025,7 +1120,49 @@ let T={x:0,y:0,k:1}, LOD=-1, POS={};
 const SVGNS="http://www.w3.org/2000/svg";
 function el(t,a,txt){ const e=document.createElementNS(SVGNS,t); for(const k in a) e.setAttribute(k,a[k]); if(txt!=null) e.textContent=txt; return e; }
 
+/* ---------- PATH BAR at the top ----------
+   The route from the "to ja" person (until one is picked: DB.root, set by ME in tree_data.py; without it the
+   person with the most descendants) to the person in the centre — on the whole-tree map, to the selected
+   person — over parent/child/spouse edges (bestPath, the same as "Pokrewieństwo"). Each person in the
+   colour of their grandparent's line; click = that person in the centre. The kinship term at the end.
+   The bar stays in every tree view (constant height, so switching views doesn't move the drawing); it hides
+   in the List, on the start screen and while the "Pokrewieństwo" path is open. */
+function crumbName(id){
+  const p=P[id]; if(!p) return "?";
+  if(p.t==="luka") return p.n.replace(/^❓ /,"");
+  let full=p.n.replace(/^❓ /,"").replace(/^\(.*?\)\s*/,"").trim(), sn=p.sn||"";
+  if(sn && full.endsWith(sn)) full=full.slice(0,-sn.length).trim();
+  const g=full.split(/\s+/)[0]||"";
+  return (g && sn) ? g+" "+sn : (full||sn||"?");
+}
+function crumbsUpdate(){
+  const bar=document.getElementById("crumbs"); if(!bar) return;
+  const origin=(ME && P[ME]) ? ME : (ME0 || ROOT);
+  const show=!!origin && !HOME && (MODE==="family"||MODE==="all"||MODE==="fan"||MODE==="time");
+  bar.classList.toggle("on", show);
+  if(!show){ bar.innerHTML=""; return; }
+  const target=MODE==="all" ? selId : focusId;
+  const pa=(target && P[target]) ? bestPath(origin, target) : [origin];
+  const step=(a,b)=>{ const t=stepType(a,b), sx=P[b]?.s||"U";
+    return t==="P" ? (sx==="F"?"matka":sx==="M"?"ojciec":"rodzic") : t==="C" ? (sx==="F"?"córka":sx==="M"?"syn":"dziecko")
+         : t==="S" ? (sx==="F"?"żona":sx==="M"?"mąż":"małżonek") : ""; };
+  const chip=(id,cur)=>{ const lk=P[id]?.ln, lh=(lk && LND[lk]) ? LND[lk][1] : null;
+    return `<button type="button" class="cr${lh!=null?" ln":""}${cur?" cur":""}" data-cr="${id}"${lh!=null?` style="--lh:${lh}"`:""}`
+      +` title="${esc(P[id].n.replace(/^❓ /,""))}${lk && LND[lk] && LND[lk][2] ? " · linia: "+esc(LND[lk][0]) : ""}">${esc(crumbName(id))}</button>`; };
+  let h=`<span class="lead">${ME && P[ME] ? "Od ciebie" : "Droga"}</span>`;
+  if(!pa){ h+=chip(origin,false)+`<span class="sep">›</span>`+chip(target,true)+`<span class="ckin">nie są w drzewie połączeni</span>`; }
+  else {
+    h+=pa.map((x,i)=>(i ? `<span class="sep" title="${step(pa[i-1],x)}">›</span>` : "")+chip(x, i===pa.length-1)).join("");
+    if(pa.length>1){ const kn=kinship(origin, pa[pa.length-1]); if(kn && kn!=="to ja") h+=`<span class="ckin">— ${esc(kn)}</span>`; }
+  }
+  bar.innerHTML=h;
+  bar.querySelectorAll("[data-cr]").forEach(b=>b.onclick=()=>{ const id=b.dataset.cr;
+    if(MODE==="all"){ selId=id; side(id); markSel(); if(HILITE) render(); panTo(id); crumbsUpdate(); }
+    else if(id!==focusId) go(id); else side(id); });
+  bar.scrollLeft=bar.scrollWidth;
+}
 function render(){
+  crumbsUpdate();
   if(MODE==="fan"){ renderFan(); return; }
   if(MODE==="time"){ renderTime(); return; }
   const all = MODE==="all";
@@ -1038,9 +1175,10 @@ function render(){
   const W=all?ANW:NW, Hh=all?ANH:NH, GYY=all?AGY:GY;
   const {nodes,edges,labels}=all?buildAll():build();
   POS=Object.fromEntries(nodes.map(n=>[n.id,n]));
-  vp.replaceChildren();
-  const gL=el("g"), gE=el("g"), gA=el("g",{class:"lnTop"}), gN=el("g");
-  vp.append(gL,gE,gA,gN);
+  vp.replaceChildren(); NODEG={};
+  const gR=el("g"), gL=el("g"), gE=el("g"), gA=el("g",{class:"lnTop"}), gN=el("g");
+  vp.append(gR,gL,gE,gA,gN);
+  RUNS=drawLines(gR, nodes, W, Hh, GYY);
   const minX=Math.min(...nodes.map(n=>n.x))-W/2-14;
   const LAB={"-7":"7 pokoleń wstecz","-6":"6 pokoleń wstecz","-5":"praprapradziadkowie",
              "-4":"prapradziadkowie","-3":"pradziadkowie","-2":"dziadkowie","-1":"rodzice",
@@ -1148,9 +1286,10 @@ function render(){
        if(!all && n.id!==focusId){ if(Date.now()-NAVAT<450) return; NAVAT=Date.now(); go(n.id); return; }
        selId=n.id; side(n.id); markSel(); if(HILITE&&MODE==="all") render(); });
     g.addEventListener("dblclick",ev=>{ ev.stopPropagation(); if(Date.now()-dblAt<600) return; nodeDbl(n.id); });
-    g.__id=n.id;
+    g.__id=n.id; NODEG[n.id]=g;
     gN.append(g);
   }
+  LL=el("g"); ZL=el("g"); vp.append(LL,ZL);
   miniBuild(nodes, W, Hh);
   apply(); markSel();
 }
@@ -1202,7 +1341,8 @@ function renderFan(){
       const pf=child ? par(child).fid : null, hyp=!!(id && pf && F[pf] && F[pf].hp);
       const cls="fseg "+(p ? (p.s||"U")+" t-"+(p.t||"none") : "empty")+(hyp?" hyp":"")
         +(id && id===selId ? " sel" : "")+(FIND && id ? (FIND.ids.has(id) ? " hit" : " nohit") : "");
-      const sg=el("g",{class:cls});
+      const lk=p && p.ln, sg=el("g",{class:cls+((lk && LND[lk]) ? " ln" : "")});
+      if(lk && LND[lk]) sg.style.setProperty("--lh",LND[lk][1]);
       sg.append(el("path",{d:arcPath(r0,r1,a0,a1)}));
       if(p && p.t && p.t!=="luka") sg.append(el("path",{class:"ftier",stroke:`var(--t-${p.t})`,
         d:`M${fpt(r1-3,a0+.006)} A${r1-3},${r1-3} 0 0 1 ${fpt(r1-3,a1-.006)}`}));
@@ -1274,6 +1414,342 @@ function fitTime(){
   T.y=Math.min(f ? r.h/2-f.y*k : 1e9, 24-b.y*k); apply();
 }
 
+/* ---------- ANCESTOR PORTRAIT: a PNG / JPG / SVG file to download ----------
+   The "Obraz przodków" dialog (menu → Badania): person, layout (fan or tree), generations, dates, places,
+   photos, certainty colours, theme, title, a line under the title, format and width — with a live preview.
+   The picture is an SVG with explicit colours and font (a saved file can't see the page's styles); PNG and
+   JPG are the same SVG drawn on a canvas. Ancestors follow the same filters as the tree (walls, hypothetical
+   branches); an empty field only above a known person, so it shows where knowledge ends. Parents attached
+   on a hypothesis: always a dashed frame (it is information about certainty, not decoration). By default
+   no dates or places for people presumed living. */
+const AI_FONT="Helvetica Neue, Helvetica, Arial, sans-serif";
+const AI_THEME={
+  jasny: {bg:"#f6f4ef",panel:"#fffdf8",ink:"#241f1a",dim:"#7b7268",line:"#cfc6b8",m:"#3f6ea8",f:"#a85570",u:"#8a8378",acc:"#9a6b2f",hi:"#f3e2bd",
+          t:{akt:"#2f7d3a",praw:"#a9761d",hip:"#3f6ea8",luka:"#8a8378"}},
+  druk:  {bg:"#ffffff",panel:"#ffffff",ink:"#111111",dim:"#555555",line:"#a3a3a3",m:"#3f6ea8",f:"#a85570",u:"#777777",acc:"#444444",hi:"#efefef",
+          t:{akt:"#2f7d3a",praw:"#a9761d",hip:"#3f6ea8",luka:"#777777"}},
+  ciemny:{bg:"#16150f",panel:"#211f18",ink:"#ece5d8",dim:"#9a9184",line:"#4a4436",m:"#7fb0e8",f:"#e298b0",u:"#9a9184",acc:"#d6a85f",hi:"#3a3018",
+          t:{akt:"#6fc27f",praw:"#d9a640",hip:"#7fb0e8",luka:"#9a9184"}}
+};
+const AI_TIERS=[["akt","potwierdzone dokumentem"],["praw","prawdopodobne"],["hip","hipoteza"]];
+const AI_GEN=["","Rodzice","Dziadkowie","Pradziadkowie","Prapradziadkowie","3× pradziadkowie","4× pradziadkowie","5× pradziadkowie"];
+const AI_DEF={layout:"fan", gens:5, dates:"lata", places:false, photos:true, empty:true, tiers:true, sex:true,
+  living:true, theme:"jasny", format:"png", width:3000};
+const AI_O={...AI_DEF};
+try{ const v=JSON.parse(localStorage.getItem("drzewo.obraz")||"{}");
+  for(const k in AI_DEF) if(k in v && typeof v[k]===typeof AI_DEF[k]) AI_O[k]=v[k]; }catch(e){}
+let AI_ID=null, AI_TITLE="", AI_NOTE="", AI_TOUCHED=false, AI_T=0, AI_BLOB=null;
+
+const aiX = s => String(s==null ? "" : s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const aiCut = (s,n) => s.length>n ? s.slice(0,Math.max(1,n-1))+"…" : s;
+const aiMix = (a,b,t) => { const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)), A=h(a), B=h(b);
+  return "#"+A.map((v,i)=>Math.round(v*t+B[i]*(1-t)).toString(16).padStart(2,"0")).join(""); };
+const aiAlive = p => !p.dy && !p.dd && !p.bu && +p.by >= new Date().getFullYear()-100;
+const aiPhoto = id => (IMG.b && IMG.b[id]) || (IMG.t && IMG.t[id]) || "";
+const aiFill = (o,th,p) => o.sex ? aiMix(p.s==="F" ? th.f : p.s==="M" ? th.m : th.u, th.panel, .09) : th.panel;
+/* place on the picture: the first part, without a postcode, "par." or brackets; DĘBINA → Dębina */
+function aiPlace(s){
+  if(!s) return "";
+  const parts=s.split(",").map(x=>x.trim()).filter(x=>x && !/^\d{2}-\d{3}$/.test(x) && !/^[\s\-–—?.]*$/.test(x));
+  let x=(parts[0]||"").replace(/^\?\s*/,"").replace(/\(.*?\)/g,"").replace(/^par\.\s*/,"").trim();
+  if(x && x===x.toUpperCase() && /\p{Lu}/u.test(x)) x=x.charAt(0)+x.slice(1).toLowerCase();
+  return /^[\s\-–—?.]*$/.test(x) ? "" : x;
+}
+function aiName(p){
+  const full=p.n.replace(/^❓ /,"").replace(/^\(.*?\)\s*/,"").trim();
+  const sn=(p.sn && full.endsWith(p.sn) && full.length>p.sn.length) ? p.sn : "";
+  return {full, sn, gn: sn ? full.slice(0,-sn.length).trim() : full};
+}
+/* lines under the name: dates and places, as the options say */
+function aiFacts(p,o){
+  if(p.t==="luka" || (o.living && aiAlive(p))) return [];
+  const bp=o.places ? aiPlace(p.bp) : "", dp=o.places ? aiPlace(p.dp) : "", out=[];
+  if(o.dates==="pelne"){
+    if(p.bd || p.by || bp) out.push("ur. "+[p.bd || p.by, bp].filter(Boolean).join(", "));
+    if(p.dd || p.dy || dp) out.push("zm. "+[p.dd || p.dy, dp].filter(Boolean).join(", "));
+    return out;
+  }
+  if(o.dates==="lata"){ const l=life(p); if(l) out.push(l); }
+  if(bp) out.push(bp);
+  return out;
+}
+/* slots in Ahnentafel numbering: 1 = the person, 2 = father, 3 = mother, 4 = father's father … */
+function aiSlots(id,G){
+  const s=[null,id];
+  for(let a=2;a<2**(G+1);a++){ const c=s[a>>1]; let v=null;
+    if(c && P[c].t!=="luka"){ const pr=par(c); v=(a%2===0) ? pr.f : pr.m; }
+    s.push(v||null); }
+  return s;
+}
+const aiHyp = (s,a) => { const c=s[a>>1], fid=c ? par(c).fid : null; return !!(s[a] && fid && F[fid] && F[fid].hp); };
+const aiGap = (s,a) => !s[a] && a>1 && s[a>>1] && P[s[a>>1]].t!=="luka";   // an empty field above a known person
+
+/* ---- fan: a half circle as in the Wachlarz view, father's line on the left, mother's on the right ---- */
+function aiFanText(o,th,p,g,r0,r1,a0,a1){
+  const am=(a0+a1)/2, rm=(r0+r1)/2, deg=am*180/Math.PI, tang=g<=3, wall=p.t==="luka";
+  const rot = tang ? deg+90 : (deg>270 ? deg : deg+180);
+  const fs = g<=3 ? 12.5 : g===4 ? 11 : g===5 ? 10 : 9, lh=fs*1.18;
+  const len = tang ? rm*(a1-a0) : (r1-r0), room = tang ? (r1-r0-10) : (rm*(a1-a0)-4);
+  const maxL=Math.max(1,Math.floor(room/lh)), maxc=Math.max(3,Math.floor((len-10)/(fs*0.58)));
+  const nm=aiName(p), facts=aiFacts(p,o);
+  let ls = wall ? ["?"] : (g<=4 && nm.sn ? [nm.gn,nm.sn,...facts] : [nm.full,...facts]);
+  if(ls.length>maxL && !wall && nm.sn && ls[1]===nm.sn) ls=[nm.full,...facts];
+  ls=ls.slice(0,maxL);
+  const nName = wall ? 1 : (ls[1]===nm.sn && nm.sn ? 2 : 1), y0=-(ls.length-1)*lh/2+fs*0.35;
+  const t=ls.map((x,i)=>`<tspan x="0" y="${(y0+i*lh).toFixed(1)}"${i>=nName ? ` fill="${th.dim}" font-weight="400"` : ""}>${aiX(aiCut(x,maxc))}</tspan>`).join("");
+  return `<text transform="translate(${fpt(rm,am)}) rotate(${rot.toFixed(1)})" text-anchor="middle" font-size="${fs}" font-weight="600" fill="${wall ? th.dim : th.ink}">${t}</text>`;
+}
+function aiFan(o,th,info){
+  const G=o.gens, s=aiSlots(AI_ID,G), pc=P[AI_ID], nm=aiName(pc), facts=aiFacts(pc,o);
+  const photo=o.photos ? aiPhoto(AI_ID) : "", ls=[nm.full,...facts];
+  const R0=Math.max(86, 26+ls.length*17+(photo ? 80 : 0)), WR=[0,88,88,88,112,124,132,132];
+  const R=g=>{ let r=R0; for(let i=1;i<=g;i++) r+=WR[i]; return r; };
+  const out=[];
+  out.push(`<path d="M${-R0},0 A${R0},${R0} 0 0 1 ${R0},0 Z" fill="${th.hi}" stroke="${th.acc}" stroke-width="2"/>`);
+  const yl=i=>-12-(ls.length-1-i)*17;
+  ls.forEach((x,i)=>out.push(`<text x="0" y="${yl(i)}" text-anchor="middle" font-size="${i ? 12.5 : 15}" font-weight="${i ? 400 : 700}" fill="${i ? th.dim : th.ink}">${aiX(aiCut(x, i ? 30 : 24))}</text>`));
+  if(photo){ const cy=yl(0)-15-6-34;
+    out.push(`<clipPath id="aic0"><circle cx="0" cy="${cy}" r="34"/></clipPath>`,
+      `<image xlink:href="${photo}" x="-34" y="${cy-34}" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#aic0)"/>`,
+      `<circle cx="0" cy="${cy}" r="34" fill="none" stroke="${th.acc}" stroke-width="1.5"/>`); }
+  for(let g=1; g<=G; g++){
+    const n=2**g, r0=R(g-1), r1=R(g);
+    for(let i=0;i<n;i++){
+      const a=n+i, id=s[a], p=id ? P[id] : null;
+      if(!p && !(o.empty && aiGap(s,a))) continue;
+      const a0=Math.PI+i*Math.PI/n, a1=Math.PI+(i+1)*Math.PI/n, hyp=aiHyp(s,a), wall=p && p.t==="luka";
+      let fill=th.panel, stroke=th.line, dash="", sw=1.2;
+      if(!p){ fill="none"; dash="3 4"; info.empty++; }
+      else if(wall){ fill="none"; stroke=th.t.luka; dash="4 3"; info.empty++; }
+      else { fill=aiFill(o,th,p); info.n++; }
+      if(hyp){ stroke=th.t.hip; dash="6 4"; sw=1.6; info.hyp++; }
+      out.push(`<path d="${arcPath(r0,r1,a0,a1)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`);
+      if(p && !wall && o.tiers && th.t[p.t]){ info.tiers.add(p.t);
+        out.push(`<path d="M${fpt(r1-3,a0+.006)} A${r1-3},${r1-3} 0 0 1 ${fpt(r1-3,a1-.006)}" fill="none" stroke="${th.t[p.t]}" stroke-width="3.5" stroke-linecap="round"/>`); }
+      if(p) out.push(aiFanText(o,th,p,g,r0,r1,a0,a1));
+    }
+  }
+  if(pc.t!=="luka") info.n++;
+  const RG=R(G);
+  return {body:out.join(""), x:-RG, y:-RG, w:2*RG, h:RG+4, orient:"linia ojca po lewej, matki po prawej"};
+}
+
+/* ---- tree: the person on the left, ancestors to the right; father above, mother below ---- */
+function aiTree(o,th,info){
+  const G=o.gens, s=aiSlots(AI_ID,G), N=2**(G+1);
+  const shown=a=> a<N && (s[a] ? true : (o.empty && aiGap(s,a)));
+  const all=[]; for(let a=1;a<N;a++) if(shown(a)) all.push(a);
+  const nF=Math.max(0,...all.map(a=>s[a] ? aiFacts(P[s[a]],o).length : 0));
+  const ph=o.photos && all.some(a=>s[a] && aiPhoto(s[a]));
+  const BW=ph ? 262 : 222, BH=Math.max(ph ? 64 : 0, 38+nF*16), GX=46, GY=12, HD=30;
+  const Y={}; let next=0;
+  (function place(a){
+    const up=(s[a] && P[s[a]].t!=="luka") ? [2*a,2*a+1].filter(shown) : [];
+    if(up.length){ up.forEach(place); Y[a]=(Y[up[0]]+Y[up[up.length-1]])/2; } else Y[a]=next++;
+  })(1);
+  const X=a=>Math.floor(Math.log2(a))*(BW+GX), YY=a=>HD+Y[a]*(BH+GY);
+  const lines=[], boxes=[], heads=[];
+  const deep=Math.max(...all.map(a=>Math.floor(Math.log2(a))));
+  for(let g=1; g<=deep; g++) heads.push(`<text x="${g*(BW+GX)+BW/2}" y="14" text-anchor="middle" font-size="12" letter-spacing=".5" fill="${th.dim}">${aiX(AI_GEN[g]||("pokolenie "+g))}</text>`);
+  for(const a of all){
+    const x=X(a), y=YY(a), id=s[a], p=id ? P[id] : null, hyp=aiHyp(s,a), wall=p && p.t==="luka";
+    if(a>1){ const c=a>>1, cx=X(c)+BW, cy=YY(c)+BH/2, mx=cx+GX/2;
+      lines.push(`<path d="M${cx},${cy} H${mx} V${y+BH/2} H${x}" fill="none" stroke="${hyp ? th.t.hip : th.line}" stroke-width="${hyp ? 1.6 : 1.3}"${hyp ? ' stroke-dasharray="6 4"' : ""}/>`); }
+    if(!p || wall){ info.empty++;
+      boxes.push(`<rect x="${x}" y="${y}" width="${BW}" height="${BH}" rx="9" fill="none" stroke="${wall ? th.t.luka : th.line}" stroke-dasharray="4 4" stroke-width="1.2"/>`,
+        `<text x="${x+BW/2}" y="${y+BH/2+6}" text-anchor="middle" font-size="17" font-weight="600" fill="${th.dim}">?</text>`);
+      continue; }
+    info.n++; if(hyp) info.hyp++;
+    const root=a===1, img=ph ? aiPhoto(id) : "";
+    boxes.push(`<rect x="${x}" y="${y}" width="${BW}" height="${BH}" rx="9" fill="${root ? th.hi : aiFill(o,th,p)}" stroke="${hyp ? th.t.hip : root ? th.acc : th.line}" stroke-width="${root || hyp ? 1.8 : 1.2}"${hyp ? ' stroke-dasharray="6 4"' : ""}/>`);
+    if(o.tiers && th.t[p.t]){ info.tiers.add(p.t);
+      boxes.push(`<rect x="${x+3}" y="${y+8}" width="4" height="${BH-16}" rx="2" fill="${th.t[p.t]}"/>`); }
+    const tx=x+(ph ? 64 : 16);
+    if(img){ const iy=y+(BH-52)/2;
+      boxes.push(`<clipPath id="aic${a}"><rect x="${x+12}" y="${iy}" width="44" height="52" rx="6"/></clipPath>`,
+        `<image xlink:href="${img}" x="${x+12}" y="${iy}" width="44" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#aic${a})"/>`); }
+    const nm=aiName(p), facts=aiFacts(p,o), room=x+BW-10-tx;
+    const ty=y+BH/2-(facts.length*16)/2+5;
+    boxes.push(`<text x="${tx}" y="${ty}" font-size="15" font-weight="700" fill="${th.ink}">${aiX(aiCut(nm.full, Math.floor(room/8.6)))}</text>`);
+    facts.forEach((f,i)=>boxes.push(`<text x="${tx}" y="${ty+17+i*16}" font-size="12.5" fill="${th.dim}">${aiX(aiCut(f, Math.floor(room/6.7)))}</text>`));
+  }
+  const w=(deep+1)*(BW+GX)-GX, h=HD+next*(BH+GY)-GY;
+  return {body:heads.join("")+lines.join("")+boxes.join(""), x:0, y:0, w, h, orient:"ojciec wyżej, matka niżej"};
+}
+
+/* the whole picture: background, title, note, drawing, legend, footer */
+function aiBuild(o, scale){
+  const th=AI_THEME[o.theme] || AI_THEME.jasny, info={n:0, empty:0, hyp:0, tiers:new Set()};
+  const r=(o.layout==="tree" ? aiTree : aiFan)(o,th,info);
+  const pad=48, title=AI_TITLE.trim(), note=AI_NOTE.trim();
+  const leg=[];
+  for(const [k,lab] of AI_TIERS) if(info.tiers.has(k)) leg.push({k:"t", c:th.t[k], lab});
+  if(info.hyp) leg.push({k:"h", lab:"rodzice wpięci hipotetycznie"});
+  if(info.empty) leg.push({k:"e", lab:"nieznany przodek — tu kończy się wiedza"});
+  const W=Math.max(Math.ceil(r.w+2*pad), 760);
+  const rows=[[]]; let rw=0;
+  for(const it of leg){ it.w=34+it.lab.length*6.9; if(rw && rw+it.w>W-2*pad){ rows.push([]); rw=0; } rows[rows.length-1].push(it); rw+=it.w+24; }
+  const top=pad+(title ? 44 : 0)+(note ? 26 : 0)+(title||note ? 18 : 0);
+  const legH=leg.length ? rows.length*24+6 : 0, H=Math.ceil(top+r.h+30+legH+pad*0.75);
+  const out=[`<rect width="${W}" height="${H}" fill="${th.bg}"/>`];
+  if(title) out.push(`<text data-ai="title" x="${W/2}" y="${pad+26}" text-anchor="middle" font-size="30" font-weight="700" fill="${th.ink}">${aiX(title)}</text>`);
+  if(note) out.push(`<text x="${W/2}" y="${pad+(title ? 44 : 0)+18}" text-anchor="middle" font-size="16" fill="${th.dim}">${aiX(note)}</text>`);
+  out.push(`<g transform="translate(${((W-r.w)/2-r.x).toFixed(1)},${(top-r.y).toFixed(1)})">${r.body}</g>`);
+  let y=top+r.h+26;
+  const stamp=new Date().toLocaleDateString("pl-PL",{day:"2-digit",month:"2-digit",year:"numeric"});
+  out.push(`<text x="${W/2}" y="${y}" text-anchor="middle" font-size="13" fill="${th.dim}">${aiX(r.orient+" · stan na "+stamp)}</text>`);
+  for(const row of rows){ if(!row.length) continue; y+=24;
+    let x=(W-row.reduce((s,it)=>s+it.w,0)-(row.length-1)*24)/2;
+    for(const it of row){
+      if(it.k==="t") out.push(`<rect x="${x}" y="${y-8}" width="22" height="5" rx="2" fill="${it.c}"/>`);
+      else if(it.k==="h") out.push(`<line x1="${x}" y1="${y-5}" x2="${x+22}" y2="${y-5}" stroke="${th.t.hip}" stroke-width="2" stroke-dasharray="6 4"/>`);
+      else out.push(`<rect x="${x}" y="${y-12}" width="22" height="13" rx="3" fill="none" stroke="${th.line}" stroke-dasharray="3 3"/>`);
+      out.push(`<text x="${x+30}" y="${y}" font-size="12.5" fill="${th.dim}">${aiX(it.lab)}</text>`);
+      x+=it.w+24; }
+  }
+  const k=scale||1;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${Math.round(W*k)}" height="${Math.round(H*k)}" viewBox="0 0 ${W} ${H}" font-family="${AI_FONT}">${out.join("")}</svg>`;
+  return {svg, w:W, h:H, n:info.n};
+}
+
+/* raster size: the width from the options, but at most ~16 million pixels and 16 000 px a side (Safari's limits) */
+function aiSize(b,o){
+  let k=o.width/b.w; k=Math.min(k, Math.sqrt(16e6/(b.w*b.h)), 16000/b.h, 16000/b.w);
+  return {k, w:Math.round(b.w*k), h:Math.round(b.h*k)};
+}
+async function aiRaster(o){
+  const b0=aiBuild(o), z=aiSize(b0,o), b=aiBuild(o,z.k);
+  const url=URL.createObjectURL(new Blob([b.svg],{type:"image/svg+xml;charset=utf-8"}));
+  try{
+    const im=new Image();
+    await new Promise((res,rej)=>{ im.onload=res; im.onerror=()=>rej(new Error("SVG się nie wczytało")); im.src=url; });
+    const c=document.createElement("canvas"); c.width=z.w; c.height=z.h;
+    const x=c.getContext("2d");
+    x.drawImage(im,0,0,z.w,z.h);
+    await new Promise(r=>setTimeout(r,120));        // Safari sometimes draws the photos inside an SVG only on the second pass
+    x.drawImage(im,0,0,z.w,z.h);
+    const type=o.format==="jpg" ? "image/jpeg" : "image/png";
+    return await new Promise((res,rej)=>c.toBlob(bl=>bl ? res(bl) : rej(new Error("toBlob")), type, .92));
+  } finally { URL.revokeObjectURL(url); }
+}
+const aiFile = o => { const nm=aiName(P[AI_ID]).full.normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/ł/g,"l").replace(/Ł/g,"L").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  return `Przodkowie-${nm||"osoba"}-${o.layout==="tree" ? "drzewo" : "wachlarz"}.${o.format}`; };
+async function aiBlob(){
+  const o={...AI_O};
+  return {o, blob: o.format==="svg" ? new Blob([aiBuild(o).svg],{type:"image/svg+xml;charset=utf-8"}) : await aiRaster(o)};
+}
+function aiSave(blob,name){
+  const u=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=u; a.download=name; document.body.append(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u), 60000);
+}
+
+/* ---- the dialog ---- */
+const AI_PEOPLE={};
+function aiDialog(){
+  let d=document.getElementById("aimg"); if(d) return d;
+  d=document.createElement("div"); d.id="aimg"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-labelledby","ai-h");
+  const gens=[1,2,3,4,5,6,7].map(g=>`<option value="${g}">${g}</option>`).join("");
+  d.innerHTML=`<div class="ai-box">
+  <div class="ai-top"><h2 id="ai-h">Obraz przodków</h2><button type="button" id="ai-x" aria-label="Zamknij">&#10005;</button></div>
+  <div class="ai-body">
+    <div class="ai-prev"><div id="ai-svg"></div><p id="ai-info"></p></div>
+    <div class="ai-opts">
+      <label class="ai-f">Osoba<input id="ai-who" list="ai-people" autocomplete="off" spellcheck="false"></label><datalist id="ai-people"></datalist>
+      <label class="ai-f">Tytuł na obrazie<input id="ai-title" autocomplete="off" placeholder="bez tytułu"></label>
+      <label class="ai-f">Dopisek pod tytułem<input id="ai-note" autocomplete="off" placeholder="np. Dla rodziny, Boże Narodzenie 2026"></label>
+      <div class="ai-f"><span id="ai-lay">Układ</span><div class="ai-seg" role="radiogroup" aria-labelledby="ai-lay">
+        <label><input type="radio" name="ai-layout" value="fan"><span>Wachlarz</span></label>
+        <label><input type="radio" name="ai-layout" value="tree"><span>Drzewo</span></label></div></div>
+      <div class="ai-row"><label class="ai-f">Pokolenia<select id="ai-gens">${gens}</select></label>
+        <label class="ai-f">Daty<select id="ai-dates"><option value="lata">lata życia</option><option value="pelne">pełne daty</option><option value="brak">bez dat</option></select></label></div>
+      <label class="ai-c"><input type="checkbox" id="ai-places">Miejsca urodzenia i zgonu</label>
+      <label class="ai-c"><input type="checkbox" id="ai-photos">Zdjęcia</label>
+      <label class="ai-c"><input type="checkbox" id="ai-empty">Puste pola nieznanych przodków</label>
+      <label class="ai-c"><input type="checkbox" id="ai-tiers">Kolory pewności (akt, prawdopodobne, hipoteza)</label>
+      <label class="ai-c"><input type="checkbox" id="ai-sex">Kolor pól według płci</label>
+      <label class="ai-c"><input type="checkbox" id="ai-living">Bez dat i miejsc osób żyjących</label>
+      <label class="ai-f">Motyw<select id="ai-theme"><option value="jasny">jasny</option><option value="druk">biały, do druku</option><option value="ciemny">ciemny</option></select></label>
+      <div class="ai-row"><label class="ai-f">Plik<select id="ai-format"><option value="png">PNG</option><option value="jpg">JPG</option><option value="svg">SVG (wektor, do druku)</option></select></label>
+        <label class="ai-f">Szerokość<select id="ai-width"><option value="2000">2000 px</option><option value="3000">3000 px</option><option value="4000">4000 px</option></select></label></div>
+    </div>
+  </div>
+  <div class="ai-act"><span id="ai-msg" role="status"></span><button type="button" id="ai-share" hidden>Udostępnij</button><button type="button" id="ai-dl" class="act">Pobierz</button></div>
+</div>`;
+  document.body.append(d);
+  const dl=d.querySelector("#ai-people");
+  const ppl=Object.values(P).filter(p=>p.t!=="luka").sort((a,b)=>a.n.localeCompare(b.n,"pl"));
+  for(const p of ppl){ const yl=life(p).replace(/\s*–\s*$/,""); let lab=p.n.replace(/^❓ /,"")+(yl ? " ("+yl+")" : "");
+    while(AI_PEOPLE[lab] && AI_PEOPLE[lab]!==p.id) lab+=" ";
+    AI_PEOPLE[lab]=p.id; const op=document.createElement("option"); op.value=lab; dl.append(op); }
+  const q$=s=>d.querySelector(s);
+  d.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Escape") aiClose(); });   // the tree's "/" and +/− keys don't act inside the dialog
+  d.addEventListener("click",e=>{ if(e.target===d) aiClose(); });
+  q$("#ai-svg").addEventListener("click",e=>{ if(e.target.closest("[data-ai=title]")){ const t=q$("#ai-title"); t.focus(); t.select(); } });   // a click on the title in the preview = edit it
+  q$("#ai-x").onclick=aiClose;
+  const who=q$("#ai-who");
+  who.addEventListener("change",()=>{ const id=AI_PEOPLE[who.value];
+    if(id){ AI_ID=id; if(!AI_TOUCHED) AI_TITLE=aiDefTitle(); aiSync(); aiPreview(); } else who.value=aiLabel(AI_ID); });
+  q$("#ai-title").addEventListener("input",e=>{ AI_TITLE=e.target.value; AI_TOUCHED=true; aiPreview(); });
+  q$("#ai-note").addEventListener("input",e=>{ AI_NOTE=e.target.value; aiPreview(); });
+  d.querySelectorAll("input[name=ai-layout]").forEach(r=>r.addEventListener("change",()=>{ AI_O.layout=r.value; aiChanged(); }));
+  for(const k of ["places","photos","empty","tiers","sex","living"]) q$("#ai-"+k).addEventListener("change",e=>{ AI_O[k]=e.target.checked; aiChanged(); });
+  for(const k of ["gens","dates","theme","format","width"]) q$("#ai-"+k).addEventListener("change",e=>{
+    AI_O[k]=(k==="gens"||k==="width") ? +e.target.value : e.target.value; aiChanged(); });
+  q$("#ai-dl").onclick=async()=>{ const m=q$("#ai-msg"); m.textContent="Przygotowuję plik…";
+    try{ const {o,blob}=await aiBlob(); aiSave(blob, aiFile(o)); m.textContent="Zapisano: "+aiFile(o); }
+    catch(e){ m.textContent="Nie udało się zapisać obrazu ("+(e.message||e)+"). Spróbuj formatu SVG."; } };
+  const sh=q$("#ai-share");
+  if(navigator.canShare){ sh.hidden=false;
+    sh.onclick=async()=>{ const m=q$("#ai-msg");
+      try{
+        if(!AI_BLOB){ m.textContent="Przygotowuję plik…"; AI_BLOB=await aiBlob(); }
+        const f=new File([AI_BLOB.blob], aiFile(AI_BLOB.o), {type:AI_BLOB.blob.type});
+        if(!navigator.canShare({files:[f]})){ m.textContent="Ta przeglądarka nie udostępnia plików — użyj „Pobierz”."; return; }
+        await navigator.share({files:[f], title:AI_TITLE||"Obraz przodków"}); m.textContent="";
+      }catch(e){
+        if(e && e.name==="NotAllowedError" && AI_BLOB) m.textContent="Plik gotowy — dotknij „Udostępnij” jeszcze raz.";
+        else if(!(e && e.name==="AbortError")) m.textContent="Nie udało się udostępnić ("+(e.message||e)+").";
+      } }; }
+  return d;
+}
+const aiLabel = id => Object.keys(AI_PEOPLE).find(k=>AI_PEOPLE[k]===id) || "";
+const aiDefTitle = () => "Przodkowie: "+aiName(P[AI_ID]).full;
+function aiSync(){
+  const d=aiDialog(), q$=s=>d.querySelector(s);
+  q$("#ai-who").value=aiLabel(AI_ID); q$("#ai-title").value=AI_TITLE; q$("#ai-note").value=AI_NOTE;
+  d.querySelectorAll("input[name=ai-layout]").forEach(r=>r.checked=(r.value===AI_O.layout));
+  for(const k of ["places","photos","empty","tiers","sex","living"]) q$("#ai-"+k).checked=!!AI_O[k];
+  for(const k of ["gens","dates","theme","format","width"]) q$("#ai-"+k).value=String(AI_O[k]);
+  q$("#ai-width").disabled = AI_O.format==="svg";
+}
+function aiChanged(){
+  try{ localStorage.setItem("drzewo.obraz", JSON.stringify(AI_O)); }catch(e){}
+  aiSync(); aiPreview();
+}
+function aiPreview(){
+  AI_BLOB=null; clearTimeout(AI_T);
+  AI_T=setTimeout(()=>{
+    const d=aiDialog(), b=aiBuild({...AI_O}), z=aiSize(b,AI_O);
+    d.querySelector("#ai-svg").innerHTML=b.svg;
+    d.querySelector("#ai-info").textContent=`Na obrazie: ${b.n} ${plOs(b.n)} · `
+      +(AI_O.format==="svg" ? "SVG (wektor — dowolny rozmiar wydruku)" : `${z.w} × ${z.h} px`)
+      +" · przodkowie według filtrów drzewa (ściany, gałęzie hipotetyczne)";
+    d.querySelector("#ai-msg").textContent="";
+  }, 60);
+}
+function imgOpen(id){
+  if(typeof closeMenu==="function") closeMenu();
+  const cand=[id, selId, focusId, ROOT].find(x=>x && P[x] && P[x].t!=="luka");
+  if(cand!==AI_ID){ AI_ID=cand; AI_TOUCHED=false; }
+  if(!AI_TOUCHED) AI_TITLE=aiDefTitle();
+  const d=aiDialog(); aiSync(); aiPreview(); d.classList.add("on");
+  d.querySelector("#ai-x").focus();
+}
+function aiClose(){ const d=document.getElementById("aimg"); if(d) d.classList.remove("on"); }
+document.getElementById("imgbtn").onclick=()=>imgOpen();
+
 /* ---------- mini map: where am I in the whole drawing ---------- */
 let MB=null;
 function miniBuild(nodes, W, H){
@@ -1286,7 +1762,10 @@ function miniBuild(nodes, W, H){
   m.setAttribute("viewBox",`${MB.x-pad} ${MB.y-pad} ${MB.w+2*pad} ${MB.h+2*pad}`);
   for(const n of nodes){
     if(!vis(n.id)) continue;
-    gn.append(el("rect",{class:"n"+(n.id===focusId||n.id===selId?" f":"")+(FIND&&FIND.ids.has(n.id)?" h":""),x:n.x-W/2,y:n.y-H/2,width:W,height:H,rx:Math.min(W,H)*0.25}));
+    const lk=(P[n.id]||{}).ln, lh=(lk && LND[lk]) ? LND[lk][1] : null;
+    const mr=el("rect",{class:"n"+(lh!=null?" ln":"")+(n.id===focusId||n.id===selId?" f":"")+(FIND&&FIND.ids.has(n.id)?" h":""),x:n.x-W/2,y:n.y-H/2,width:W,height:H,rx:Math.min(W,H)*0.25});
+    if(lh!=null) mr.style.setProperty("--lh",lh);
+    gn.append(mr);
   }
 }
 function miniUpdate(){
@@ -1321,10 +1800,95 @@ function markLine(){
     if(on && top) top.append(pth);          // on top of the ordinary lines
   }
 }
+/* ---------- background of the grandparents' lines ----------
+   Each line splits into its anchor's father's line and mother's line, each on its own background, so a
+   reader sees at a glance whose side of the family a tile belongs to. Membership (P[x].ln) and hues
+   (DB.lnd) come from build_tree.py. In every row: one rounded band behind each run of NEIGHBOURING tiles of
+   the same line; the vertical margin is half the gap between rows, so the rows of one line join into one
+   field. Returns the bands of the grandparents' lines; relabel() puts the "linia: …" label at the highest
+   VISIBLE band of each line, pinned to the top-left corner of the screen when the band starts off it. */
+function drawLines(g, nodes, W, Hh, GYY){
+  const rows=new Map();
+  for(const n of nodes){ if(!vis(n.id)) continue; const k=(P[n.id]||{}).ln;
+    if(!rows.has(n.y)) rows.set(n.y,[]); rows.get(n.y).push({n, k:(k && LND[k]) ? k : null}); }
+  const padY=Math.max(6,(GYY-Hh)/2), runs=[];
+  for(const [y,arr] of rows){
+    arr.sort((a,b)=>a.n.x-b.n.x);
+    for(let i=0;i<arr.length;){
+      const k=arr[i].k; if(!k){ i++; continue; }
+      let j=i; while(j+1<arr.length && arr[j+1].k===k && arr[j+1].n.x-arr[j].n.x<=3.2*W) j++;
+      const gl=i>0 ? arr[i].n.x-arr[i-1].n.x-W : 2*W, gr=j<arr.length-1 ? arr[j+1].n.x-arr[j].n.x-W : 2*W;
+      const x0=arr[i].n.x-W/2-Math.max(2,Math.min(14,gl/2-1)), x1=arr[j].n.x+W/2+Math.max(2,Math.min(14,gr/2-1));
+      const y0=y-Hh/2-padY;
+      g.append(el("rect",{class:"lnreg",x:x0,y:y0,width:x1-x0,height:Hh+2*padY,rx:10,style:"--lh:"+LND[k][1]}));
+      if(LND[k][2]) runs.push({k, x0, y0, x1, y1:y0+Hh+2*padY});
+      i=j+1;
+    }
+  }
+  return runs;
+}
+/* ---------- labels when zoomed far out ----------
+   At lod0 the tiles are only coloured dots. The ZL layer shows given name and surname at a constant size
+   on screen — for as many people as fit without overlapping: first the centre / selected person, search
+   hits, the kinship path, the direct line, then whoever is nearest the middle of the screen.
+   Computed ~0.1 s after the last movement (not every frame); the labels sit inside `vp`, so they move
+   with the tree. A click on a label = a click on the tile. */
+let ZL=null, LL=null, RUNS=[], ZT=0, NODEG={};
+function relabelSoon(){ clearTimeout(ZT); ZT=setTimeout(relabel,110); }
+function labTxt(id){
+  const p=P[id], sn=p.sn||p.mn||"", cut=(t,n)=>t.length>n ? t.slice(0,n-1)+"…" : t;
+  let full=p.n.replace(/^❓ /,"").replace(/^\(.*?\)\s*/,"").trim();
+  if(p.sn && full.endsWith(p.sn)) full=full.slice(0,-p.sn.length).trim();
+  return (sn && full) ? [cut(full,14), cut(sn,16)] : ["", cut(sn||full,18)];
+}
+function relabel(){
+  if(!ZL || !ZL.isConnected) return;
+  ZL.replaceChildren(); LL.replaceChildren();
+  if(HOME || (MODE!=="family" && MODE!=="all")) return;
+  const r=svg.getBoundingClientRect(), W=r.width, H=r.height, M=30, C=48, grid=new Map();
+  const best={};
+  for(const u of RUNS){ const sx0=u.x0*T.k+T.x, sx1=u.x1*T.k+T.x, sy0=u.y0*T.k+T.y, sy1=u.y1*T.k+T.y;
+    if(sx1<40 || sx0>W-40 || sy1<24 || sy0>H-24) continue;
+    const vw=Math.min(sx1,W)-Math.max(sx0,0), b=best[u.k]; if(vw<90) continue;
+    if(!b || sy0<b.sy0-1 || (Math.abs(sy0-b.sy0)<=1 && vw>b.w)) best[u.k]={u, sy0, w:vw}; }
+  for(const k in best){ const u=best[k].u, s="linia: "+LND[k][0], wl=(s.length+2)*6.6;
+    if(best[k].w < wl*0.6) continue;                       // too little of the band is visible: the label would hang over another line's field
+    const x=Math.min(Math.max(u.x0, (6-T.x)/T.k), (W-wl-6-T.x)/T.k), y=Math.max(u.y0, (4-T.y)/T.k);
+    const t=el("text",{x, y, class:"lnlab", style:"--lh:"+LND[k][1]});
+    t.append(el("tspan",{dx:"0.8em",dy:"1.3em"},s)); LL.append(t); }
+  if(LOD!==0){ return; }
+  const cells=(b,f)=>{ for(let i=Math.floor(b[0]/C);i<=Math.floor(b[2]/C);i++) for(let j=Math.floor(b[1]/C);j<=Math.floor(b[3]/C);j++) f(i+","+j); };
+  const free=b=>{ let ok=true; cells(b,k=>{ if(ok) for(const o of grid.get(k)||[]) if(b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]){ ok=false; break; } }); return ok; };
+  const take=b=>cells(b,k=>{ if(!grid.has(k)) grid.set(k,[]); grid.get(k).push(b); });
+  for(const t of vp.querySelectorAll("text.cl,text.lnlab")){ const b=t.getBoundingClientRect();
+    if(b.width) take([b.left-r.left-3, b.top-r.top-2, b.right-r.left+3, b.bottom-r.top+2]); }
+  const own=MODE==="all" ? selId : focusId, anc=(own && P[own]) ? ancLine(own) : new Set();
+  const cand=[];
+  for(const id in POS){ const p=P[id]; if(!p || p.t==="luka" || !vis(id)) continue;
+    const n=POS[id], sx=n.x*T.k+T.x, sy=n.y*T.k+T.y;
+    if(sx<-M || sx>W+M || sy<-M || sy>H+M) continue;
+    const pr=(id===focusId || id===selId) ? 0 : (FIND && FIND.ids.has(id)) ? 1 : pathSet.has(id) ? 2 : anc.has(id) ? 3 : 4;
+    cand.push([pr, Math.hypot(sx-W/2, sy-H/2), id, sx, sy]); }
+  cand.sort((a,b)=>a[0]-b[0] || a[1]-b[1]);
+  let k=0;
+  for(const [pr,,id,sx,sy] of cand){
+    if(k>=160) break;
+    const [gn,sn]=labTxt(id), w=Math.max(gn.length*5.0, sn.length*6.9)+6, h=gn ? 26 : 15;
+    const b=[sx-w/2, sy-h/2, sx+w/2, sy+h/2];
+    if(!free(b)) continue;
+    take(b); k++;
+    const n=POS[id], t=el("text",{x:n.x, y:n.y, class:"zl"+(pr===0?" me":"")});
+    if(gn){ t.append(el("tspan",{x:n.x,dy:"-0.45em",class:"gn"},gn), el("tspan",{x:n.x,dy:"1.15em"},sn)); }
+    else { t.setAttribute("dy","0.35em"); t.textContent=sn; }
+    t.addEventListener("click",ev=>{ ev.stopPropagation(); NODEG[id]?.dispatchEvent(new MouseEvent("click")); });
+    ZL.append(t);
+  }
+}
 function apply(){
   vp.setAttribute("transform",`translate(${T.x},${T.y}) scale(${T.k})`);
-  const l=T.k<.35?0:T.k<.8?1:2;
+  const l=T.k<(MODE==="all" ? .5 : .35)?0:T.k<.8?1:2;   // the map has narrow tiles: below .5 a lod1 label would be under 9 px
   if(l!==LOD){ LOD=l; svg.classList.remove("lod0","lod1","lod2"); svg.classList.add("lod"+l); }
+  relabelSoon();
   svg.style.setProperty("--inv",(1/T.k).toFixed(4));
   miniUpdate();
   ptrUpdate();
@@ -1462,6 +2026,7 @@ function navBack(){ if(NAVSEQ>0) history.back(); }
 const BARR='<svg class="barr" viewBox="0 0 16 16" aria-hidden="true"><path d="M14.5 8H3.6M8.2 3.2 3.4 8l4.8 4.8" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';   // thick arrow — the same in the header and in the phone button
 /* the button says WHERE it goes back to: “← Start”, “← Lista”, “← Mapa całości” or the previous person's name */
 function navUi(){
+  crumbsUpdate();
   const can=NAVSEQ>0, c=history.state, pv=(c && c.dz && c.pv) || null;
   const hb=document.getElementById("back"); hb.disabled=!can;
   let lab="Wstecz";
@@ -1587,12 +2152,16 @@ const TIER={akt:["AKT","potwierdzone dokumentem: aktem, sygnaturą archiwalną, 
             hip:["HIPOTEZA","trop do sprawdzenia; nie traktować jako ustalonego faktu"],
             luka:["ŚCIANA","tego nie wiemy — tutaj kończy się obecny stan wiedzy"]};
 let LASTV=null;
-function sheet(st){ const s=document.getElementById("side"); s.classList.remove("peek","full"); if(st!=="close") s.classList.add(st); }
+function sheet(st){ const s=document.getElementById("side");
+  const w0=(!PHONE() && MODE!=="grid") ? svg.getBoundingClientRect().width : 0;
+  s.classList.remove("peek","full"); if(st!=="close") s.classList.add(st);
+  if(w0){ const dw=svg.getBoundingClientRect().width-w0; if(Math.abs(dw)>1){ T.x+=dw/2; apply();
+    const n=selId && POS[selId]; if(n && st!=="close"){ const x=n.x*T.k+T.x, w=w0+dw; if(x<40 || x>w-40) panTo(selId); } } } }
 function closeMenu(){ const m=document.getElementById("menu"); m.classList.remove("on"); document.getElementById("menubtn").classList.remove("on"); }
 /* Bottom sheet on phones: the grip drags between peek / full / closed. */
 function gripInit(g){
   if(!g) return; const s=document.getElementById("side"); let y0=null, base=0;
-  g.addEventListener("pointerdown",e=>{ if(e.target.closest("#closeside")) return;
+  g.addEventListener("pointerdown",e=>{ if(!PHONE() || e.target.closest("#closeside")) return;
     y0=e.clientY; base=s.getBoundingClientRect().height; s.classList.add("dragging"); g.setPointerCapture(e.pointerId); });
   g.addEventListener("pointermove",e=>{ if(y0===null) return;
     const h=Math.max(40, Math.min(window.innerHeight*0.82, base+(y0-e.clientY))); s.style.height=h+"px"; });
@@ -1605,7 +2174,7 @@ function gripInit(g){
 }
 function paint(h){
   const s=document.getElementById("side");
-  s.innerHTML='<div class="grip"><button id="closeside" title="Zamknij">&#10005;</button></div>'+h;
+  s.innerHTML='<div class="grip"><button id="closeside" title="Zamknij (Esc)" aria-label="Zamknij">&#10005;</button></div><div class="sb">'+h+'</div>';
   s.querySelector("#closeside").onclick=()=>sheet("close");
   gripInit(s.querySelector(".grip"));
   s.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{ const id=e.dataset.go;
@@ -1626,8 +2195,14 @@ function paint(h){
   s.querySelectorAll("[data-docs]").forEach(e=>e.onclick=()=>docsView());
   s.querySelectorAll("[data-br]").forEach(e=>e.onclick=()=>openLine(e.dataset.br));
   s.scrollTop=0; closeMenu();
-  if(PHONE() && !s.classList.contains("full") && !s.classList.contains("peek")) sheet("peek");
+  if(!s.classList.contains("full") && !s.classList.contains("peek")){
+    if(PHONE()) sheet("peek"); else if(!NAVQ) sheet("full"); }
 }
+/* Esc closes the enlarged photo, then the card panel (on a computer) */
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return;
+  const lb=document.getElementById("lb"); if(lb.classList.contains("on")){ lb.classList.remove("on"); return; }
+  if(PHONE() || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||"")) return;
+  const s=document.getElementById("side"); if(s.classList.contains("full")||s.classList.contains("peek")) sheet("close"); });
 document.getElementById("lb").onclick=()=>document.getElementById("lb").classList.remove("on");
 
 /* “Source” section: the full transcription of the register entry + the scan crop
@@ -1697,7 +2272,7 @@ function hyBox(p){
     +`</div>${h.r?`<div class="hyr">Rozstrzygnie: ${esc(h.r)}</div>`:""}</div>`).join("");
 }
 function side(id){
-  LASTV=null;
+  LASTV=null; if(MODE==="all") crumbsUpdate();
   const p=P[id];
   const {f,m}=par(id);
   const ti=TIER[p.t];
@@ -1797,7 +2372,7 @@ function branchFaces(br, anchor){
 }
 function homeView(){
   if(!NAVQ && !NAVD) return nav(()=>homeView());
-  HOME=true;
+  HOME=true; crumbsUpdate();
   const h=document.getElementById("homescr");
   const real=Object.values(P).filter(x=>x.t!=="luka");
   const cnt={}; for(const x of real) if(x.br) cnt[x.br]=(cnt[x.br]||0)+1;
@@ -1823,7 +2398,7 @@ function homeView(){
     if(k==="about"){ introView(); return; }
     nav(()=>{ hideHome(); setMode(k==="all"?"all":"grid"); }); if(k==="all") coach(); });
 }
-function hideHome(){ HOME=false; document.getElementById("homescr").classList.remove("on"); }
+function hideHome(){ HOME=false; document.getElementById("homescr").classList.remove("on"); crumbsUpdate(); }
 function coach(){
   if(!PHONE()) return;
   let seen=false; try{ seen=localStorage.getItem("drzewo.coach")==="1"; }catch(e){}
@@ -2058,7 +2633,7 @@ function fitHits(){
   const k=Math.max(KMIN, Math.min(1, (r.w-60)/Math.max(x1-x0,1), (r.h-60)/Math.max(y1-y0,1)));
   T.k=k; T.x=r.w/2-(x0+x1)/2*k; T.y=r.h/2-(y0+y1)/2*k; apply();
 }
-document.addEventListener("keydown",e=>{ if(e.key==="/"&&document.activeElement!==q){e.preventDefault();q.focus();q.select();} });
+document.addEventListener("keydown",e=>{ if(e.key==="/"&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)){e.preventDefault();q.focus();q.select();} });
 document.addEventListener("click",e=>{ if(!sug.contains(e.target)&&e.target!==q) sug.style.display="none"; });
 
 /* ---------- pan / zoom (mouse, wheel, drag, pinch on touch, +/− buttons) ---------- */

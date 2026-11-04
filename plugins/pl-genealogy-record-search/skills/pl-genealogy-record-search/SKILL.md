@@ -1,9 +1,9 @@
 ---
 name: pl-genealogy-record-search
-description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, which parish a village belonged to, reading Latin and Greek-Catholic registers with a blind second reading of decisive cells, a research log of every search (nothing-found included), and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
+description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK, the Lviv archive's ARCHIUM), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, which parish a village belonged to, reading Latin and Greek-Catholic registers with a blind second reading of decisive cells, a research log of every search (nothing-found included), and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
 license: MIT
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # Polish genealogy: record matching
@@ -13,8 +13,9 @@ Turning names in a tree into cited archival records. Four phases, in order:
 **inventory -> sweep the sources -> cross-match -> capture**
 
 The tree is a hypothesis; records are evidence. Never let a family story into the tree as
-fact without an act behind it, and never silently overwrite what the family remembers:
-put the record next to it and flag the conflict.
+fact without an act behind it, and never silently overwrite what the family remembers: a
+record that contradicts it goes next to it as a flagged conflict. Only a certain act replaces
+a family fact, and then the old value stays visible beside the new one (Phase 4).
 
 All scripts are in `scripts/`, Python 3.10+ standard library only, except
 `contact_sheet.py` (Pillow, run it with `uv run`). Run any of them with `--help`.
@@ -182,7 +183,19 @@ Other mechanics:
   Poland the act gives Julian and Gregorian dates (`pierwszego /: trzynastego :/ lutego`);
   the tree gets the Gregorian event date.
 - **Geneteka often links straight to the scan, but only in the raw JSON** (`<a class="gt"
-  href=...>`). `search --links` prints those links; the formatted rows lose them.
+  href=...>`). `search --links` prints those links; the formatted rows lose them. For parishes
+  now in Ukraine a link often reads `.../file-viewer/<unit>#file-<image id>`: the image id is the
+  scan of that very act in the Lviv archive's ARCHIUM. Jump to it instead of paging a 500-image
+  volume (`references/scans.md`).
+- **The parish an index is labelled with is not always the book the act is in.** An index
+  labelled with one parish quoted the signatures of other volumes, one of them a neighbouring
+  parish's; the act was in the labelled parish's own book, a unit the index didn't name. Before
+  trusting a label or a quoted signature, read the title page of the volume (or the unit's title
+  in the archive's inventory).
+- **A zero in the right parish's index can still be a gap.** An index can cover only some of the
+  parish's villages or years. One family, every member present in the parish book, returned zero
+  in all three record types of that parish's index. Look at the village column of the rows the
+  index does return: if your village never appears, log the zero as `inconclusive`, not `negative`.
 - `geneszukacz.genealodzy.pl?op=se` counts surname occurrences per province: use it to
   decide whether to dig. It returns no records.
 
@@ -254,8 +267,9 @@ one project four sessions: a volume written up again and again as "needs an arch
 had been free on Skanoteka for weeks, and three pages of it closed five walls in an afternoon.
 Check, in this order: `szukajwarchiwach.gov.pl` (the unit page shows a scan count),
 `skanoteka.genealodzy.pl` (new fonds weekly; the front page lists them),
-`metryki.genealodzy.pl`, diocesan archives (`caak.upjp2.edu.pl` for Kraków), and the
-FamilySearch catalog, which also tells you in which archive the books were filmed (many
+`metryki.genealodzy.pl`, diocesan archives (`caak.upjp2.edu.pl` for Kraków), for Eastern
+Galicia the Lviv archive's ARCHIUM (`archium.tsdial.archives.gov.ua`), and the FamilySearch
+catalog, which also tells you in which archive the books were filmed (many
 Polish films open only at a FamilySearch Center: check before promising a scan).
 A negative from six months ago is worthless.
 
@@ -286,13 +300,17 @@ What one act gives, so you budget for it:
 - Margins matter: Russian-partition birth acts carry later notes of the person's marriage;
   Galician entries carry USC notes from 1949-53 with the spouse's death date and act number.
 
-### Mixed-rite marriages are in the bride's parish
+### Marriages are in the bride's parish
 
-A Greek-Catholic groom marrying a Roman-Catholic bride in Galicia is recorded in **her**
-parish's book, not his. Every query that follows the groom's rite misses it; this cost one
-wall three sessions. Signals: the shape of the surname, the **siblings' marriages** (sisters
-married in one rite's church, their brother in the other's because of his bride), and plain
-absence from the rite you have been searching.
+A marriage is normally recorded where the bride lived. When the groom's parish has no marriage,
+open the book of the parish the bride came from (her children's baptisms often name it) before
+anything else: a wedding the groom's parish didn't have was in the bride's parish book.
+
+The rite makes this easy to miss. A Greek-Catholic groom marrying a Roman-Catholic bride in
+Galicia is recorded in **her** parish's book, not his. Every query that follows the groom's rite
+misses it; this cost one wall three sessions. Signals: the shape of the surname, the **siblings'
+marriages** (sisters married in one rite's church, their brother in the other's because of his
+bride), and plain absence from the rite you have been searching.
 
 ### Where the book physically is
 
@@ -305,13 +323,19 @@ absence from the rite you have been searching.
   after 1947).
 - **Kresy**: before ~1900 AGAD fond 301 and the Lviv archive (CDIAL fond 618); after ~1900
   the Warsaw-Śródmieście registry office (*księgi zabużańskie*).
+- **The Lviv archive's metrical books are largely online.** TsDIAL's e-resource ARCHIUM shows the
+  scans of fond 618 (Roman-Catholic) and fond 201 op. 4a (Greek-Catholic, including the
+  consistory's copies) free, without a login, up to the 1940s for many parishes. Three walls
+  written up as "only in Lviv, needs a query" fell in one day once the books were checked
+  there. How to list a whole inventory and find a parish in it: `references/sources.md`;
+  reading the viewer: `references/scans.md`.
 
 | What is missing | What it means | Where to go |
 |---|---|---|
 | death after the index's last year | coverage gap | cemetery register, then the civil registry (death acts name parents and birthplace) |
 | Kresy family, no deportation record | resettled, not deported | PUR records in the regional AP |
 | Kresy parish after 1900 | *księgi zabużańskie* | USC Warszawa-Śródmieście |
-| Kresy parish before 1900 | | AGAD fond 301, CDIAL Lviv fond 618 |
+| Kresy parish before 1900 | | AGAD fond 301; CDIAL Lviv fond 618 and 201 op. 4a, much of it online in ARCHIUM |
 | Anders' Army soldier in no index | no complete public index exists | WBH-CAW (card with photo), Sikorski Institute, TNA `WO 315`, UdSKiOR |
 
 ### Which parish a village belonged to
@@ -319,7 +343,11 @@ absence from the rite you have been searching.
 Search the parish the village belonged to **at the time**, never the one its municipality
 (gmina) has today. Villages moved between parishes, a hamlet's acts are in a neighbouring
 village's book, and in the east the Greek-Catholic church of a village often stood in another
-village than its Roman-Catholic parish.
+village than its Roman-Catholic parish. A wrong parish doesn't fail loudly: it returns a clean
+zero. One family's village was noted under a neighbouring town's parish, taken from an index;
+nothing turned up there, and the wall was written up as needing the diocesan archive. The
+children's acts named the right parish, and that parish's book, with scans online, had every
+member of the family. Settle the parish before you trust any negative.
 
 1. **Słownik geograficzny Królestwa Polskiego** (1880-1914; the whole former Commonwealth,
    Galicia and the Kresy included). An entry names the parishes (`par. rz.-kat. w ...`,
@@ -327,7 +355,8 @@ village than its Roman-Catholic parish.
    `https://dir.icm.edu.pl/?find_in=fulltext&volume_id=1&find_text=<name>&search_volume=all`.
    Hits "in the index" are the village's own entry pages (`/Slownik_geograficzny/Tom_XIII/319`);
    hits "in the text" are mentions in other entries, often the parish's own entry listing its
-   villages. The abbreviations are explained at the start of volume I.
+   villages. The abbreviations are explained at the start of volume I. In November 2026 the site
+   put a bot check in front of its pages: open it in the user's browser, never around the check.
 2. **Diocesan schematisms**, the yearly lists of a diocese's parishes with the villages of
    each, give the answer for one year. Look for them in the digital libraries listed in
    `references/sources.md`.
@@ -355,7 +384,13 @@ the married surname, both spouses in marriage rows. It gives candidates. Grade e
 
 - **Confirmed**: a second independent field agrees. The spouse's given name in the remarks
   is the strongest single corroborator; the parents' names next. An indexer's free-text note
-  about the person is gold.
+  about the person is gold. Names alone don't prove identity, exact dates do: two independent
+  exact matches settle it, such as a child's birth date known in the family and the mother's
+  birth date printed in her marriage act, both equal to the act. Marriage acts from about 1900 on
+  often print both spouses' birth dates, and a grave card gives the birth date of the dead, so
+  look for that pair. A grave card or a family date can still be off by days or weeks from the
+  act (a date misremembered, the baptism taken for the birth): a near miss is a lead to check
+  against the act, not a contradiction and not a match.
 - **Probable**: right parish, name and timing, nothing contradicts. Enter it, flagged as
   probable in the note and in the GEDCOM `NOTE`.
 - **Hypothesis**: plausible, one link missing. Don't enter it. Write down which act would settle it.
@@ -369,7 +404,8 @@ hard-to-read cell** (a maiden name, a house number, an age, a first name) gets a
 independent reading before it is graded confirmed or written into the tree as from an act:
 
 1. Crop the cell at full resolution (`contact_sheet.py crop`, or `caak.py crop` at the host's
-   native resolution). One cell, not the whole page again.
+   native resolution). One cell, not the whole page again. Name the file neutrally
+   (`blind-01.jpg`): a file name with the surname tells the reader what to expect.
 2. Give the crop to a reader that knows nothing of the research: a **fresh subagent** where the
    agent can start one (`general-purpose`, the same model, no cheaper override), never a fork,
    which inherits the whole conversation and isn't blind. Its prompt is the image path and one
@@ -438,9 +474,20 @@ guess how the user addresses their relatives, and check the direction of every k
   plus two-way FAMC/FAMS links and duplicate ids.
 - Every touched record gets a `NOTE` with the act citation, so the file documents itself.
   The house number goes in as `1 RESI / 2 PLAC <village> <no.>`, not inside a note.
-- Where a record contradicts the tree, add a `NOTE` and leave the tree value alone. Where
-  kinship is unresolved, add the person **unattached** with a note listing the hypotheses.
-  Guessing a parent writes a permanent falsehood.
+- 🔴 **Before adding a person from an act, look for them in the parsed tree** by given name and
+  dates (and the parents' or spouse's names). A child already in the tree was added a second time
+  from her death act.
+- Where a record contradicts the tree, add a `NOTE` and leave the tree value alone: one index row,
+  one hard-to-read cell or one late source is a conflict, not a correction. Where kinship is
+  unresolved, add the person **unattached** with a note listing the hypotheses. Guessing a parent
+  writes a permanent falsehood.
+- **When a certain act contradicts family tradition, the tree follows the act, visibly.** Certain
+  means read twice (the blind second reading) and, for a parent's name, best confirmed by a second
+  act, e.g. the marriage act and a child's baptism agreeing. Then change the value in the GEDCOM,
+  keep the old one as a conflict marked as resolved by the acts (the family's version, each act and
+  its value), and give the person a `NOTE` beginning `🔁 ZMIANA <date> według aktów:` that says what
+  it was, what it is now and which acts decided it. Never silently: a relative who remembers the old
+  name must find why it changed. Ask the user first when the tradition came from a living relative.
 
 **MyHeritage** cannot take a GEDCOM back: a web import always creates a new tree, and Family
 Tree Builder's "merge into project" matches heuristically, not by XREF. The patched file is a

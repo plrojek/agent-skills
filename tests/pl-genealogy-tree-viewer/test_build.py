@@ -112,6 +112,56 @@ class ExampleBuild(unittest.TestCase):
         self.assertEqual(x["n"], "Ignacy Kos")
         self.assertTrue(any(p["t"] == "luka" and p.get("wf") == self.person("Leon Kos")["id"] for p in self.P.values()))
 
+    def test_grandparents_lines(self):
+        lnd = self.r["db"]["lnd"]
+        stan, helena, andrzej = self.person("Stanisław Jaworski"), self.person("Helena Gołąb"), self.person("Andrzej Jaworski")
+        self.assertEqual(lnd[stan["id"]][0], "Stanisław Jaworski")
+        self.assertEqual(lnd[stan["id"]][2], 1)                              # a grandparent's line: labelled
+        self.assertEqual(lnd[andrzej["id"]][2], 0)                           # the anchor's own side: band only
+        self.assertEqual(len([v for v in lnd.values() if v[2]]), 8)          # 4 anchors x father and mother
+        self.assertEqual(self.person("Szymon Jaworski")["ln"], stan["id"])   # an ancestor on the father's side
+        self.assertEqual(self.person("Franciszek Gołąb")["ln"], helena["id"])
+        self.assertEqual(andrzej["ln"], andrzej["id"])                       # in both his parents' blood
+        self.assertEqual(self.person("Anna Cisek")["ln"], stan["id"])        # married in: takes the partner's line
+        self.assertNotIn("ln", self.person("Tomasz Jaworski"))               # two anchors' lines meet: no band
+        self.assertNotIn("ln", self.person("Michał Jaworski"))
+        self.assertEqual(self.P["@X1@"]["ln"], self.person("Leon Kos")["id"])  # someone only in tree_data.py
+        walls = [p for p in self.P.values() if p["t"] == "luka" and p.get("wf") == self.person("Maciej Sowa")["id"]]
+        self.assertEqual(walls[0]["ln"], stan["id"])                         # the wall above follows its person
+        hues = {v[1] for v in lnd.values()}
+        self.assertEqual(len(hues), 12)                                      # every line its own hue
+
+    def test_grandparents_lines_options(self):
+        cfg = self.config('GRANDPARENT_LINES = False', "tree_data_nolines.py")
+        with redirect_stdout(io.StringIO()):
+            r = build_tree.build(cfg, out=os.path.join(self.tmp, "nolines.html"))
+        self.assertEqual(r["db"]["lnd"], {})
+        self.assertFalse(any("ln" in p for p in r["db"]["people"].values()))
+        cfg = self.config('LINE_HUES = [((1, 2), 3)]', "tree_data_hues.py")
+        with redirect_stdout(io.StringIO()):
+            r = build_tree.build(cfg, out=os.path.join(self.tmp, "hues.html"))
+        stan = next(p for p in r["db"]["people"].values() if p["n"] == "Stanisław Jaworski")
+        self.assertEqual(r["db"]["lnd"][stan["id"]][1], 1)
+        self.assertEqual({v[1] for v in r["db"]["lnd"].values()}, {1, 2, 3})   # one entry reused for every line
+
+    def test_me_is_the_path_start(self):
+        self.assertEqual(self.r["db"]["root"], self.person("Tomasz Jaworski")["id"])
+        cfg = self.config('ME = ""', "tree_data_nome.py")
+        with redirect_stdout(io.StringIO()):
+            r = build_tree.build(cfg, out=os.path.join(self.tmp, "nome.html"))
+        self.assertNotIn("root", r["db"])                                    # the viewer falls back on its own
+        cfg = self.config('ME = "Nikt Taki|1800"', "tree_data_badme.py")
+        with redirect_stdout(io.StringIO()):
+            r = build_tree.build(cfg, out=os.path.join(self.tmp, "badme.html"))
+        self.assertTrue(any("ME: key" in p for p in r["problems"]))
+
+    def test_conflict_resolved_by_acts_with_change_note(self):
+        m = self.person("Maciej Sowa")
+        self.assertTrue(m["cf"][0]["s"].startswith("rozstrzygnięta według aktów"))  # shown green on the card
+        self.assertEqual(m["cf"][0]["v"][0], ["drzewo rodzinne, przed poprawką", "Gerwazy"])
+        self.assertTrue(any(n.startswith("🔁 ZMIANA") and "1885 nr 3" in n for n in m["no"]))
+        self.assertEqual(m["t"], "akt")                                      # named in both acts
+
     def test_page_is_filled(self):
         page = read(self.r["out"])
         for ph in ("__DB__", "__IMG__", "__TITLE__", "__H1__"):
@@ -137,6 +187,30 @@ class ExampleBuild(unittest.TestCase):
         self.assertIn("@I1@", res["redacted"])
         self.assertNotIn("@I20@", res["redacted"])               # died 1990
         self.assertEqual(db["people"]["@I20@"]["n"], "Stanisław Jaworski")
+        # a living anchor's name also labels a line: it goes too
+        self.assertIn("@I10@", res["redacted"])
+        self.assertEqual(db["lnd"]["@I10@"][0], "Osoba żyjąca Jaworski")
+        self.assertEqual(db["lnd"]["@I20@"][0], "Stanisław Jaworski")
+        self.assertNotIn("Andrzej Jaworski", page)
+        self.assertIn("przodkowie Andrzeja Jaworskiego", res["line_labels"])   # your label: reported, not rewritten
+
+    def test_publish_leaves_photos_alone(self):
+        page = read(self.r["out"])
+        lines = page.split("\n")
+        i = next(k for k, l in enumerate(lines) if l.startswith("const IMG = "))
+        uri = "data:image/jpeg;base64,AAAA+61041512345/BBBB"           # 11 digits inside base64 are not a number
+        lines[i] = 'const IMG = {"t":{"@I20@":"%s"},"b":{}};' % uri
+        src = os.path.join(self.tmp, "with-photo.html")
+        with open(src, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        with redirect_stdout(io.StringIO()):
+            res = publish.publish(src, os.path.join(self.tmp, "pub3"))
+        self.assertEqual(res["masked"], 0)
+        self.assertIn(uri, read(os.path.join(self.tmp, "pub3", "index.html")))
+
+    def test_template_has_no_eleven_digit_number(self):
+        tpl = read(os.path.join(SKILL, "templates", "viewer", "tree.html"))
+        self.assertIsNone(publish.PESEL.search(tpl))             # masking must never touch the viewer's code
 
     def test_publish_masks_eleven_digits(self):
         page = read(self.r["out"]).replace("nauczyciel", "nauczyciel 61041512345")

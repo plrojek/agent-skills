@@ -56,6 +56,25 @@ real browser passes. Work in a browser session the user can see.
 - Court files (`Akta spadkowe`, `Akt zejścia`) have no scans, but the unit **title** usually
   names the deceased, the village and every heir: the search index alone rebuilds a household.
 
+### TsDIAL Lviv: ARCHIUM
+
+Addresses and the inventories: `sources.md`. The site refuses scripts (HTTP 403), so this is work in
+the user's browser session (Claude in Chrome or a DevTools MCP), at a human pace.
+
+- **Go straight to the act when Geneteka links it.** A link `/file-viewer/<files id>#file-<image id>`
+  names the image: its file is `/static/files/<image id // 1000>/<image id>.jpg` (id 412377 →
+  `/static/files/412/412377.jpg`). Open that instead of paging a 500-image volume, then note where it
+  sits in the viewer's order (`search_log.py lesson add --book <signature> "act 1888/12 = image 57"`):
+  the next act in that book is found from there.
+- **The viewer's order is the `img[data-observe-src]` list** on the `/file-viewer/<files id>` page;
+  "obraz 57" in your notes means the 57th of them. Read the list once and keep it with the volume.
+- **Saving scans**: save the images you will read from that tab, as the user would (open the image and
+  let the browser save it, or a download link per image), a few at a time with pauses. Don't copy the
+  session's cookies into curl or a script, and don't download whole volumes "just in case".
+- Many images are dark copies from microfilm: autocontrast the crop before reading
+  (`contact_sheet.py crop --autocontrast`).
+- A unit can be listed and still show "page not found" or no images: not digitized. Log it so.
+
 ## Mapping a volume before hunting in it
 
 A unit titled like `Kopie ksiąg metrykalnych parafii X z filią Y i Z` is not one register.
@@ -91,6 +110,11 @@ Numbering traps:
 - **The last frame is the microfilm target card** and states the page and frame count
   (`LICZBA STRON ... · LICZBA KLATEK ...`). Read it before concluding "the book must continue
   somewhere": it settles whether later years are hiding further in.
+- **A unit's title years are not its contents.** A parish book whose title spanned more than fifty
+  years held births for only about twenty of them; the earlier years were in the diocesan archive.
+  Map the volume before you write "not in this book".
+- **Slips pasted onto a page hide entries**, and the same spread is often photographed twice, with and
+  without the slip: read both images.
 - **A fond's description generalises; the unit list does not.** A Greek-Catholic parish fond
   advertised "Death book 1851-1945", which reads like the whole parish; the unit's own title
   showed it covered one filial village only. Open the unit list and read each title.
@@ -120,6 +144,13 @@ any later note in the margin.
   number: a free bridge to the 20th century.
 - An indexer's struck-out first attempt (`Marianna` corrected to `Magdalena`) is a correction,
   not a second person.
+- **Later annotations can belong to another entry.** Dates added in the 20th century beside the
+  parents' names (`*12.4.88, ślub 3.2.910`) were in one book copied beside the wrong couple: they
+  were another family's, from a marriage act of the same year. Check such a note against the
+  parents' own acts before using it.
+- **A negative covers what was read, nothing more.** A child "not born in this parish" was written
+  after reading fifteen years of the book; she was born the year after the range read. Log the years
+  and pages read, and phrase the conclusion as exactly that range.
 
 Latin worth knowing:
 
