@@ -56,6 +56,32 @@ real browser passes. Work in a browser session the user can see.
 - Court files (`Akta spadkowe`, `Akt zejścia`) have no scans, but the unit **title** usually
   names the deceased, the village and every heir: the search index alone rebuilds a household.
 
+**Saving scans from a DevTools MCP browser.** `evaluate_script` can write a file only inside
+the MCP's configured roots, which usually exclude the working folders. What works: in the
+unit page, `fetch()` the image (`credentials: 'include'`), make a blob and click an
+`<a download>` link; the file lands in the user's Downloads, saved by their own browser, with
+no cookies copied anywhere.
+- 🔴 Chrome lets a page start **one automatic download per page load**. Later downloads from
+  the same page are dropped silently, with no error in the script. Put several images into
+  **one JSON file** (`{name: base64}`), download that once, reload the page before the next
+  one, then decode the JSON locally and delete it from Downloads.
+- **Finding a year in a 200-scan book**: pack every tenth `_mid` thumbnail (about 130 KB each),
+  lay them out side by side and read the year headers; then pack the window around the year;
+  then fetch the one or two `_max` scans to read. Thumbnails are too small to read a year
+  reliably: confirm it on a full-size crop.
+
+**Galician yearly extracts (`Extractus metricalis`).** Many AP fonds of Roman-Catholic parishes
+hold, besides the books, a yearly duplicate ("ex anno 1891", made the following year, about 20
+scans) for the years around 1890-1904. A multi-village parish numbers its acts **separately for
+each village** (`Pagus A`, `Pagus B`, ...), births first, then deaths. "Act 2" means act 2 of
+that village, so find the village's heading first. A Geneteka remark `skan nr N` for such a unit
+can be off by a couple of scans against the portal's gallery: look for the heading instead of
+trusting N. A main book titled with one village (`Księga urodzeń <village>`) can hold that
+village only, while the extracts hold the whole parish: check before reading it for another
+village. The extract was copied from the book, so on a conflict prefer the book (or another
+original): in one case an extract gave the mother's parents different given names from two
+originals that agreed.
+
 ### TsDIAL Lviv: ARCHIUM
 
 Addresses and the inventories: `sources.md`. The site refuses scripts (HTTP 403), so this is work in

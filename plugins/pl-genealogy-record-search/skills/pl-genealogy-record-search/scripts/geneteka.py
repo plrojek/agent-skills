@@ -4,7 +4,11 @@
   geneteka.py parishes <woj> [--grep TEXT]
       rid per record type and indexed years for every parish in a province
   geneteka.py search <woj> <B|S|D> <surname> [--name X] [--rid N] [--from Y] [--to Y]
+                     [--surname2 Y] [--name2 Z]
                      [--max-rows 250] [--json out.json] [--links] [--no-cache] [--no-log]
+      --surname2/--name2: a second person in the same row (the other spouse in a marriage).
+      It also matches that person's parents, so a pair of the parents' surnames lists every
+      marriage of their children: read which role matched before counting a hit.
   geneteka.py check <woj> <B|S|D> <rid> <surname> <expected_total>
       control query: run a search whose answer you already know
 
@@ -115,14 +119,16 @@ def _fetch(params, use_cache=True):
 
 
 def search(woj, bdm, lastname="", name="", rid=None, frm="", to="", exact=True,
-           max_rows=250, use_cache=True):
-    """Returns (total, rows, raw_rows, problems). rows are stripped text cells."""
+           max_rows=250, use_cache=True, lastname2="", name2=""):
+    """Returns (total, rows, raw_rows, problems). rows are stripped text cells.
+
+    lastname2/name2 ask for a second person in the same row (pair search)."""
     rid = rid or bdm
     raw, start, total, problems = [], 0, 0, []
     while True:
         p = {"op": "gt", "lang": "pol", "bdm": bdm, "w": woj, "rid": rid,
              "search_lastname": lastname, "search_name": name,
-             "search_lastname2": "", "search_name2": "",
+             "search_lastname2": lastname2, "search_name2": name2,
              "from_date": frm, "to_date": to, "draw": 1, "start": start, "length": 50}
         if exact:
             p["exac"] = 1
@@ -157,7 +163,7 @@ def _announce_pages(total, first, max_rows):
               f"Stop earlier with --max-rows {first}.", file=sys.stderr, flush=True)
 
 
-def log_search(woj, bdm, surname, name, rid, frm, to, total, problems):
+def log_search(woj, bdm, surname, name, rid, frm, to, total, problems, surname2="", name2=""):
     """One line in the research log for one search."""
     where = f"{WOJ.get(woj, woj)} ({woj}) " + (f"rid {rid}" if rid else "whole province")
     years = "-".join(x for x in (frm, to) if x)
@@ -166,6 +172,10 @@ def log_search(woj, bdm, surname, name, rid, frm, to, total, problems):
     else:
         result, note = ("found" if total else "negative"), ""
     query = {"woj": woj, "bdm": bdm, "rid": rid or "", "from": frm, "to": to}
+    if surname2 or name2:
+        query.update(surname2=surname2, name2=name2)
+        surname = f"{surname} + {surname2}" if surname2 else surname
+        name = f"{name} + {name2}" if name2 else name
     for e in search_log.entries("search")[-300:]:      # the same query asked again today
         if (e.get("date") == search_log._today() and e.get("query") == query and e.get("surname") == surname
                 and e.get("given", "") == name and e.get("result") == result and e.get("count") == total):
@@ -238,6 +248,8 @@ def main(argv=None):
     s.add_argument("--rid")
     s.add_argument("--from", dest="frm", default="")
     s.add_argument("--to", default="")
+    s.add_argument("--surname2", default="", help="second person's surname (pair search)")
+    s.add_argument("--name2", default="", help="second person's given name (pair search)")
     s.add_argument("--loose", action="store_true", help="drop the exact-match flag")
     s.add_argument("--max-rows", type=int, default=250,
                    help="stop after this many rows (each 50 more = one request, 120 s apart)")
@@ -266,13 +278,16 @@ def main(argv=None):
         return 0 if ok else 1
 
     total, rows, raw, problems = search(o.woj, o.bdm, o.surname, o.name, o.rid, o.frm, o.to,
-                                        not o.loose, o.max_rows, not o.no_cache)
+                                        not o.loose, o.max_rows, not o.no_cache,
+                                        o.surname2, o.name2)
     warn(problems)
     if not o.no_log:
-        log_search(o.woj, o.bdm, o.surname, o.name, o.rid, o.frm, o.to, total, problems)
+        log_search(o.woj, o.bdm, o.surname, o.name, o.rid, o.frm, o.to, total, problems,
+                   o.surname2, o.name2)
     if problems:
         return 2
-    show(total, rows, o.bdm, f"{o.surname} {o.name} in {WOJ.get(o.woj, o.woj)}".replace("  ", " "))
+    label = f"{o.surname} {o.name}" + (f" + {o.surname2} {o.name2}" if o.surname2 or o.name2 else "")
+    show(total, rows, o.bdm, f"{label} in {WOJ.get(o.woj, o.woj)}".replace("  ", " "))
     if o.links:
         for r, rr in zip(rows, raw):
             for href in links(rr):

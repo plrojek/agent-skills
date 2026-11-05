@@ -131,6 +131,25 @@ class GenetekaTest(unittest.TestCase):
         other = dict(self.REAL, parishes={"07mz": [[176, "Somewhere", "0", "x"]]})
         self.assertTrue(geneteka.sanity_reasons(other, "Nowak", "7602"))
 
+    def test_whole_province_answer_without_parishes_passes(self):
+        # rid=B/S/D: Geneteka never names a parish, real answers included
+        self.assertEqual(geneteka.sanity_reasons(dict(self.REAL, parishes=[]), "Nowak", "B"), [])
+
+    def test_parish_query_without_parishes_is_rejected(self):
+        reasons = geneteka.sanity_reasons(dict(self.REAL, parishes=[]), "Nowak", "7602")
+        self.assertIn("the answer names no parish", reasons)
+
+    def test_pair_search_sends_second_person(self):
+        sent = []
+        orig = geneteka._fetch
+        geneteka._fetch = lambda p, use_cache=True: (sent.append(dict(p)), self.REAL)[1]
+        try:
+            geneteka.search("13sk", "S", "Nowak", rid="7602", max_rows=50,
+                            lastname2="Lis", name2="Anna")
+        finally:
+            geneteka._fetch = orig
+        self.assertEqual((sent[0]["search_lastname2"], sent[0]["search_name2"]), ("Lis", "Anna"))
+
     def test_diacritics_and_l_stroke(self):
         d = dict(self.REAL, data=[["1900", "1", "Jan", "Michałek", "", "", "", "", "", ""]])
         self.assertEqual(geneteka.sanity_reasons(d, "Michalek", "7602"), [])
