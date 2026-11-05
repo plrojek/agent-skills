@@ -181,13 +181,17 @@ def sanity_reasons(d, lastname, rid=None):
     of rows from unrelated parishes, filters ignored, and an empty "parishes" list.
     Two known causes: a defective rid for one parish, or your network address being
     flagged after heavy automated use (then even a browser on that network gets it).
+
+    A whole-province search (rid=B/S/D) always comes back with "parishes": [], real
+    answers included, so the empty list only means something for a parish query.
     """
     reasons = []
     rows = d.get("data") or []
     total = int(d.get("recordsTotal") or 0)
+    parish_query = bool(rid) and str(rid).isdigit()
     if total > POOLED_TOTAL:
         reasons.append(f"{total} rows: more than any real query returns")
-    if rows and not d.get("parishes"):
+    if rows and parish_query and not d.get("parishes"):
         reasons.append("the answer names no parish")
     if rid and str(rid).isdigit() and d.get("parishes"):
         ids = {str(p[0]) for v in d["parishes"].values() for p in v} if isinstance(

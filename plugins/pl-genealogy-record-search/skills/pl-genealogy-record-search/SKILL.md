@@ -146,8 +146,10 @@ real index rows. Two causes are known:
    confirmed; a VPN or tailnet that keeps the same public exit address changes nothing. The
    block on the home address lifted on its own within two months.
 
-`search` checks every answer (`sanity_reasons`: over 3000 rows, no parish named, the wrong
-parish, the surname in no row), refuses to cache or page through a bad one, and says so.
+`search` checks every answer (`sanity_reasons`: over 3000 rows, the surname in no row, and
+for a parish query also no parish named or the wrong parish), refuses to cache or page
+through a bad one, and says so. A whole-province search never names a parish, even when its
+rows are real, so an empty parish list counts only on a parish query.
 To tell the causes apart, run a **control query** whose answer you already know:
 `geneteka.py check <woj> <B|S|D> <rid> <surname> <expected_total>`. If the control is also
 pooled, the address is blocked: stop all Geneteka queries on that connection and tell the
