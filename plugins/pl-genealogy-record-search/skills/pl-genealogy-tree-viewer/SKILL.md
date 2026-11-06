@@ -31,7 +31,7 @@ publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzin
 
 | Part | What it shows |
 |---|---|
-| Start screen | one card per line (the ancestors of one person), with photos and counts |
+| Start screen | one card per line (the ancestors of one person), with photos and counts; under the cards "O drzewie": where to go next (acts, book, walls, everyone), what the tree is, its lines, the oldest ancestors, the legend |
 | Rodzina | the person in the centre with all partners, children under each couple, every partner's ancestors above; side relatives on request; the direct line drawn thicker; a hint when parents are off screen |
 | Line backgrounds | each line splits into its anchor's father's and mother's lines, each on its own colour band with a "linia: …" label; the same colours in the map, the fan, the minimap and the path bar |
 | Path bar | under the header: the route from "to ja" (by default `ME`, the person the tree is for) to the person in the centre, each step in its line's colour and clickable, with the kinship term at the end |
@@ -45,7 +45,7 @@ publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzin
 | Obraz przodków | a picture of one person's ancestors to download or share: fan or tree, 1–7 generations, dates, places, photos, empty fields for unknown ancestors, certainty colours, light, print or dark theme, PNG/JPG (2000–4000 px) or SVG; no dates or places of people presumed living by default |
 | Tiers | the left edge of a tile: act, probable, hypothesis; (?) after the surname only for research-level doubt |
 | Phone | bottom sheet, tab bar, pinch zoom, back gesture through the browser history |
-| Book | the whole tree or chosen lines (`--lines`); a contents page; a fan of every known ancestor at the front (`--fan`) and at each chapter; a chapter per line in pedigree numbering, its generation headers also counted from the reader (`--reader`); act marks, walls, hypotheses, an appendix of the chapters' acts, an index; a print edition (`--print`) |
+| Book | the whole tree or chosen lines (`--lines`); a contents page; a fan of every known ancestor at the front (`--fan`) and at each chapter; a chapter per line in pedigree numbering, its generation headers also counted from the reader (`--reader`); act marks, walls, hypotheses; every act (scan crop, transcription, translation) right under the entry of the person it is about, a marriage act after both spouses, the others in the act pointing to it, acts naming nobody in the chapters at the end; an index; a print edition (`--print`) |
 
 ## Phase 0: what to collect
 
@@ -114,7 +114,7 @@ uv run --with pillow==11.3.0 python3 scripts/build_book.py publication/index.htm
 `--living`, redacts people presumed living (it prints them, and any line whose label you may want to
 change; read the list). Build the book from the
 published page: a PDF can't be filtered afterwards. Set `BOOK = "Ksiega-rodzinna.pdf"` in
-`tree_data.py` to put the link on the welcome card. Hosting it privately (access control, caching,
+`tree_data.py` to put the link on the start screen ("O drzewie"). Hosting it privately (access control, caching,
 checks): **`references/publishing.md`**.
 
 ### Books for one family, and the print edition
@@ -151,7 +151,7 @@ uv run --with pillow==11.3.0 --with pypdf==6.20.1 python3 scripts/build_book.py 
 
 The print edition is for the printer; the page links the screen edition (its links work on screen).
 Open the PDF and look at the contents page, one landscape fan and one cross-reference before sending it.
-`BOOK` puts one book on the welcome card; link the other families' books from wherever relatives open
+`BOOK` puts one book on the start screen; link the other families' books from wherever relatives open
 the page (a short list next to it, or the message that sends them the link).
 
 ## Phase 4: keep it current

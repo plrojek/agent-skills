@@ -20,11 +20,13 @@ Reads `const DB` and `const IMG` from the page build_tree.py wrote. Build the bo
 are going to share: after `publish.py --living`, run it on the published page, so the PDF holds only
 what that page holds. A chapter per line (DB.lines anchors) with the fan of its ancestors, pedigree
 numbering (anchor = 1, the father of n = 2n, the mother = 2n+1), evidence marks D1…Dn, walls,
-hypotheses, conflicts; an appendix with every act (scan crop, transcription, translation, what it
-proves) and an index of people.
+hypotheses, conflicts, and an index of people. Every act (scan crop, transcription, translation, what
+it proves) stands once, right under the entry of the person it is about: a birth act under the child,
+a death act under the deceased, a marriage act after the entries of both spouses; the other people
+in the act point to it. Acts naming nobody in the chapters go to "Pozostałe dokumenty" at the end.
 
 --lines FRAGMENTS   only the lines whose label contains one of the comma-separated fragments; the
-                    appendix keeps the acts that name someone in them, the index their people.
+                    book keeps the acts that name someone in them, the index their people.
 --reader F,…=GEN    chapters of the lines matching F are read by a child of their anchor (normally the
                     anchors are the parents of the people the book is for): the generation headers say
                     what each generation is to that reader. GEN is the genitive: "Tomasza", "Tomasza i Ewy".
@@ -213,7 +215,45 @@ for pid, p in P.items():
     for aid, rola in p.get("sd", []): WHO_IN.setdefault(aid, []).append((pid, rola))
 if FRAGS:                                                    # one family's book: only the acts naming its people
     A = {aid: a for aid, a in A.items() if {x for x, _ in WHO_IN.get(aid, [])} & set(where)}
-DN = {aid: i + 1 for i, aid in enumerate(A)}                 # act -> D1, D2 …
+
+# ---------------------------------------------------------------- acts under the entries
+# An act stands once, under the entry of the person it is about (child, deceased, bride and groom, owner).
+# A marriage act goes after the entries of both spouses (§2n and §2n+1 stand side by side). When that person
+# has no entry in this book (the birth act of an ancestor's sibling), the act goes under the parents, then
+# the grandparents, then anyone named in it. Acts naming nobody in the chapters go to the end of the book.
+POS = {}                                                     # (chapter, number) -> position in the book
+for ci, ch in enumerate(chapters, 1):
+    for n in sorted(k for k, v in ch["num"].items() if not isinstance(v, tuple)): POS[(ci, n)] = len(POS)
+OWN = ("dziecko", "zmarł", "pan młody", "panna młoda", "właściciel", "child", "deceased", "groom", "bride", "owner")
+PARENTS = ("ojciec", "matka", "mąż", "żona", "jej ", "pierwsz", "father", "mother", "husband", "wife")
+GRAND = ("dziad", "babka", "pradziad", "prababka", "grandfather", "grandmother", "great-grand")
+
+def rank(role):
+    r = role.lower().strip()
+    if r.startswith(OWN): return 0
+    if r.startswith(PARENTS): return 1
+    if r.startswith(GRAND): return 2
+    return 3
+
+def candidate(role):
+    """A role marked KANDYDAT / CANDIDATE: the act may be about this person, but does not prove it."""
+    return "KANDYDAT" in role or "CANDIDATE" in role
+
+def act_year(a):
+    m = re.search(r"\b(1[4-9]\d\d|20\d\d)\b", (a.get("d") or "") + " " + (a.get("t") or ""))
+    return int(m.group(1)) if m else 9999
+
+AIDX = {aid: i for i, aid in enumerate(A)}
+HOME, PLACED, REST = {}, {}, []                              # act -> (chapter, n); (chapter, n) -> [acts]; acts with no place
+for aid in A:
+    ins = [(rank(r), pid) for pid, r in WHO_IN.get(aid, []) if pid in where]
+    if not ins: REST.append(aid); continue
+    best = min(t for t, _ in ins)
+    HOME[aid] = max((where[pid][0] for t, pid in ins if t == best), key=POS.get)
+    PLACED.setdefault(HOME[aid], []).append(aid)
+for k in PLACED: PLACED[k].sort(key=lambda a: (act_year(A[a]), AIDX[a]))
+# D1, D2 … in the order the acts stand in the book
+DN = {aid: i + 1 for i, aid in enumerate([a for k in sorted(PLACED, key=POS.get) for a in PLACED[k]] + REST)}
 
 READER = {}                                                  # chapter -> genitive of its reader
 for spec in o.reader:
@@ -237,11 +277,16 @@ def ref(pid, ci=None, txt=None):
     other = "" if best[0] == ci else " r." + str(best[0]) + sn_(f"r{best[0]}-{best[1]}")
     return f'<a href="#r{best[0]}-{best[1]}">{lab}</a> <span class="nr">§{best[1]}{other}</span>'
 
-def dref(ids):
-    """Act marks, at most three; the rest as +N (all of them are in the act's own list of people)."""
+def dref(ids, here=None, cap=3):
+    """Act marks, at most `cap`; the rest as +N (all of them are in the act's own list of people).
+    Print edition: the page number, when the act stands on another page than the entry `here`."""
     ids = [a for a in dict.fromkeys(ids) if a in DN]
-    more = len(ids) - 3
-    return " ".join(f'<a class="ak" href="#d{DN[a]}">D{DN[a]}</a>' for a in ids[:3]) + (f' <span class="akm">+{more}</span>' if more > 0 else "")
+    more = len(ids) - cap
+    hp = PG.get(f"r{here[0]}-{here[1]}") if here else None
+    def one(a):
+        pg = PG.get(f"d{DN[a]}")
+        return f'<a class="ak" href="#d{DN[a]}">D{DN[a]}</a>' + (f'<span class="nr"> s. {pg}</span>' if PRINT and pg and pg != hp else "")
+    return " ".join(one(a) for a in ids[:cap]) + (f' <span class="akm">+{more}</span>' if more > 0 else "")
 
 TIER = {"akt": "akt", "praw": "prawdopodobne", "hip": "hipoteza"}
 POK = {1: "Rodzice", 2: "Dziadkowie", 3: "Pradziadkowie", 4: "Prapradziadkowie"}
@@ -263,14 +308,15 @@ def no_given_name(pid):
 
 def entry(pid, n, ci):
     p, ev = P[pid], P[pid].get("ev", {})
+    here = (ci, n)
     h = [f'<section class="os" id="r{ci}-{n}">']
     if IMG["t"].get(pid): h.append(f'<img class="ph" src="{IMG["t"][pid]}" alt="">')
     t = TIER.get(p["t"], "")
     h.append(f'<h4><span class="nr">§{n}</span> {e(nm(pid))} <span class="ly">{e(life(p))}</span>'
              + (f' <span class="t {p["t"]}">{t}</span>' if t else "") + "</h4>")
     fk = []
-    if p.get("bd") or p.get("bp"): fk.append("ur. " + e(" · ".join(x for x in (p.get("bd"), place(p.get("bp"))) if x)) + (" " + dref(ev.get("ur", [])) if ev.get("ur") else ""))
-    if p.get("dd") or p.get("dp"): fk.append("zm. " + e(" · ".join(x for x in (p.get("dd"), place(p.get("dp"))) if x)) + (" " + dref(ev.get("zm", [])) if ev.get("zm") else ""))
+    if p.get("bd") or p.get("bp"): fk.append("ur. " + e(" · ".join(x for x in (p.get("bd"), place(p.get("bp"))) if x)) + (" " + dref(ev.get("ur", []), here) if ev.get("ur") else ""))
+    if p.get("dd") or p.get("dp"): fk.append("zm. " + e(" · ".join(x for x in (p.get("dd"), place(p.get("dp"))) if x)) + (" " + dref(ev.get("zm", []), here) if ev.get("zm") else ""))
     if p.get("bu"): fk.append(by_sex(pid, "pochowany: ", "pochowana: ", "pochowany(-a): ") + e(place(p["bu"])))
     if p.get("oc"): fk.append("zawód: " + e(p["oc"]))
     if p.get("re"): fk.append(by_sex(pid, "mieszkał: ", "mieszkała: ", "mieszkał(a): ") + e(place(p["re"])))
@@ -281,7 +327,7 @@ def entry(pid, n, ci):
     wall = next((x for x in (f, m) if x and P[x]["t"] == "luka"), None)
     if real:
         rd = ev.get("rd", {})
-        h.append(f'<p><b>Rodzice{" (hipoteza)" if hp else ""}:</b> ' + " i ".join(ref(x, ci) + (" " + dref(rd[x]) if x in rd else "") for x in real) + "</p>")
+        h.append(f'<p><b>Rodzice{" (hipoteza)" if hp else ""}:</b> ' + " i ".join(ref(x, ci) + (" " + dref(rd[x], here) if x in rd else "") for x in real) + "</p>")
     if hp and p.get("hw"): h.append(f'<div class="box hyp"><b>Dlaczego to hipoteza</b> {e(p["hw"])}</div>')
     if wall: h.append(f'<div class="box wall"><b>Rodzice nieznani — ściana.</b> {e(P[wall].get("w", ""))}</div>')
     sp = spouses(pid)
@@ -290,7 +336,7 @@ def entry(pid, n, ci):
         for o_, fam in sp:
             ids = (ev.get("sl", {}).get(o_) or ev.get("zw", {}).get(o_) or [])
             parts.append(("dziecko z: " if fam.get("um") else "") + ref(o_, ci) + (f' — ślub {e(fam["md"])}' if fam.get("md") else "")
-                         + (f', {e(place(fam["mp"]))}' if fam.get("mp") else "") + (" " + dref(ids) if ids else ""))
+                         + (f', {e(place(fam["mp"]))}' if fam.get("mp") else "") + (" " + dref(ids, here) if ids else ""))
         h.append(f'<p><b>{"Małżonkowie" if len(sp) > 1 else "Małżonek"}:</b> ' + "; ".join(parts) + "</p>")
     kids = [c for fid2 in p["fs"] for c in (F.get(fid2) or {}).get("c", []) if P.get(c) and P[c]["t"] != "luka"]
     unnamed = [c for c in kids if no_given_name(c)]            # a child known only from a count: one phrase, not "Kowal, Kowal"
@@ -300,7 +346,7 @@ def entry(pid, n, ci):
         rest = ("dziecko o nieznanym imieniu" if len(unnamed) == 1 else f"{len(unnamed)} dzieci o nieznanych imionach") if unnamed else ""
         h.append("<p><b>Dzieci:</b> " + ", ".join(
             [(ref(c, ci) if c in chapters[ci - 1]["seen"] else e(nm(c))) + (f" ({e(life(P[c]))})" if life(P[c]) else "")
-             + (" " + dref(dz[c]) if c in dz else "") for c in kids] + ([rest] if rest else [])) + "</p>")
+             + (" " + dref(dz[c], here) if c in dz else "") for c in kids] + ([rest] if rest else [])) + "</p>")
     for hy in p.get("hy", []):
         h.append(f'<div class="box hyp"><b>{e(hy["q"])}</b><ul>' + "".join(
             f'<li><span class="st">{e(v["s"])}</span> {e(v["o"])}{(" — " + e(v["u"])) if v.get("u") else ""}</li>' for v in hy["v"])
@@ -308,12 +354,35 @@ def entry(pid, n, ci):
     for c in p.get("cf", []):
         h.append(f'<div class="box cf"><b>Źródła podają różnie: {e(c["f"])}</b><table>' + "".join(
             f"<tr><td>{e(s)}</td><td>{e(v)}</td></tr>" for s, v in c["v"]) + f'</table><div class="r">{e(c["s"])}</div></div>')
+    linked = set(ev.get("ur", [])) | set(ev.get("zm", [])) | {a for k in ("rd", "sl", "zw", "dz") for v in ev.get(k, {}).values() for a in v}
+    also = [(aid, r) for aid, r in dict.fromkeys((aid, r) for aid, r in p.get("sd", []))
+            if aid in DN and aid not in linked and HOME.get(aid) != here]
+    if also:
+        h.append(f'<p class="also">{by_sex(pid, "Wymieniony", "Wymieniona", "Wymieniony(-a)")} także w aktach: '
+                 + ", ".join(dref([aid], here) + f" ({e(r)})" for aid, r in also[:8]) + (f" i {len(also) - 8} innych" if len(also) > 8 else "") + "</p>")
     other = [x for x in where.get(pid, []) if x[0] != ci]
     if other: h.append('<p class="also">Także: ' + ", ".join(f'<a href="#r{a}-{b}">rozdz. {a} §{b}{sn_(f"r{a}-{b}")}</a>' for a, b in other) + "</p>")
     if NOTATKI and p.get("no"):
         h.append('<div class="notes">' + "".join(f"<p>{e(x)}</p>" for x in p["no"]) + "</div>")
     h.append("</section>")
     return "\n".join(h)
+
+def doc_html(aid, ci=None):
+    """An act: scan crop, transcription, translation, what it proves, the people with their roles, signature."""
+    a, img = A[aid], CROP.get(aid, "")
+    cand = any(candidate(r) for _, r in WHO_IN.get(aid, []))
+    # header and scan stay together; the rest may break: "avoid" on the whole act put one act per page
+    return (f'<div class="doc" id="d{DN[aid]}"><div class="dh"><h4><span class="ak">D{DN[aid]}</span> {e(a["t"])}'
+            + (' <span class="t hip">hipoteza</span>' if cand else "") + "</h4>"
+            + (f'<div class="sg">{e(a.get("d", ""))}</div>' if a.get("d") else "")
+            + (f'<img src="{e(img)}" alt="">' if img and os.path.exists(os.path.join(OUTDIR, img)) else "") + "</div>"
+            + ('<div class="box hyp">Akt kandydata: może dotyczyć osoby z wpisu powyżej, ale tego nie dowodzi '
+               '(zob. jej rolę w wierszu „Osoby”).</div>' if cand else "")
+            + f'<pre>{e(a.get("x", ""))}</pre>'
+            + (f'<div class="tr"><b>Tłumaczenie.</b> {e(a["p"]).replace(chr(10), "<br>")}</div>' if a.get("p") else "")
+            + (f'<div class="tr"><b>Potwierdza:</b> {e("; ".join(a["w"]))}</div>' if a.get("w") else "")
+            + (f'<div class="tr"><b>Osoby:</b> ' + ", ".join(ref(pid, ci) + f" ({e(r)})" for pid, r in WHO_IN.get(aid, [])) + "</div>" if WHO_IN.get(aid) else "")
+            + f'<div class="sg">{e(a.get("s", ""))}{(" · " + e(a["z"])) if a.get("z") else ""}</div></div>')
 
 # ---------------------------------------------------------------- fan of all known ancestors (SVG)
 KOLOR = ["#d3e1f2", "#f5dccd", "#d7ebcf", "#eadcf2"]   # grandparents' lines: father's father, father's mother, mother's father, mother's mother
@@ -526,10 +595,14 @@ h3 { font-size: 9pt; text-transform: uppercase; letter-spacing: 1.2px; color: #8
 .doc { margin: 0 0 7mm; }
 .doc .dh { break-inside: avoid; }
 .doc h4 { font-size: 10.5pt; margin: 0 0 1mm; break-after: avoid; }
-.doc img { width: 100%; max-height: 70mm; object-fit: contain; object-position: left; border: 1px solid #ddd; margin: 1mm 0; }
+.doc img { display: block; width: auto; height: auto; max-width: 100%; max-height: 70mm; border: 1px solid #ddd; margin: 1mm 0; }
 .doc .tr, .doc .sg { break-inside: avoid; }
 .doc pre { font-family: inherit; font-size: 8.8pt; white-space: pre-wrap; background: #f6f5f1; padding: 2mm 3mm; margin: 1mm 0; }
 .doc .sg, .doc .tr { font-size: 8.8pt; color: #444; }
+.pod { margin: -3mm 0 5mm; padding: 1.5mm 0 .5mm 7mm; border-left: 2.5px solid #ece6da; break-before: avoid; }
+.pod .doc { margin: 0 0 4mm; }
+.pod .doc:last-child { margin-bottom: 0; }
+.pod .doc h4 { font-size: 9.8pt; }
 .idx { columns: 2; column-gap: 8mm; font-size: 9pt; }
 .idx p { margin: 0 0 .6mm; break-inside: avoid; }
 .idx .h { font-weight: 700; margin-top: 2.5mm; }
@@ -578,8 +651,10 @@ liczy się rozdział, to §1, jej ojciec §2, matka §3, a ogólnie ojciec osoby
 <p><span class="t akt">akt</span> <span class="t praw">prawdopodobne</span> <span class="t hip">hipoteza</span> — na czym opiera się
 wpis: akt z sygnaturą, mocna poszlaka (indeks, rejestr, przekaz) albo trop do sprawdzenia. Osoba bez tego znaku
 pochodzi z drzewa rodzinnego albo z relacji rodziny.</p>
-<p><span class="ak">D12</span> przy dacie, rodzicach, małżonku albo dziecku — przepisany akt, który to potwierdza
-(aneks „Dokumenty”, z wycinkiem skanu i transkrypcją).</p>
+<p><span class="ak">D12</span> przy dacie, rodzicach, małżonku albo dziecku — przepisany akt, który to potwierdza. Akt stoi
+zaraz pod wpisem osoby, której dotyczy, z wycinkiem skanu, transkrypcją i tłumaczeniem: akt urodzenia pod dzieckiem, akt zgonu
+pod zmarłym, akt ślubu po wpisach obojga małżonków. Akt rodzeństwa przodka stoi pod jego rodzicami. Inne osoby z aktu mają
+przy swoim wpisie odsyłacz do niego.</p>
 <p>Ramki: <b>ściana</b> — rodzice nieznani i co byłoby następnym krokiem; <b>hipoteza</b> — możliwe odpowiedzi, każda ze
 stanem; <b>źródła podają różnie</b> — dwie wersje obok siebie.</p>
 <p><b>Wachlarz</b> na początku """ + ("księgi i " if FRONT_FANS else "") + """każdego rozdziału pokazuje przodków na jednym obrazku: w środku osoba,
@@ -592,8 +667,8 @@ wyżej jej rodzice, dziadkowie i dalsze pokolenia; kolor mówi, z której linii 
         k, deep = len(nums) - 1, max(nums).bit_length() - 1
         toc.append(f'<p><a href="#r{ci}">{ci}. {e(ch["lab"][0].upper() + ch["lab"][1:])}</a>{e(" — " + rel) if rel else ""} · '
                    f'{k} {pl(k, "przodek", "przodków", "przodków")}, {deep} {pl(deep, "pokolenie", "pokolenia", "pokoleń")}{tp("r" + str(ci))}</p>')
-    toc.append(f'<p><a href="#dok">Dokumenty</a> · {len(A)} {pl(len(A), "akt", "akty", "aktów")}{tp("dok")}</p>'
-               f'<p><a href="#idx">Indeks osób</a>{tp("idx")}</p></div>')
+    if REST: toc.append(f'<p><a href="#dok">Pozostałe dokumenty</a> · {len(REST)} {pl(len(REST), "akt", "akty", "aktów")}{tp("dok")}</p>')
+    toc.append(f'<p><a href="#idx">Indeks osób</a>{tp("idx")}</p></div>')
     out[-1] += "".join(toc)
     for root, label in FRONT_FANS:
         out.append(('<div class="fanpage">' if PRINT else "") + f'<h2>Wachlarz przodków — {e(label or nm(root))}</h2>'
@@ -615,22 +690,14 @@ wyżej jej rodzice, dziadkowie i dalsze pokolenia; kolor mówi, z której linii 
                 g = gn
                 out.append("<h3>" + e(gen_header(g, ci)) + "</h3>")
             out.append(entry(ch["num"][n], n, ci))
+            if PLACED.get((ci, n)): out.append('<div class="pod">' + "".join(doc_html(aid, ci) for aid in PLACED[(ci, n)]) + "</div>")
         dup = sorted(k for k, v in ch["num"].items() if isinstance(v, tuple))
         if dup: out.append('<p class="also">Zbieg przodków: ' + ", ".join(f"§{k} = §{ch['num'][k][1]}" for k in dup) + "</p>")
 
-    out.append('<h2 id="dok">Dokumenty</h2><p class="lead">Akty przepisane w całości, w kolejności jak w drzewie. Przy każdym: wycinek skanu, '
-               'transkrypcja oryginału, tłumaczenie, sygnatura i to, co akt potwierdza.</p>')
-    for aid, a in A.items():
-        img = CROP.get(aid, "")
-        # header and scan stay together; the rest may break: "avoid" on the whole act put one act per page
-        out.append(f'<div class="doc" id="d{DN[aid]}"><div class="dh"><h4><span class="ak">D{DN[aid]}</span> {e(a["t"])}</h4>'
-                   + (f'<div class="sg">{e(a.get("d", ""))}</div>' if a.get("d") else "")
-                   + (f'<img src="{e(img)}" alt="">' if img and os.path.exists(os.path.join(OUTDIR, img)) else "") + "</div>"
-                   + f'<pre>{e(a.get("x", ""))}</pre>'
-                   + (f'<div class="tr"><b>Tłumaczenie.</b> {e(a["p"]).replace(chr(10), "<br>")}</div>' if a.get("p") else "")
-                   + (f'<div class="tr"><b>Potwierdza:</b> {e("; ".join(a["w"]))}</div>' if a.get("w") else "")
-                   + (f'<div class="tr"><b>Osoby:</b> ' + ", ".join(ref(pid) + f" ({e(r)})" for pid, r in WHO_IN.get(aid, [])) + "</div>" if WHO_IN.get(aid) else "")
-                   + f'<div class="sg">{e(a.get("s", ""))}{(" · " + e(a["z"])) if a.get("z") else ""}</div></div>')
+    if REST:
+        out.append('<h2 id="dok">Pozostałe dokumenty</h2><p class="lead">Akty, w których nie występuje nikt z rozdziałów tej księgi: '
+                   'dotyczą krewnych spoza linii prostej albo tropów sprawdzonych i odrzuconych.</p>')
+        out.extend(doc_html(aid) for aid in REST)
 
     out.append('<h2 id="idx">Indeks osób</h2><div class="idx">')
     groups = {}
@@ -660,7 +727,8 @@ def pages_in_pdf():
     return {k.lstrip("/"): r.get_destination_page_number(v) + 1 for k, v in r.named_destinations.items()}
 
 write_html()
-print("written", OUT, "— chapters: %d, people with an entry: %d, acts: %d" % (len(chapters), len(where), len(A)))
+print("written", OUT, "— chapters: %d, people with an entry: %d, acts: %d (under entries %d, at the end %d)"
+      % (len(chapters), len(where), len(A), len(HOME), len(REST)))
 for label, G, n, full in FANS:
     print(f"   fan {label}: {n} ancestors, {G} generation{'s' if G != 1 else ''}, {'full circle' if full else 'half circle'}")
 if not o.no_pdf:

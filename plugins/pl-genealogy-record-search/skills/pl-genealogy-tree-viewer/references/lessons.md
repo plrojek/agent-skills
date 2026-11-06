@@ -120,6 +120,14 @@ follow them; they are here so a change to either doesn't undo one.
 - **Phone layout**: the card is a bottom sheet whose *height* changes (a transform left the bottom of
   the card unreachable), a tab bar replaces the header buttons, the "More" menu needs a higher z-index
   than the start screen and the sheet, and a one-time gesture hint explains pinch and the sheet.
+- **"O drzewie" belongs on the start screen, not in a side window.** Opened at start, the window
+  covered the tree on a computer and was a second thing to close. Under the family cards it is read
+  in passing: first where to go next, then the description, the lines, the oldest ancestors, the
+  legend; the header's "O drzewie" scrolls down to it.
+- **A screen that scrolls inside the zoomable stage must keep its wheel.** The start screen and the
+  List sit in the stage, whose wheel handler took every event as zoom. Once "O drzewie" made the
+  start screen longer than the window it could not be scrolled; the handler now lets the wheel
+  through on both.
 
 ## Ancestor picture
 
@@ -154,7 +162,7 @@ follow them; they are here so a change to either doesn't undo one.
 
 - **One book per family, not one book for everyone.** Relatives read their own lines: the whole
   tree's book given to one side of a couple is mostly the other side's family. `--lines` picks the
-  chapters, and the appendix keeps only the acts that name someone in them (the index likewise);
+  chapters, and the book keeps only the acts that name someone in them (the index likewise);
   without that filter a two-line book carried every act of the tree.
 - **Say what a generation is to the reader.** Chapters count from the anchor, who is normally the
   reader's parent, so "Dziadkowie" in a chapter are the reader's great-grandparents and every header
@@ -181,7 +189,20 @@ follow them; they are here so a change to either doesn't undo one.
 - **Place strings exported from tree sites carry litter**: "---, ", a postcode, "X / X Voivodeship,
   Poland". The book prints the place itself.
 - **Three act marks are enough after one fact.** A parent proven by many acts drowned the line in
-  marks; the book shows three and "+N" (every act in the appendix still lists its people).
+  marks; the book shows three and "+N" (every act still lists its people).
+- **Put each act under the entry it proves, not in an appendix.** With all acts in an appendix at
+  the back, readers flipped between an entry and the act behind it a hundred pages later. Each act
+  stands once, right under the person it is about: a birth act under the child, a death act under
+  the deceased, a marriage act after the entries of both spouses (§2n and §2n+1 stand side by
+  side). The birth act of an ancestor's sibling, who has no entry, goes under their parents. Every
+  other person named in the act gets "Wymieniony także w aktach: D12 (świadek)" at their own entry.
+  Only acts naming nobody in the chapters go to "Pozostałe dokumenty" at the end; a one-family book
+  has none. Number the acts D1… in the order they stand in the book, not in the tree's order.
+- **A row crop's frame fits the crop.** `width: 100%` with `object-fit: contain` drew a page-wide
+  frame around a narrow row; the image keeps its own size, capped at the column width and 70 mm.
+- **An act that may be about someone proves nothing about them.** A role marked `KANDYDAT` made the
+  person "akt" because everyone named in an act was raised; now such a role raises no tier, and the
+  book marks the act "hipoteza".
 
 ## Publishing
 

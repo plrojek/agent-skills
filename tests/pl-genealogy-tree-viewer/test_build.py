@@ -265,6 +265,47 @@ class ExampleBuild(unittest.TestCase):
         self.assertNotIn('class="doc"', book)                        # no act names anyone in these lines
         self.assertNotIn("Jaworski", book.split('id="idx"')[1])     # the index holds only their people
 
+    def test_book_acts_under_the_entries(self):
+        r, book = self.book()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn('id="dok"', book)                           # every act names someone in the chapters
+        docs = book.split('<div class="doc" id="d')[1:]
+        self.assertEqual([d.split('"')[0] for d in docs], ["1", "2", "3"])   # numbered in book order
+        # the birth act right under the child, the marriage and the death after the wife's entry, by year
+        self.assertIn("urodzeń 1890", docs[0].split("</h4>")[0])
+        self.assertIn("ślubów 1885", docs[1].split("</h4>")[0])
+        self.assertIn("zgonów 1895", docs[2].split("</h4>")[0])
+        szymon = self.person("Szymon Jaworski", "1890")["id"]
+        marianna = self.person("Marianna Sowa", "1862")["id"]
+        for who, d in ((szymon, "d1"), (marianna, "d2")):
+            n = book.split(f'id="{d}"')[0].rsplit('<section class="os" id="', 1)[1]
+            self.assertIn(self.P[who]["n"], n.split("</h4>")[0])
+            self.assertTrue(n.split("</section>")[1].lstrip().startswith('<div class="pod">'), d)
+        self.assertIn("under entries 3, at the end 0", r.stdout)
+
+    def test_candidate_role_raises_no_tier(self):
+        act = ('ACTS.append(dict(id="x-u-1955-1", title="Wola, księga urodzeń 1955, akt 1", date="1955", ref="sygn. 1", '
+               'source="", text="", translation="", people={{"@I10@": "dziecko — {role}"}}))')
+        for role, tier in (("KANDYDAT (czy to on?)", ""), ("to jego akt", "akt")):
+            cfg = self.config(act.format(role=role), name=f"tree_data_cand_{tier or 'none'}.py")
+            out = os.path.join(self.tmp, f"cand_{tier or 'none'}.html")
+            with redirect_stdout(io.StringIO()):
+                res = build_tree.build(cfg, out=out)
+            sys.modules.pop("tree_data", None)
+            self.assertEqual(res["db"]["people"]["@I10@"]["t"], tier, role)
+        r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_book.py"), os.path.join(self.tmp, "cand_none.html"),
+                            "--no-pdf", "--out", os.path.join(self.tmp, "cand_book.html")], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        doc = read(os.path.join(self.tmp, "cand_book.html")).split("Wola, księga urodzeń 1955")[1].split("<pre>")[0]
+        self.assertIn('class="t hip">hipoteza', doc)
+        self.assertIn("Akt kandydata", doc)
+
+    def test_about_is_on_the_start_screen(self):
+        page = read(self.r["out"])
+        self.assertIn('<div class="habout" id="habout">${aboutHtml()}</div>', page)
+        self.assertNotIn('data-hact="about"', page)
+        self.assertIn('e.target.closest("#homescr,#grid")', page)     # the wheel scrolls the start screen
+
     def test_book_unknown_line_refused(self):
         r, _ = self.book("--lines", "Nikogo")
         self.assertNotEqual(r.returncode, 0)
