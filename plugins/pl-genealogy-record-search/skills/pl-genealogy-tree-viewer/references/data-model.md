@@ -32,7 +32,7 @@ who married in takes the partner's line. The wall above a person takes that pers
 | `GEDCOM`, `OUTPUT` | paths, relative to tree_data.py | input and the page to write; `scans/` goes next to the page |
 | `PHOTOS` | folder | `<xref without @>.jpg` (`I30.jpg`); 128 px square thumb + 480 px picture, embedded |
 | `PHOTO_FILES` | `{person: path}` | photos named some other way |
-| `BOOK` | str | file name of the family book PDF; shows the link on the welcome card |
+| `BOOK` | str | file name of the family book PDF; shows the link on the start screen, in "O drzewie" |
 | `ME` | person | the person the tree is for: the path bar starts there until a reader marks someone "to ja" on their own device. Without it the bar starts at the person with the most descendants. |
 | `LINES` | `[(person, label, short)]` | one branch per anchor. The anchor is the person at the **bottom** of the branch (a parent of the people the tree is for). `label` = `"przodkowie Jana Kowala"`, `short` = `"Jana Kowala"` (genitive: the header asks "whose ancestors?"). |
 | `LINE_HUES` | `[((father, mother), side)]`, HSL hues | one entry per `LINES` anchor, in order: the hue of the anchor's father's line, of the mother's line, and of the anchor's own side. Default: four sets, reused past the fourth line. |
@@ -100,11 +100,15 @@ A role like `"ojciec dziecka, zgłaszający"` is a father (first part). A link d
 whether that child is this person is exactly the open question. Acts whose title fits no kind (land
 registers, address books) list each named person with their role instead.
 
+A role with **`KANDYDAT`** or **`CANDIDATE`** in capitals (`"dziecko — KANDYDAT (czy to Jan z grobu?)"`)
+is an act that may be about this person but does not show it. It does not raise the person's tier,
+and the book prints that act with a "hipoteza" badge and a note that it does not prove the identity.
+
 ## Tiers
 
 | Tier | Badge | Comes from |
 |---|---|---|
-| `akt` | green edge, "AKT" | named in a transcribed act, `TIER: AKT` in a note, or `TIER_OVERRIDE` |
+| `akt` | green edge, "AKT" | named in a transcribed act (not as a `KANDYDAT`/`CANDIDATE`), `TIER: AKT` in a note, or `TIER_OVERRIDE` |
 | `praw` | amber edge, (?) | `TIER: PRAWDOPODOBNE` (or `PROBABLE`), a `HYPOTHESIS_LINKS` tier, `TIER_OVERRIDE` |
 | `hip` | blue edge, (?) | `TIER: HIPOTEZA` (or `HYPOTHESIS`), a `HYPOTHESIS_LINKS` tier, `TIER_OVERRIDE` |
 | `""` | none | everything else, including `TIER: PEWNE` (`CERTAIN`): what the family knows is not doubt |

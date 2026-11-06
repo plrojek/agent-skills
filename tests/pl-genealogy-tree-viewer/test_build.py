@@ -231,6 +231,119 @@ class ExampleBuild(unittest.TestCase):
         self.assertEqual(book.count('<h2 id="r'), 4)
         self.assertIn('id="d3"', book)
         self.assertIn("Indeks osób", book)
+        self.assertEqual(book.count('<svg class="fan"'), 4)          # one per chapter
+
+    def book(self, *args, name="book.html"):
+        out = os.path.join(self.tmp, name)
+        r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_book.py"), self.r["out"],
+                            "--no-pdf", "--out", out, *args], capture_output=True, text=True)
+        if "--print" in args: out = out[:-5] + "-druk.html"
+        return r, (read(out) if r.returncode == 0 else "")
+
+    def ancestors(self, pid):
+        """Known direct ancestors, parents taken from the first family with parents (as par() does)."""
+        seen, q = set(), [pid]
+        while q:
+            x = q.pop()
+            for fid in self.P[x]["fc"]:
+                f = self.F.get(fid) or {}
+                if f.get("h") or f.get("w"):
+                    for y in (f.get("h"), f.get("w")):
+                        if y and self.P[y]["t"] != "luka" and y not in seen:
+                            seen.add(y); q.append(y)
+                    break
+        return seen
+
+    def test_book_of_some_lines_for_a_reader(self):
+        r, book = self.book("--lines", "Krzysztofa Lisa,Doroty Dudziak", "--reader", "Lisa,Dudziak=Marty",
+                            "--title", "Księga Marty")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(book.count('<h2 id="r'), 2)
+        self.assertIn("<title>Księga Marty</title>", book)
+        self.assertIn("Osoba, od której liczy się rozdział — ojciec Marty", book)
+        self.assertIn("Rodzice · dla Marty: dziadkowie", book)
+        self.assertNotIn('class="doc"', book)                        # no act names anyone in these lines
+        self.assertNotIn("Jaworski", book.split('id="idx"')[1])     # the index holds only their people
+
+    def test_book_acts_under_the_entries(self):
+        r, book = self.book()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn('id="dok"', book)                           # every act names someone in the chapters
+        docs = book.split('<div class="doc" id="d')[1:]
+        self.assertEqual([d.split('"')[0] for d in docs], ["1", "2", "3"])   # numbered in book order
+        # the birth act right under the child, the marriage and the death after the wife's entry, by year
+        self.assertIn("urodzeń 1890", docs[0].split("</h4>")[0])
+        self.assertIn("ślubów 1885", docs[1].split("</h4>")[0])
+        self.assertIn("zgonów 1895", docs[2].split("</h4>")[0])
+        szymon = self.person("Szymon Jaworski", "1890")["id"]
+        marianna = self.person("Marianna Sowa", "1862")["id"]
+        for who, d in ((szymon, "d1"), (marianna, "d2")):
+            n = book.split(f'id="{d}"')[0].rsplit('<section class="os" id="', 1)[1]
+            self.assertIn(self.P[who]["n"], n.split("</h4>")[0])
+            self.assertTrue(n.split("</section>")[1].lstrip().startswith('<div class="pod">'), d)
+        self.assertIn("under entries 3, at the end 0", r.stdout)
+
+    def test_candidate_role_raises_no_tier(self):
+        act = ('ACTS.append(dict(id="x-u-1955-1", title="Wola, księga urodzeń 1955, akt 1", date="1955", ref="sygn. 1", '
+               'source="", text="", translation="", people={{"@I10@": "dziecko — {role}"}}))')
+        for role, tier in (("KANDYDAT (czy to on?)", ""), ("to jego akt", "akt")):
+            cfg = self.config(act.format(role=role), name=f"tree_data_cand_{tier or 'none'}.py")
+            out = os.path.join(self.tmp, f"cand_{tier or 'none'}.html")
+            with redirect_stdout(io.StringIO()):
+                res = build_tree.build(cfg, out=out)
+            sys.modules.pop("tree_data", None)
+            self.assertEqual(res["db"]["people"]["@I10@"]["t"], tier, role)
+        r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", "build_book.py"), os.path.join(self.tmp, "cand_none.html"),
+                            "--no-pdf", "--out", os.path.join(self.tmp, "cand_book.html")], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        doc = read(os.path.join(self.tmp, "cand_book.html")).split("Wola, księga urodzeń 1955")[1].split("<pre>")[0]
+        self.assertIn('class="t hip">hipoteza', doc)
+        self.assertIn("Akt kandydata", doc)
+
+    def test_about_is_on_the_start_screen(self):
+        page = read(self.r["out"])
+        self.assertIn('<div class="habout" id="habout">${aboutHtml()}</div>', page)
+        self.assertNotIn('data-hact="about"', page)
+        self.assertIn('e.target.closest("#homescr,#grid")', page)     # the wheel scrolls the start screen
+
+    def test_book_unknown_line_refused(self):
+        r, _ = self.book("--lines", "Nikogo")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("no line label contains", r.stderr)
+
+    def test_book_fan_holds_every_known_ancestor(self):
+        tomasz = self.person("Tomasz Jaworski", "1985")["id"]
+        anc = self.ancestors(tomasz)
+        r, book = self.book("--fan", "Tomasz Jaworski|1985=Tomasz")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        front = book.split('<svg class="fan"')[1].split("</svg>")[0]
+        for pid in anc:
+            given = self.P[pid]["n"].split()[0]
+            self.assertIn(">" + given, front, self.P[pid]["n"])
+        self.assertIn(f"Wszyscy znani przodkowie w linii prostej: {len(anc)} osób", book)
+        self.assertIn("Przerywana ramka", book)                      # Helena Gołąb's parents are a hypothesis
+
+    def test_book_fan_finds_the_common_descendant(self):
+        # four lines: Tomasz's parents and Marta's; the fan's centre is one of their children
+        tomasz = self.person("Tomasz Jaworski", "1985")["id"]
+        marta = self.person("Marta Lis")["id"]
+        n = len(self.ancestors(tomasz) | self.ancestors(marta)) + 2
+        r, book = self.book("--fan", "Jan i Michał")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Wachlarz przodków — Jan i Michał", book)
+        self.assertIn(f"Wszyscy znani przodkowie w linii prostej: {n} osób", book)
+
+    def test_book_print_edition_page_numbers(self):
+        pages = os.path.join(self.tmp, "pages.json")
+        with open(pages, "w", encoding="utf-8") as f:
+            json.dump({"r1": 4, "r2": 7, "dok": 13, "idx": 15, "r2-1": 7}, f)
+        r, book = self.book("--print", "--fan", "Tomasz", "--pages", pages, name="print.html")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("@page fan", book)
+        self.assertIn('<div class="fanpage">', book)
+        self.assertIn('<span class="tp">4</span>', book)
+        self.assertIn('<span class="tp">15</span>', book)
+        self.assertIn("§1 r.2, s. 7", book)                  # Teresa, Andrzej's wife, has her entry in chapter 2
 
 
 if __name__ == "__main__":

@@ -350,6 +350,14 @@ button.act{border-color:var(--acc);color:var(--acc)}
 .hlinks{display:flex;flex-wrap:wrap;gap:8px}
 .hlinks button{padding:8px 14px;font-size:13px;border-radius:10px}
 .hfoot{color:var(--dim);font-size:11.5px;margin-top:22px;line-height:1.5}
+/* --- "O drzewie" under the family cards (not a side window) --- */
+.habout{margin-top:24px;border-top:1px solid var(--line);padding-top:4px;scroll-margin-top:12px}
+.habout h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin:24px 0 8px}
+.habout .sub{color:var(--dim);font-size:12.5px;margin:0 0 12px}
+.habout .rel{font-size:14px;margin:7px 0}
+.habout .rel i{font-size:12px}
+.habout .lead{font-size:13.5px}
+.habout .big{max-width:540px}
 /* --- mini map --- */
 #mini{position:absolute;left:12px;bottom:12px;width:180px;height:112px;background:var(--panel);
  border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);display:none;z-index:5;cursor:crosshair;
@@ -2388,15 +2396,21 @@ function homeView(){
       +`<div><b>${esc(plural(ap.sn))}</b><br><i>${esc(br)}</i><br><i>${cnt[br]||0} osób w drzewie</i></div></button>`;
   }
   html+=`</div><div class="hlinks"><button type="button" data-hact="search">&#128269; Szukaj osoby</button>`
-    +`<button type="button" data-hact="all">Mapa całości</button><button type="button" data-hact="list">Lista wszystkich</button>`
-    +`<button type="button" data-hact="about">O drzewie</button></div>`
+    +`<button type="button" data-hact="all">Mapa całości</button><button type="button" data-hact="list">Lista wszystkich</button></div>`
+    +`<div class="habout" id="habout">${aboutHtml()}</div>`
     +`<div class="hfoot">${brs.length} ${plGal(brs.length)} — każda liczona od jednej osoby w górę drzewa. Kolorowa krawędź kafelka mówi, na czym opiera się wpis — od aktu z sygnaturą po hipotezę; przerywane pola to ściany, czyli miejsca, w których wiedza się kończy.</div></div>`;
   h.innerHTML=html; h.classList.add("on");
   h.querySelectorAll("[data-hbr]").forEach(b=>b.onclick=()=>openLine(b.dataset.hbr));
   h.querySelectorAll("[data-hact]").forEach(b=>b.onclick=()=>{ const k=b.dataset.hact;
     if(k==="search"){ nav(()=>hideHome()); q.focus(); return; }
-    if(k==="about"){ introView(); return; }
     nav(()=>{ hideHome(); setMode(k==="all"?"all":"grid"); }); if(k==="all") coach(); });
+  /* links in "O drzewie": close the home screen first, it covers the tree and the card */
+  h.querySelectorAll("#habout [data-go]").forEach(e=>e.onclick=()=>nav(()=>{ closeMenu(); hideHome();
+    if(MODE!=="family") setMode("family"); go(e.dataset.go,true); }));
+  h.querySelectorAll("#habout [data-br]").forEach(e=>e.onclick=()=>openLine(e.dataset.br));
+  h.querySelectorAll("#habout [data-docs]").forEach(e=>e.onclick=()=>nav(()=>{ hideHome(); docsView(); }));
+  h.querySelectorAll("#habout [data-walls]").forEach(e=>e.onclick=()=>nav(()=>{ hideHome(); wallsView(); }));
+  h.querySelectorAll("#habout [data-roster]").forEach(e=>e.onclick=()=>nav(()=>{ hideHome(); setMode("grid"); }));
 }
 function hideHome(){ HOME=false; document.getElementById("homescr").classList.remove("on"); crumbsUpdate(); }
 function coach(){
@@ -2406,9 +2420,14 @@ function coach(){
   const c=document.getElementById("coach"); c.classList.add("on");
   document.getElementById("coachok").onclick=()=>{ c.classList.remove("on"); try{ localStorage.setItem("drzewo.coach","1"); }catch(e){} };
 }
-/* ---------- welcome card ---------- */
+/* ---------- "O drzewie" ----------
+   Stands on the home screen under the family cards, not in a side window: first where to go next
+   (no heading), then what the tree is, its lines, the oldest ancestors and the legend. */
 function introView(){
-  LASTV=introView;
+  homeView();
+  const a=document.getElementById("habout"); if(a) a.scrollIntoView({block:"start"});
+}
+function aboutHtml(){
   const vs   = Object.values(P).filter(x=>vis(x.id));
   const real = vs.filter(x=>x.t!=="luka");
   const lk   = vs.length - real.length;
@@ -2416,7 +2435,11 @@ function introView(){
   const old  = real.filter(x=>x.by && +x.by>1500 && kids(x.id).length)
                    .sort((a,b)=>+a.by-+b.by).slice(0,10);
   const ls={}; for(const x of real) if(x.br) ls[x.br]=(ls[x.br]||0)+1;
-  let h=`<h2>${esc(TITLE)}</h2>`
+  let h=`<div class="rel" data-docs>Dokumenty <i>${Object.keys(A).length} aktów z transkrypcją i skanem</i></div>`
+   +(META.book ? `<div class="rel"><a href="${esc(META.book)}" target="_blank" rel="noopener" style="color:inherit">Księga rodzinna</a> <i>do druku (PDF): przodkowie gałąź po gałęzi, akty pod wpisami osób, indeks osób</i></div>` : "")
+   +`<div class="rel" data-walls>Ściany i luki <i>${lk} miejsc z opisem następnego kroku</i></div>`
+   +`<div class="rel" data-roster>Spis wszystkich osób <i>alfabetycznie, po nazwiskach</i></div>`
+   +`<h3>O drzewie</h3>`
    +`<div class="sub">${esc(META.subtitle || [...new Set(Object.values(LINES).filter(l=>l[0] && P[l[0]]).map(l=>plural(P[l[0]].sn)))].join(" · "))}</div>`
    +`<div class="big"><div><b>${real.length}</b><i>osób</i></div>`
    +`<div><b>${Object.values(F).filter(f=>vis(f.h)||vis(f.w)).length}</b><i>rodzin</i></div>`
@@ -2445,11 +2468,6 @@ function introView(){
    +Object.keys(ls).sort((a,b)=>{const o=Object.keys(LINES); const i=o.indexOf(a),j=o.indexOf(b); return (i<0?99:i)-(j<0?99:j);}).map(k=>`<div class="rel" data-br="${esc(k)}">${esc(k)} <i>${ls[k]} osób</i></div>`).join("")
    +`<h3>Najstarsi znani przodkowie</h3>`
    +old.map(x=>`<div class="rel" data-go="${x.id}">${esc(x.n)} <i>${life(x)}${x.bp?" &middot; "+esc(x.bp):""}</i></div>`).join("")
-   +`<h3>Dokąd dalej</h3>`
-   +`<div class="rel" data-docs>Dokumenty <i>${Object.keys(A).length} aktów z transkrypcją i skanem</i></div>`
-   +(META.book ? `<div class="rel"><a href="${esc(META.book)}" target="_blank" rel="noopener" style="color:inherit">Księga rodzinna</a> <i>do druku (PDF): przodkowie gałąź po gałęzi, akty, indeks osób</i></div>` : "")
-   +`<div class="rel" data-walls>Ściany i luki <i>${lk} miejsc z opisem następnego kroku</i></div>`
-   +`<div class="rel" data-roster>Spis wszystkich osób <i>alfabetycznie, po nazwiskach</i></div>`
    +`<h3>Legenda</h3><div style="font-size:11.5px;color:var(--dim);line-height:1.75">`
    +`<span style="color:var(--m)">&#9632;</span> mężczyzna &nbsp; `
    +`<span style="color:var(--f)">&#9632;</span> kobieta<br>`
@@ -2462,7 +2480,7 @@ function introView(){
    +`<span style="color:var(--acc)">&#9670;</span> ma zapisane źródło / uwagi<br>`
    +`<b style="color:var(--t-akt)">akt</b> w karcie przy dacie, <b style="color:var(--t-akt)">✓ akt</b> przy krewnym — jest przepisany akt, który to potwierdza; fakt bez tego znaku pochodzi z drzewa rodzinnego albo z relacji rodziny<br>`
    +`ramka <b>Źródła podają różnie</b> — dwa źródła, dwie wersje, obok siebie; ramka z pytaniem — kilka możliwych odpowiedzi, każda ze stanem</div>`;
-  paint(h);
+  return h;
 }
 
 /* ---------- list of all people ---------- */
@@ -2662,7 +2680,7 @@ function zoomStep(f){
 }
 /* mouse: a drag started on the tree must not start a text selection (also in the card, if the pointer gets there) */
 stage.addEventListener("mousedown",e=>{
-  if(e.button!==0 || e.target.closest("#grid,input,select,textarea")) return;
+  if(e.button!==0 || e.target.closest("#grid,#homescr,input,select,textarea")) return;
   e.preventDefault();
   const a=document.activeElement; if(a && a!==document.body && !stage.contains(a)) a.blur();   // e.g. the search field
 });
@@ -2725,6 +2743,8 @@ window.addEventListener("pointercancel",ptrEnd);
    One wheel notch (~100 px) ≈ 7 %; trackpad pinch (wheel + ctrlKey, small deltas) has its own sensitivity. */
 const WHEEL_SENS=0.0007, PINCH_SENS=0.006;
 stage.addEventListener("wheel",e=>{
+  /* the home screen and the List sit in #stage but scroll themselves: the wheel scrolls them, it does not zoom the tree */
+  if(e.target.closest && e.target.closest("#homescr,#grid")) return;
   e.preventDefault(); ZANIM=0; const r=stage.getBoundingClientRect();
   let d=e.deltaY*(e.deltaMode===1 ? 33 : e.deltaMode===2 ? 400 : 1);   // lines / pages → pixels
   d=Math.max(-120,Math.min(120,d));
@@ -2831,7 +2851,7 @@ $("ptr").onclick=e=>{ e.stopPropagation();
 ["pointerdown","mousedown","touchstart","dblclick"].forEach(t=>$("ptr").addEventListener(t,e=>e.stopPropagation()));
 $("fit").onclick=()=>view();
 $("start").onclick=()=>nav(()=>{
-  relClear(); selId=null;
+  closeMenu(); relClear(); selId=null;
   if(MODE==="grid") setMode("family"); else markSel();
   introView();
 });
@@ -2955,7 +2975,7 @@ genlab(); cnt();
   if(s && s.dz && (!t || t===s.id)){ navRestore(s); if(t) coach(); }      // page reload: the same view
   else if(t){ setMode("family"); go(t,true); coach(); }
   else  { setMode("family"); go(ROOT,true);
-    if(PHONE()) sheet("close"); else introView();
+    sheet("close");
     homeView(); } }
 NAVQ=false; navSave(); navUi();
 </script></body></html>

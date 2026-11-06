@@ -372,8 +372,10 @@ def build(cfg_path, template=None, out=None, quiet=False):
             if not pid: continue
             people[pid].setdefault("sd", []).append([aid, role])
             named.setdefault(aid, {})[pid] = role
-    # whoever is named in a transcribed act has tier "akt" — otherwise tier and sources drift apart
-    raised = [x for x, pp in people.items() if pp.get("sd") and pp["t"] != "akt"]
+    # whoever is named in a transcribed act has tier "akt" — otherwise tier and sources drift apart.
+    # Except a role marked KANDYDAT / CANDIDATE: an act that MAY be about this person raises nothing.
+    raised = [x for x, pp in people.items() if pp.get("sd") and pp["t"] != "akt"
+              and not all("KANDYDAT" in r or "CANDIDATE" in r for _, r in pp["sd"])]
     for x in raised: people[x]["t"] = "akt"
 
     # ---------------------------------------------------------- evidence: what each act proves

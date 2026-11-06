@@ -62,6 +62,16 @@ A family that left the Kresy in 1944-46 will not be in the Indeks Represjonowany
 for **PUR** (Państwowy Urząd Repatriacyjny) registration cards in the regional state archive
 of where they settled.
 
+Villages emptied of their Ukrainian population in 1945-47 were settled by Poles from across
+the new border, so **a grave in such a village does not mean the person was born there**: do
+not read that village's pre-war Greek-Catholic books for them. The state archive of the area
+often has, besides the PUR files, **name lists of the settlers** in the county office
+(*starostwo*) fonds (`Wykazy imienne repatriantów osiedlonych na gospodarstwach
+poukraińskich w gromadzie ...`) and the village (*gromada*) registers of people arriving and
+leaving (`Rejestr osób przybywających do gromady ...`, `... opuszczających gromadę ...`,
+1946-1951). Search szukajwarchiwach for the village name and the word `gromady`. These units
+rarely have scans, but the titles give the signature to order.
+
 ## Cemeteries
 
 **Przemyśl municipal** (`cmentarzeprzemysl.pl`), script `cmentarze_przemysl.py`:
@@ -93,6 +103,7 @@ Others, no script: `mogily.pl`, `polskie-cmentarze.pl`, `ecmentarze.pl`.
 | `metryki.genealodzy.pl` | PTG scans, strong for Mazowsze (`skanoteka.py --site metryki`) |
 | `caak.upjp2.edu.pl` | Kraków archdiocese books, IIIF (`caak.py`) |
 | `jri-poland.org` | Jewish vital records; the route for a mixed-marriage lead |
+| AGAD metrical scans (`agadd.home.net.pl/metrykalia/<fond>/sygn.%20<n>/album/slides/<file>.jpg`) | static image files behind many Geneteka Ukraine rows (fonds 298, 300, 301, 437). The album page lists the files; one image is one ordinary request (no robots.txt on that host, checked November 2026) |
 
 ## Places: gazetteer and names register
 
@@ -152,8 +163,8 @@ the next section. Checked November 2026.
 |---|---|---|
 | `szukajwarchiwach.gov.pl` | bot protection (Imperva); a real browser passes | scans of parish and civil books, PUR files, court files, every AP inventory |
 | Gesher Galicia | JavaScript app; some content for members | Galician records incl. Jewish, record inventories, cadastral maps (see below) |
-| `genealogyindexer.org` | search needs a session | city directories, yizkor books, school yearbooks: an ancestor at an address |
-| FamilySearch | login | indexes, the film catalog, emigrant documents (see below) |
+| `genealogyindexer.org` | its robots.txt forbids `/search/` to every automated client (checked November 2026): the user searches it themselves | city directories, yizkor books, school yearbooks, and the full text of the Austro-Hungarian casualty lists 1914-1919 (*Verlustlisten*: surname, given name in German, regiment, land, district, home commune, birth year, status). The home commune is often the birthplace, which is exactly what a missing birth act hides; give the user a list of names, birth-year windows and communes to look for |
+| FamilySearch | login, since November 2026 also for the catalog | indexes, the film catalog, emigrant documents (see below) |
 | `genbaza.pl` | login | more scans |
 
 Use these through a browser session the user can see (Claude in Chrome or a DevTools MCP),
@@ -220,6 +231,25 @@ members. Checked October 2026.
 - **USC Warszawa-Śródmieście**: Kresy books after ~1900 (*księgi zabużańskie*).
 - Civil registry offices (USC) keep recent books until they are old enough to pass to the
   state archive; ask the USC of the place for anything more recent than the AP holds.
+
+### Civil registry offices (USC): the death act as a way past a wall
+
+Checked in the consolidated text of *Prawo o aktach stanu cywilnego*, Dz.U. 2026 poz. 393
+(November 2026); re-check before quoting it to anyone:
+- A death act gives the deceased's **date and place of birth** and the **names and maiden
+  names of the parents** (art. 95 ust. 1; older acts usually carry the same data). For a
+  20th-century ancestor whose birthplace nobody knows, the full copy of the death act
+  (*odpis zupełny*, a verbatim copy with all annotations, art. 44 ust. 2) is the fastest way
+  to the right parish.
+- A USC keeps **death and marriage acts for 80 years and birth acts for 100 years**, then
+  hands them to the state archive within 2 years (art. 28 ust. 1 and 4; books from before 2015:
+  art. 128 ust. 1). So every death act from the last 80 years is still in a USC.
+- A copy is issued to the person, the spouse, **ascendants, descendants**, siblings, or
+  someone who shows a legal interest (art. 45 ust. 1). A grandchild qualifies; the
+  grandchild's spouse does not, unless he shows a legal interest.
+- The application goes to **any USC the applicant chooses** (art. 44 ust. 5). The quick
+  gov.pl e-service covers only the applicant's own, spouse's, children's and parents' acts
+  (art. 45 ust. 2); for grandparents and older, an ordinary application at a USC.
 
 ## Wikipedia as a source
 

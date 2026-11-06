@@ -10,7 +10,9 @@ folder on disk, from a USB stick, or from any web server. The hard part is keepi
    tree is about. Read the printed list of redacted people: someone with no birth year and no death
    counts as living only when a child or spouse does, so a childless person with no dates stays visible.
 2. Living people: ask them before their names and dates go on any page, even a password-protected one.
-3. Build the book from the published page: `build_book.py publication/index.html`.
+3. Build the book from the published page: `build_book.py publication/index.html`, and every other
+   book (one family's lines, the print edition) from the same page. The print edition (`--print`,
+   `…-druk.pdf`) goes to the printer, not on the page: its page numbers replace the links.
 4. Open `publication/index.html` and search for a few living people, a PESEL-like number and a note
    you know is sensitive.
 

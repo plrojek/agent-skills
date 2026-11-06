@@ -146,8 +146,10 @@ real index rows. Two causes are known:
    confirmed; a VPN or tailnet that keeps the same public exit address changes nothing. The
    block on the home address lifted on its own within two months.
 
-`search` checks every answer (`sanity_reasons`: over 3000 rows, no parish named, the wrong
-parish, the surname in no row), refuses to cache or page through a bad one, and says so.
+`search` checks every answer (`sanity_reasons`: over 3000 rows, the surname in no row, and
+for a parish query also no parish named or the wrong parish), refuses to cache or page
+through a bad one, and says so. A whole-province search never names a parish, even when its
+rows are real, so an empty parish list counts only on a parish query.
 To tell the causes apart, run a **control query** whose answer you already know:
 `geneteka.py check <woj> <B|S|D> <rid> <surname> <expected_total>`. If the control is also
 pooled, the address is blocked: stop all Geneteka queries on that connection and tell the
@@ -196,6 +198,18 @@ Other mechanics:
   parish's villages or years. One family, every member present in the parish book, returned zero
   in all three record types of that parish's index. Look at the village column of the rows the
   index does return: if your village never appears, log the zero as `inconclusive`, not `negative`.
+- **The given-name filter matches anyone in the row**, not only the child: `--name Jan` also
+  returns children whose father is Jan. Read the role before counting a hit.
+- **Pair search**: `--surname2` (and `--name2`) ask for a second person in the same row, the
+  other spouse of a marriage. It also matches that person's parents, so one pair query on the
+  parents' surnames (`S Kowal --surname2 Lis`) lists the marriages of all their children, with
+  house numbers.
+- **In a richly indexed parish one query rebuilds a family.** Where rows carry both sets of
+  grandparents and the house, ask for the surname with the father's given name over a long span
+  (`B Kowal --name Piotr --from 1850 --to 1905`): his own birth and every child's appear, and the
+  villages of the children's births show where the family moved. When the parents' marriage is
+  not in the husband's parish, look up the wife's own birth row: her village names the parish
+  where the marriage most likely is.
 - `geneszukacz.genealodzy.pl?op=se` counts surname occurrences per province: use it to
   decide whether to dig. It returns no records.
 
@@ -239,6 +253,11 @@ an archive.
   ahead means a living relative.
 - Coverage is the five municipal cemeteries only; parish cemeteries of surrounding villages
   are absent. "Nobody of that name here" means "not buried in town", not "not from here".
+- **A card's birth date can be the baptism day, and the year can be a year off.** A card read
+  8 February of one year; the baptism in a village next to the cemetery was born 1 February,
+  baptised 8 February, the year before. Treat such a match as a candidate and look for an act
+  that ties the next generation (the person's own death act names birthplace and parents:
+  `references/sources.md`, "Civil registry offices") before attaching anyone.
 
 `scripts/grobonet.py --host <name>.grobonet.com` covers the many parish and town cemeteries on
 Grobonet. Results show sector/row/grave; `--grave <id>` lists **everyone in that grave**.
