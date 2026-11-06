@@ -3,12 +3,13 @@ name: pl-genealogy-record-search
 description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK, the Lviv archive's ARCHIUM), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, which parish a village belonged to, reading Latin and Greek-Catholic registers with a blind second reading of decisive cells, a research log of every search (nothing-found included), and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
 license: MIT
 metadata:
-  version: 1.2.0
+  version: 1.2.1
 ---
 
 # Polish genealogy: record matching
 
 Turning names in a tree into cited archival records. Four phases, in order:
+<!-- Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills -->
 
 **inventory -> sweep the sources -> cross-match -> capture**
 
@@ -478,6 +479,13 @@ the row again costs more than saving it now. Transcribe every column the first t
 the entry (ages, house number, godparents, witnesses, midwife, margin notes): opening the page
 again later costs more than writing it down now. Searches that found nothing go into the
 research log as they happen, every ten scans or each finished year, not all at the end.
+
+**Audit the scans against the acts** after any long reading session. List every downloaded book
+and every fact the notes say came from a scan, then check each against the transcribed acts the
+tree holds (with the tree viewer: `ACTS`). One such audit found eight acts whose facts were already
+in the tree, a death date, a baptism, two weddings, with no transcription, crop or signature behind
+them; the facts were right, but nothing showed why. Each one found gets its crop, transcription and
+role list then, and a note citing the wrong scan number gets corrected the same way.
 
 Family-facing documents are written in the third person ("X's great-grandfather"); don't
 guess how the user addresses their relatives, and check the direction of every kinship term.

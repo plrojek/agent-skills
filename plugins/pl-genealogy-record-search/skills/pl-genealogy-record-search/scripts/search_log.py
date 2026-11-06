@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Research log: every search with its result, nothing-found included, and per-book notes.
 
   search_log.py check [--source S] [--where W] [--surname X] [--years A-B]

@@ -1,0 +1,15 @@
+{
+  "name": "pl-genealogy-tree-viewer-atlas",
+  "private": true,
+  "type": "module",
+  "description": "Atlas 3D of the family-tree page. Made by Applied AI (https://appliedai.dev), https://github.com/plrojek/agent-skills. Only needed to rebuild atlas.bundle.js; using the skill needs no Node.",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

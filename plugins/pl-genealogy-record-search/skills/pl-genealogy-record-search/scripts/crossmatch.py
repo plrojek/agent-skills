@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Match people in the tree against index rows saved by `geneteka.py search ... --json`.
 
   crossmatch.py tree.json index1.json [index2.json ...] [--years 15]

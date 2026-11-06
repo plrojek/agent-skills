@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- Poster configurator of pl-genealogy-tree-viewer. Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Plakaty do druku</title>
+  <meta name="generator" content="pl-genealogy-tree-viewer · Made by Applied AI (https://appliedai.dev) · https://github.com/plrojek/agent-skills">
+  <meta name="poster-static" content="1">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="editor.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-title"><h1>Twój rodzinny portret</h1><p>Ułóż historię swojej rodziny.</p></div>
+    <nav class="app-nav" aria-label="Nawigacja główna"><span class="gl" aria-hidden="true">Przeglądaj</span><a href="../">Drzewo genealogiczne</a><a href="./" aria-current="page">Plakaty</a></nav>
+    <button type="button" class="button button-primary" id="download-pdf">Pobierz do druku <span aria-hidden="true">↓</span></button>
+  </header>
+  <main class="workspace">
+    <aside class="settings" aria-label="Ustawienia plakatu">
+      <form id="poster-form">
+        <fieldset><legend>Rodzina</legend>
+          <label for="person-search">Osoba u korzeni</label><input id="person-search" type="search" placeholder="Szukaj po imieniu lub nazwisku…" autocomplete="off" aria-controls="person-results"><div id="person-results" class="person-results" hidden></div>
+          <div class="selected-person" id="selected-person"></div>
+          <label class="check"><input name="showSiblings" type="checkbox"> Rodzeństwo osoby u korzeni</label><p class="field-hint" id="siblings-info"></p>
+          <label for="generations">Liczba pokoleń <output id="generations-value">6</output></label><input id="generations" name="generations" type="range" min="2" max="9" step="1"><p class="field-hint">Wliczając osobę u korzeni. Tylko dane z drzewa.</p>
+        </fieldset>
+        <fieldset><legend>Ilustracja i papier</legend>
+          <div class="background-options" id="background-options"></div>
+          <label for="format">Format plakatu</label><select id="format" name="format"><option value="panorama">Panorama · 84,1 × 47,3 cm</option><option value="a1">A1 · 84,1 × 59,4 cm</option><option value="a2">A2 · 59,4 × 42 cm</option><option value="a3">A3 · 42 × 29,7 cm</option><option value="custom">Własny format</option></select><div id="custom-dimensions" class="dimensions" hidden><label>Szerokość (mm)<input name="width" type="number" min="200" max="1600" step="0.1"></label><label>Wysokość (mm)<input name="height" type="number" min="150" max="1200" step="0.1"></label></div><p class="field-hint" id="print-info"></p>
+        </fieldset>
+        <fieldset><legend>Układ drzewa</legend>
+          <label for="titleMargin">Margines od góry <output id="titleMargin-value"></output></label><input id="titleMargin" name="titleMargin" type="range" min="0" max="0.2" step="0.001"><p class="field-hint">Od górnej krawędzi ilustracji. Przesuwa tytuł i podtytuł, a drzewo nie wchodzi wyżej niż one. Wyczyść tytuł i podtytuł, a drzewo może zająć ich miejsce aż do tego marginesu; gdy drzewo sięga do góry, suwak je obniża.</p>
+          <label for="verticalSpread">Odstępy między pokoleniami <output id="verticalSpread-value"></output></label><input id="verticalSpread" name="verticalSpread" type="range" min="0.25" max="2" step="0.01">
+          <label for="rootDrop">Obniżenie drzewa <output id="rootDrop-value"></output></label><input id="rootDrop" name="rootDrop" type="range" min="0" max="0.1" step="0.002"><p class="field-hint">Przesuwa całe drzewo, od osoby u korzeni po najdalszych przodków, niżej, bliżej dołu plakatu (mniejszy margines od dołu). Odstępy między pokoleniami się nie zmieniają.</p>
+          <label for="compact">Większe pismo ↔ krótsze linie <output id="compact-value"></output></label><input id="compact" name="compact" type="range" min="0" max="1" step="0.05"><div class="range-ends"><span>Większe pismo</span><span>Krótsze linie</span></div><p class="field-hint">W gęstych pokoleniach podpisy nie zawsze mieszczą się nad swoimi dziećmi. W prawo: przodkowie bliżej dzieci, krótsze linie, ale mniejsze pismo w najgęstszych pokoleniach. W lewo: większe pismo, dłuższe linie.</p>
+          <label for="spread">Rozpiętość korony</label><input id="spread" name="spread" type="range" min="0.55" max="0.95" step="0.01">
+          <label for="bend">Wygięcie pokoleń <output id="bend-value"></output></label><input id="bend" name="bend" type="range" min="-2" max="2" step="0.01"><p class="field-hint">Zakres od −200% do +200%. Zero to proste rzędy. Połączenia podążają za kartuszami.</p>
+          <button type="button" class="button button-secondary" id="reset-positions">Przywróć układ podpisów</button><p class="field-hint">Zeruje ręczne przesunięcia kartuszy (przeciąganie myszą lub strzałkami).</p>
+        </fieldset>
+        <fieldset><legend>Wielkość pisma</legend>
+          <label for="labelScale">Wielkość podpisów <output id="labelScale-value"></output></label><input id="labelScale" name="labelScale" type="range" min="0.65" max="1.5" step="0.05"><p class="field-hint">Wszystkie podpisy naraz.</p>
+          <label for="generationScale">Wielkość wybranych pokoleń <output id="generationScale-value">—</output></label>
+          <div class="generation-chips" id="generation-chips" role="group" aria-label="Pokolenia, które zmienia suwak"></div>
+          <input id="generationScale" type="range" min="0.5" max="2" step="0.05" value="1" disabled aria-describedby="generationScale-hint">
+          <p class="field-hint" id="generationScale-hint">Zaznacz jedno albo kilka pokoleń (1 = osoba u korzeni, 2 = rodzice, 3 = dziadkowie…) i przesuń suwak. Powiększone pokolenia dostają więcej miejsca, pozostałe trochę mniej. Gdy miejsca zabraknie, podgląd ostrzeże o nakładaniu.</p>
+        </fieldset>
+        <fieldset><legend>Wygląd podpisów</legend>
+          <div class="segmented" aria-label="Wygląd podpisów"><button type="button" data-label-style="kartusz">Kartusze</button><button type="button" data-label-style="lisc">Liście</button><button type="button" data-label-style="halo">Miękkie</button><button type="button" data-label-style="tekst">Sam tekst</button></div>
+          <div id="halo-controls" hidden>
+            <label for="haloShape">Kształt miękkiego kartusza</label><select id="haloShape" name="haloShape"><option value="oval">Owal</option><option value="circle">Okrąg</option></select>
+            <label for="haloDecay">Zanikanie (decay) <output id="haloDecay-value"></output></label><input id="haloDecay" name="haloDecay" type="range" min="0.2" max="4" step="0.1"><p class="field-hint">Większa wartość: kolor szybciej zanika od środka.</p>
+            <label for="haloBlur">Rozmycie krawędzi <output id="haloBlur-value"></output></label><input id="haloBlur" name="haloBlur" type="range" min="0" max="0.25" step="0.01">
+          </div>
+          <label for="font">Krój pisma</label><select id="font" name="font"><option value="klasyczna">Georgia · klasyczna</option><option value="ksiegowa">Palatino · księgowa</option><option value="garamond">Baskerville · elegancka</option></select>
+          <div class="color-options"><label>Litery<input name="ink" type="color" aria-label="Kolor liter"></label><label>Ornament<input name="accent" type="color" aria-label="Kolor ornamentów"></label><label>Papier<input name="paper" type="color" aria-label="Kolor papieru i kartuszy"></label></div>
+          <label for="labelOpacity">Krycie kartuszy <output id="labelOpacity-value"></output></label><input id="labelOpacity" name="labelOpacity" type="range" min="0" max="1" step="0.05">
+          <div class="field-checks"><label class="check"><input name="showDates" type="checkbox"> Lata życia</label><label class="check"><input name="showConnections" type="checkbox"> Linie pokrewieństwa</label><label class="check"><input name="showUnknown" type="checkbox"> Kartusze nieznanych rodziców</label></div>
+          <label for="lineColors">Kolor linii</label><select id="lineColors" name="lineColors"><option value="rodziny">Każda rodzina w innym kolorze</option><option value="jeden">Jeden kolor (ornament)</option></select><p class="field-hint">Obie linie od dziecka do rodziców mają ten sam kolor, sąsiednie rodziny różne. Pod liniami cienka jasna obwódka, żeby bliskie linie się nie zlewały.</p>
+          <label for="lineWidth">Grubość linii <output id="lineWidth-value"></output></label><input id="lineWidth" name="lineWidth" type="range" min="0.5" max="5" step="0.1">
+          <label for="lineOpacity">Wyrazistość linii <output id="lineOpacity-value"></output></label><input id="lineOpacity" name="lineOpacity" type="range" min="0.3" max="1" step="0.05">
+          <label for="lineCasing">Obwódka linii <output id="lineCasing-value"></output></label><input id="lineCasing" name="lineCasing" type="range" min="0" max="1" step="0.05"><p class="field-hint">Jasna obwódka pod liniami: szersza i mocniejsza oddziela linie biegnące blisko siebie; 0% = bez obwódki.</p>
+        </fieldset>
+        <fieldset><legend>Tytuł i stopka</legend>
+          <label for="title">Tytuł plakatu</label><input id="title" name="title" maxlength="150">
+          <label for="subtitle">Podtytuł</label><input id="subtitle" name="subtitle" maxlength="150">
+          <div class="color-options"><label>Tytuł<input name="titleColor" type="color" aria-label="Kolor głównego tytułu"></label><label>Podtytuł<input name="subtitleColor" type="color" aria-label="Kolor podtytułu"></label></div>
+          <label class="check"><input name="showFooter" type="checkbox"> Podpis w stopce</label>
+          <label for="footerText">Treść stopki</label><textarea id="footerText" name="footerText" maxlength="300" rows="3"></textarea><p class="field-hint">{people} = liczba osób, {generations} = liczba pokoleń. Wpisz dowolny tekst lub zostaw puste.</p>
+          <div class="field-checks"><label class="check"><input name="showFrame" type="checkbox"> Delikatna rama</label><label class="check"><input name="showGuides" type="checkbox"> Znaczniki na narożnikach (guides)</label></div>
+        </fieldset>
+        <fieldset><legend>Jedno pokolenie dokładnie</legend>
+          <label for="generation-select">Pokolenie</label><select id="generation-select"></select>
+          <label class="check"><input id="generation-custom" type="checkbox"> Własne ustawienia tego pokolenia</label>
+          <div id="generation-controls">
+            <label for="generation-width">Szerokość kartusza (mm)</label><input id="generation-width" data-generation-setting="width" type="number" min="5" max="300" step="0.5" placeholder="Automatyczna">
+            <label for="generation-fontSize">Wielkość tekstu (pkt)</label><input id="generation-fontSize" data-generation-setting="fontSize" type="number" min="3" max="72" step="0.5" placeholder="Automatyczna">
+            <div class="field-checks"><label class="check"><input data-generation-setting="showGivenName" type="checkbox"> Imiona</label><label class="check"><input data-generation-setting="showSurname" type="checkbox"> Nazwisko</label><label class="check"><input data-generation-setting="showBirth" type="checkbox"> Rok urodzenia</label><label class="check"><input data-generation-setting="showDeath" type="checkbox"> Rok śmierci</label></div>
+          </div>
+          <p class="field-hint" id="generation-info"></p><p class="field-hint">Puste pole: automatyczne dopasowanie. Szerszy kartusz mieści dłuższe nazwiska bez zmniejszania pisma. Większe kartusze mogą wymagać ręcznego rozłożenia.</p>
+        </fieldset>
+        <fieldset id="card-panel"><legend>Wybrana osoba</legend>
+          <label for="card-select">Osoba na plakacie</label><select id="card-select"></select>
+          <p class="field-hint">Możesz też kliknąć kartusz na podglądzie.</p>
+          <label for="card-scale">Wielkość kartusza <output id="card-scale-value"></output></label><input id="card-scale" type="range" min="0.5" max="2" step="0.05">
+          <label for="card-fontSize">Wielkość tekstu (pkt)</label><input id="card-fontSize" type="number" min="3" max="72" step="0.5" placeholder="Według pokolenia i skali">
+          <p class="field-hint" id="card-info"></p><button type="button" class="button button-secondary" id="reset-card">Przywróć ustawienia tego kartusza</button>
+        </fieldset>
+      </form>
+      <div class="config-actions"><button type="button" id="save-config">Zapisz ustawienia</button><button type="button" id="open-config">Wczytaj ustawienia</button><input type="file" id="load-config" accept="application/json,.json" hidden></div>
+      <button type="button" class="reset-button" id="reset-config">Zacznij od nowa</button>
+    </aside>
+    <section class="preview-area" aria-label="Podgląd plakatu">
+      <div class="preview-toolbar"><div><span class="status-dot"></span> Podgląd na żywo <span id="save-state">· zmiany zapisane lokalnie</span></div><div class="zoom-tools"><button type="button" id="zoom-out" aria-label="Pomniejsz">−</button><button type="button" id="zoom-fit" aria-label="Dopasuj do okna">Dopasuj</button><button type="button" id="zoom-in" aria-label="Powiększ">+</button></div></div>
+      <div class="canvas-scroll" id="canvas-scroll"><div class="poster-sheet" id="poster-sheet"><p class="loading">Przygotowuję rodzinne drzewo…</p></div></div>
+      <div class="preview-caption"><span id="poster-summary"></span><span id="drag-hint">Przeciągnij kartusz, aby dopasować go do gałęzi.</span><span class="layout-warning" id="layout-warning" role="status" hidden></span></div>
+      <div class="print-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 16H4V9h16v7h-3M7 13h10v8H7z"/></svg><p><strong>Od ekranu do rodzinnej pamiątki</strong><span>Ilustracja w pełnej rozdzielczości. Napisy i linie pozostają wektorowe.</span></p><button type="button" class="text-button" id="download-svg">Pobierz SVG <span aria-hidden="true">↓</span></button></div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <footer class="madeby" id="madeby">Made by <a href="https://appliedai.dev" target="_blank" rel="noopener" title="Applied AI · pl-genealogy-tree-viewer · github.com/plrojek/agent-skills"><picture><source srcset="brand/applied-ai-wordmark-dark.png" media="(prefers-color-scheme: dark)"><img src="brand/applied-ai-wordmark-light.png" alt="Applied AI"></picture></a></footer>
+</body>
+</html>

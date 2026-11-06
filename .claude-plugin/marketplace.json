@@ -29,7 +29,7 @@
     {
       "name": "pl-genealogy-record-search",
       "source": "./plugins/pl-genealogy-record-search",
-      "description": "Polish and former-Kresy genealogy: match a family tree against Geneteka, the Soviet deportation index, cemetery registers and scanned parish books, grade each finding, and patch the GEDCOM so it still imports."
+      "description": "Polish and former-Kresy genealogy: match a family tree against Geneteka, the Soviet deportation index, cemetery registers and scanned parish books, grade each finding, and patch the GEDCOM so it still imports. Plus a private family-tree website with an Atlas 3D, a poster configurator and family books."
     },
     {
       "name": "app-store-motion-banners",

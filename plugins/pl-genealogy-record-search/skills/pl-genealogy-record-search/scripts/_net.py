@@ -1,3 +1,4 @@
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Shared HTTP helpers for the source scripts.
 
 - An honest User-Agent naming this project. Override with GENEALOGY_UA.

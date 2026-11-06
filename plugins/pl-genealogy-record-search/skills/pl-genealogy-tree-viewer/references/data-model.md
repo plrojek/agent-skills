@@ -15,6 +15,10 @@ A key that matches no one, or more than one person, is printed with `!!` and ski
 Never key anything by an xref remembered from earlier: a guessed xref silently attaches a description
 to the wrong person.
 
+A key with a year breaks when the year changes: correct a birth date in the GEDCOM and every
+`"Given Surname|old year"` in `ACTS`, `WALLS` and the other tables stops matching. After any change of a
+birth date, rebuild and read the `!!` lines; switch such keys to the xref (looked up then) or the new year.
+
 ### Grandparents' lines
 
 Each line splits into its anchor's father's line and mother's line. A person in the blood (ancestors
@@ -126,6 +130,12 @@ and the book prints that act with a "hipoteza" badge and a note that it does not
 | `lnd` | `{xref: [name, hue, 1 or 0]}`: the lines of each anchor's father and mother (1, labelled "linia: name") and each anchor's own side (0, a band without a label) |
 | `root` | the xref of `ME`, where the path bar starts |
 | `var` | `VARIANTS` |
-| `meta` | `title`, optional `subtitle`, `book` |
+| `meta` | `title`, `generator` (who made the page: Applied AI and the repository), optional `subtitle`, `book` |
 
-`const IMG = {"t": {xref: data-uri}, "b": {xref: data-uri}}` — thumbnails and larger pictures.
+`const IMG = {"t": {xref: data-uri}, "b": {xref: data-uri}, "brand": {"light": data-uri, "dark": data-uri}}` —
+thumbnails and larger pictures, and the Applied AI wordmark (the footer has its own copy; `build_book.py`
+takes this one for the book's last page).
+
+A death in the GEDCOM with no date and no place (`1 DEAT Y`, as tree sites export "deceased") becomes
+`dd = "data nieznana"`: the card says "Zm. data nieznana", the life span ends in "?", and `publish.py
+--living` does not take the person for living.

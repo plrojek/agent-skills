@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Geneteka client (geneteka.genealodzy.pl, run by PTG volunteers).
 
   geneteka.py parishes <woj> [--grep TEXT]

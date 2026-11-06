@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Phase 1 inventory of a parsed tree. Usage: inventory.py tree.json [--root @I1@]
 
 Prints three lists, in the order to work them:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Pages from IIIF-based diocesan archives; written for CAAK, the Kraków archdiocese
 archive (caak.upjp2.edu.pl). Geneteka records sometimes link straight into it.
 

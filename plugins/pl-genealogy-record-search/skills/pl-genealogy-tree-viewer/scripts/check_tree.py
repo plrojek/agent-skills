@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-tree-viewer (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Open the built page in headless Chrome and run the viewer's own code over every person.
 
     python3 check_tree.py out/tree.html            # serves the folder on 127.0.0.1, then file:// if that fails

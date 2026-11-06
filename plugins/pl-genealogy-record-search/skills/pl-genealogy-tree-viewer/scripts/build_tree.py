@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-tree-viewer (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Build the family-tree page from a GEDCOM and the research tables in tree_data.py.
 
     python3 build_tree.py path/to/tree_data.py [--template tree.html] [--out tree.html]
@@ -13,7 +14,11 @@ The format is in references/data-model.md; templates/example/tree_data.py uses a
 
 The page is written from the template each time. Edits to the viewer go into a copy of
 templates/viewer/tree.html passed with --template, not into the output.
-Writes: the page, scans/ next to it (from ACTS pages and crops) and nothing else.
+Writes: the page, scans/ next to it (from ACTS pages and crops) and nothing else. The page carries the
+Atlas 3D (templates/atlas, inline; --no-atlas leaves it out) and the footer "Made by Applied AI".
+
+Part of pl-genealogy-tree-viewer. Made by Applied AI (https://appliedai.dev),
+https://github.com/plrojek/agent-skills
 """
 import argparse
 import html
@@ -28,6 +33,48 @@ sys.path.insert(0, HERE)
 from parse_ged import parse  # noqa: E402
 
 SKILL = os.path.dirname(HERE)
+# Who made this: on every page (footer, <meta name="generator">, DB.meta.generator) and every book (last page).
+CREDIT = "pl-genealogy-tree-viewer · Made by Applied AI (https://appliedai.dev) · https://github.com/plrojek/agent-skills"
+MADE_BY_URL = "https://appliedai.dev"
+BRAND = os.path.join(SKILL, "templates", "brand")
+ATLAS = os.path.join(SKILL, "templates", "atlas")
+FOOTER = ('<footer id="madeby">Made by <a href="https://appliedai.dev" target="_blank" rel="noopener" '
+          'title="Applied AI · pl-genealogy-tree-viewer · github.com/plrojek/agent-skills">'
+          '<img class="lt" src="__BRAND_LIGHT__" alt="Applied AI"><img class="dk" src="__BRAND_DARK__" alt="Applied AI"></a></footer>')
+
+
+def brand_uris():
+    """The Applied AI wordmark for light and dark surfaces, as data URIs (the page opens from disk)."""
+    import base64
+    out = {}
+    for v in ("light", "dark"):
+        with open(os.path.join(BRAND, f"applied-ai-wordmark-{v}.png"), "rb") as f:
+            out[v] = "data:image/png;base64," + base64.b64encode(f.read()).decode()
+    return out
+
+
+def with_atlas(page):
+    """Atlas 3D inline: its style before </head>, its bundle (three.js inside) before the page's own script."""
+    with open(os.path.join(ATLAS, "atlas.bundle.js"), encoding="utf-8") as f:
+        script = f.read().replace("</script", "<\\/script")
+    with open(os.path.join(ATLAS, "atlas.css"), encoding="utf-8") as f:
+        css = f.read()
+    at = page.index("const DB = ")
+    start = page.rindex("<script>", 0, at)
+    page = page[:start] + '<script id="tree3d-bundle">' + script + "</script>\n" + page[start:]
+    return page.replace("</head>", '<style id="tree3d-style">\n' + css + "</style>\n</head>", 1)
+
+
+def with_credit(page, brand):
+    """Footer and generator tag, also in a page made from your own --template that lacks them."""
+    if 'id="madeby"' not in page:
+        page = page.replace('<nav id="tabbar"', FOOTER + "\n<nav id=\"tabbar\"", 1) if '<nav id="tabbar"' in page \
+            else page.replace("</body>", FOOTER + "\n</body>", 1)
+    if 'name="generator"' not in page:
+        page = page.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="generator" content="' + html.escape(CREDIT) + '">', 1)
+    return page.replace("__BRAND_LIGHT__", brand["light"]).replace("__BRAND_DARK__", brand["dark"])
+
+
 TEMPLATE = os.path.join(SKILL, "templates", "viewer", "tree.html")
 
 # ---------------------------------------------------------------- tiers
@@ -103,7 +150,7 @@ def load_config(path):
     return mod
 
 
-def build(cfg_path, template=None, out=None, quiet=False):
+def build(cfg_path, template=None, out=None, quiet=False, atlas=True):
     say = (lambda *a: None) if quiet else print
     cfg = load_config(cfg_path)
     base = os.path.dirname(os.path.abspath(cfg_path))
@@ -122,6 +169,9 @@ def build(cfg_path, template=None, out=None, quiet=False):
     for pid, p in GP.items():
         b, dd, bu = p["birt"] or (None, None), p["deat"] or (None, None), p["buri"] or (None, None)
         bd, by = dm(b[0]); ded, dy = dm(dd[0])
+        # "1 DEAT Y" with no date and no place: dead, date unknown. Without this the person looked alive
+        # (no death on the card, presumed living by publish.py --living).
+        if p["deat"] is not None and not ded and not dd[1]: ded = "data nieznana"
         people[pid] = {"id": pid, "n": p["name"] or "(bez imienia)", "s": p["sex"] or "U",
                        "sn": p["surn"] or "", "mn": p["marnm"] or "",
                        "bd": bd, "bp": b[1] or "", "by": by, "dd": ded, "dp": dd[1] or "", "dy": dy,
@@ -463,7 +513,7 @@ def build(cfg_path, template=None, out=None, quiet=False):
 
     # ---------------------------------------------------------- write
     title = get("TITLE", "Drzewo rodzinne")
-    meta = {"title": title}
+    meta = {"title": title, "generator": CREDIT}
     if get("SUBTITLE", ""): meta["subtitle"] = get("SUBTITLE", "")
     if get("BOOK", ""): meta["book"] = get("BOOK", "")
     db = {"people": people, "fams": fams, "acts": acts, "lines": LINES, "var": get("VARIANTS", []), "meta": meta,
@@ -474,6 +524,10 @@ def build(cfg_path, template=None, out=None, quiet=False):
         page = f.read()
     for ph in ("__DB__", "__IMG__", "__TITLE__", "__H1__"):
         if page.count(ph) != 1: raise SystemExit(f"template: {ph} must occur exactly once")
+    brand = brand_uris()
+    img["brand"] = brand                                   # build_book.py puts the wordmark on the book's last page
+    if atlas: page = with_atlas(page)
+    page = with_credit(page, brand)
     page = (page.replace("const DB = __DB__;", "const DB = " + j(db) + ";")
                 .replace("const IMG = __IMG__;", "const IMG = " + j(img) + ";")
                 .replace("__TITLE__", html.escape(title)).replace("__H1__", html.escape(title)))
@@ -503,8 +557,9 @@ def main(argv=None):
     ap.add_argument("config", help="tree_data.py")
     ap.add_argument("--template", help="your copy of templates/viewer/tree.html")
     ap.add_argument("--out", help="output page (default: OUTPUT in tree_data.py)")
+    ap.add_argument("--no-atlas", action="store_true", help="leave the Atlas 3D out (the page is ~0.7 MB smaller)")
     o = ap.parse_args(argv)
-    r = build(o.config, o.template, o.out)
+    r = build(o.config, o.template, o.out, atlas=not o.no_atlas)
     return 1 if r["problems"] else 0
 
 
