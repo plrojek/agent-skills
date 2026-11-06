@@ -74,16 +74,20 @@ rarely have scans, but the titles give the signature to order.
 
 ## Cemeteries
 
-**Przemyśl municipal** (`cmentarzeprzemysl.pl`), script `cmentarze_przemysl.py`:
+Where a town's dead are registered online, in the order to check:
 
-| | |
-|---|---|
-| list (paged) | `pages/find2.php?nazwisko=&imie=&data_ur=&data_zg=&rok_od=&rok_do=&search=Szukaj&page=N&c=` |
-| grave card | `pages/mapa.php?c=<1-5>&id=<id>`: birth date, death date, section/row/grave, fee paid until |
-
-Cemetery codes: `1` Główny · `2` Zasanie · `3` Wojskowy · `4` Przekopana · `5` Kruhel Mały.
-Without `search=Szukaj` the filter is ignored. `nazwisko` is matched as `LIKE '<input>%'`.
-The TLS certificate is issued for another host name.
+- **The town's own grave locator** for its municipal cemeteries. Every voivodeship city runs one,
+  e.g. Wrocław (`wroclaw.pl/wyszukiwarka-grobow`), Gdańsk (`cmentarze-gdanskie.pl`), Kraków (the
+  Zarząd Cmentarzy Komunalnych's internet grave locator), Łódź, Poznań, Warsaw; many smaller towns
+  too. Find it with `<town> wyszukiwarka grobów` / `lokalizator grobów`. No script except the
+  Przemyśl one below; use the browser, or write a client like it.
+- **Grobonet** instances, about 1,300 municipal and parish cemeteries (script below).
+- **National search pages** over many registers (no scripts): `polskie-cmentarze.com`,
+  `mogily.pl`, `polskie-cmentarze.pl`, `ecmentarze.pl`. They are aggregations: a hit gives the
+  cemetery; the grave card is on the cemetery's own register.
+- A central register of all burial places is being prepared by the government (project
+  "Cyfryzacja Miejsc Pamięci", gov.pl); check whether it is live before relying on the others alone.
+- Parish cemeteries in villages are often not online: the parish office keeps the burial book.
 
 **Grobonet** (`<name>.grobonet.com`), script `grobonet.py`:
 
@@ -93,7 +97,17 @@ The TLS certificate is issued for another host name.
 | person | `/osoba/<id>`; `/osoba/<id>?inni=1` = everyone in the grave |
 | all instances | `polskie-cmentarze.com` (national search) and `grobonet.com` |
 
-Others, no script: `mogily.pl`, `polskie-cmentarze.pl`, `ecmentarze.pl`.
+**A town's own system, Przemyśl** (`cmentarzeprzemysl.pl`), script `cmentarze_przemysl.py`, the
+model for a client of another town's register:
+
+| | |
+|---|---|
+| list (paged) | `pages/find2.php?nazwisko=&imie=&data_ur=&data_zg=&rok_od=&rok_do=&search=Szukaj&page=N&c=` |
+| grave card | `pages/mapa.php?c=<1-5>&id=<id>`: birth date, death date, section/row/grave, fee paid until |
+
+Cemetery codes: `1` Główny · `2` Zasanie · `3` Wojskowy · `4` Przekopana · `5` Kruhel Mały.
+Without `search=Szukaj` the filter is ignored. `nazwisko` is matched as `LIKE '<input>%'`.
+The TLS certificate is issued for another host name.
 
 ## Other script-friendly sources
 

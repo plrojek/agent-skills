@@ -1,9 +1,9 @@
 ---
 name: pl-genealogy-record-search
-description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers (Przemyśl, Grobonet), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK, the Lviv archive's ARCHIUM), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, which parish a village belonged to, reading Latin and Greek-Catholic registers with a blind second reading of decisive cells, a research log of every search (nothing-found included), and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
+description: "Match people from a family tree against Polish and former Kresy (eastern borderlands) record sources and turn family stories into cited acts. Use when the user points at a GEDCOM, a MyHeritage/Geni/FamilySearch tree, or names an ancestor and asks to find records, verify a family story, break a brick wall, fill a missing maiden name, read a parish-book scan, or check whether someone is really a relative. Covers Geneteka parish indexes, the Indeks Represjonowanych (Soviet deportations), cemetery registers of any town (Grobonet's cemeteries by script, a town's own grave locator, one city's system as a ready client), scan hosts (Skanoteka, metryki.genealodzy.pl, szukajwarchiwach.gov.pl, CAAK, the Lviv archive's ARCHIUM), FamilySearch (records, film catalog, full-text search) and Gesher Galicia in the user's browser, where Galician and Kresy books physically are, which parish a village belonged to, reading Latin and Greek-Catholic registers with a blind second reading of decisive cells, a research log of every search (nothing-found included), and patching a GEDCOM safely. Trigger phrases: 'drzewo genealogiczne', 'dopasuj osoby', 'znajdź akt', 'geneteka', 'kto był rodzicem', 'nazwisko panieńskie', 'czy jesteśmy spokrewnieni', 'przodkowie', 'metryki', 'akt urodzenia/ślubu/zgonu', 'Kresy', 'zesłanie', 'deportacja', 'Polish ancestors', 'parish records Poland'."
 license: MIT
 metadata:
-  version: 1.2.1
+  version: 1.3.0
 ---
 
 # Polish genealogy: record matching
@@ -28,7 +28,7 @@ All scripts are in `scripts/`, Python 3.10+ standard library only, except
 | `audit_tree.py tree.json` | impossible chronology |
 | `geneteka.py parishes / search / check` | parish indexes; `--json` feeds the cross-match |
 | `indeks_repr.py surname / place` | Soviet deportations, whole village transports |
-| `cmentarze_przemysl.py` | Przemyśl municipal cemeteries, birth dates from grave cards |
+| `cmentarze_przemysl.py` | one city's own register (Przemyśl), birth dates from grave cards; a template for another town's system |
 | `grobonet.py --host ...` | any Grobonet cemetery, everyone in a grave |
 | `sweep_all.py` | one surname through the sources you switch on |
 | `skanoteka.py units / files / get` | scans from skanoteka and metryki.genealodzy.pl |
@@ -234,34 +234,50 @@ look for PUR (repatriation office) records instead.
 
 ### Cemetery registers: the best source for the 20th century
 
-Municipal registers are administrative records and usually beat family memory on dates. For
+Cemetery registers are administrative records and usually beat family memory on dates. For
 anyone who died after the parish indexes stop (about 1914-1935 depending on the parish)
 this is often the only thing online, and it is free and instant: check it before writing to
-an archive.
+an archive. They exist for most of Poland, in three kinds; check all that apply to the town
+where the person lived and died:
 
-`scripts/cmentarze_przemysl.py` (five municipal cemeteries of Przemyśl):
+1. **The town's own grave locator.** Every voivodeship city and many towns run one for their
+   municipal cemeteries (Kraków's Zarząd Cmentarzy Komunalnych, Wrocław, Gdańsk, Łódź, Poznań,
+   Warsaw, …). Search the web for `<town> wyszukiwarka grobów` or `lokalizator grobów`, or the
+   town's cemetery administration (`zarząd cmentarzy komunalnych`). Use it in the browser
+   (Claude in Chrome) unless a script exists for that system; the rules below apply to all of them.
+2. **Grobonet**, some 1,300 municipal and parish cemeteries across the country, each under its own
+   `<name>.grobonet.com`: `scripts/grobonet.py --host <name>.grobonet.com`. Results show
+   sector/row/grave; `--grave <id>` lists **everyone in that grave**. Grobonet's own site and the
+   national search pages in `references/sources.md` find which instance holds a town.
+3. **Nothing online**: many parish cemeteries in villages. The parish office keeps the burial book
+   and the grave fees; write or call, and ask for the grave's other names too.
 
-- The list is not the data. Results are paged, and the **birth date and the grave-fee date
-  are only on the grave card**. The script reads every page and every card.
+What every register hides, whichever kind it is:
+
+- The list is not the data. Results are paged, and the **birth date and the grave-fee date are
+  often only on the grave card**. Read every page and open every card.
 - Women are filed under the female form of the husband's surname, sometimes with the maiden
   name appended (`KOWAL Z NOWAKÓW`, `HELENA Z D. LIS`), and sometimes the maiden name is in
-  the given-name field. The surname filter matches from the start of the field, so a plain
-  maiden-name query finds none of them: use `--maiden` (searches `%NAME`), and
-  `<Married> --first "%MAIDEN%"` for the given-name field.
-- **Search by birth date** (`--born 1901-05-17`) when the date is known from elsewhere and
-  the married name isn't.
-- The grave-fee date (`fee to`) shows whether someone still pays for the grave: decades
-  ahead means a living relative.
-- Coverage is the five municipal cemeteries only; parish cemeteries of surrounding villages
-  are absent. "Nobody of that name here" means "not buried in town", not "not from here".
+  the given-name field. A surname filter that matches from the start of the field finds none of
+  them by the maiden name: search the married name, and put the maiden name where the system
+  allows wildcards.
+- **Search by birth date** when the date is known from elsewhere and the married name isn't.
+- The grave-fee date shows whether someone still pays for the grave: decades ahead means a
+  living relative.
+- Coverage is the cemeteries that register holds; "nobody of that name here" means "not buried
+  there", not "not from here". A parish cemetery of the next village is often in none of them.
 - **A card's birth date can be the baptism day, and the year can be a year off.** A card read
   8 February of one year; the baptism in a village next to the cemetery was born 1 February,
   baptised 8 February, the year before. Treat such a match as a candidate and look for an act
   that ties the next generation (the person's own death act names birthplace and parents:
   `references/sources.md`, "Civil registry offices") before attaching anyone.
 
-`scripts/grobonet.py --host <name>.grobonet.com` covers the many parish and town cemeteries on
-Grobonet. Results show sector/row/grave; `--grave <id>` lists **everyone in that grave**.
+`scripts/cmentarze_przemysl.py` is a ready client for one town's own system (Przemyśl's five
+municipal cemeteries), and a template for another town: find the list request and the grave-card
+page in the browser's network tab, page through every result, read every card, and send the
+requests through `_net.py` so the town's `robots.txt` and delays are kept. Its options show what
+to look for: `--maiden` (the surname matched anywhere: `%NAME`), `<Married> --first "%MAIDEN%"`
+(the maiden name in the given-name field) and `--born 1901-05-17`.
 
 **A shared grave is a family unit** and often the strongest evidence available: father and
 son in one grave can confirm a parentage the indexes cannot. Graves in the same row are
@@ -275,7 +291,7 @@ one project, a month apart, both times with a matching name and birth year. Ask 
 ### Several sources at once
 
 `scripts/sweep_all.py <Surname> [...]` with the sources switched on by flag
-(`--przemysl`, `--grobonet HOST`, `--repressions`, `--geneteka WOJ`). It adds female forms,
+(`--grobonet HOST`, `--repressions`, `--geneteka WOJ`, and `--przemysl` for that one town's system). It adds female forms,
 keeps going when one source fails, stops Geneteka at the first answer that is not real, and
 writes every answer to the research log. With Geneteka switched on it runs for hours: run
 `search_log.py check` for the surnames first, then start it in the background.
