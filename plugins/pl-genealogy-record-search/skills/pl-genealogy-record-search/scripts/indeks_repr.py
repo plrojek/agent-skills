@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Indeks Represjonowanych (indeksrepresjonowanych.pl): Poles repressed by the USSR,
 mostly the 1940-41 deportations, with their later fate (Anders' Army, return, death).
 

@@ -1,9 +1,9 @@
 ---
 name: pl-genealogy-tree-viewer
-description: "Turn a GEDCOM and the research behind it into a private family-tree website and a printable family book: a family view with couples side by side, each grandparent's line on its own background, a whole-tree map, an ancestor fan, a timeline, a list, kinship between any two people and a path bar from the reader to whoever is in the centre, search by every spelling of a surname, by place and by years, the evidence for each fact (a transcribed act with its scan crop next to a date or a parent), walls with the next step, hypotheses and conflicting sources side by side, a downloadable ancestor picture (fan or tree, PNG/JPG/SVG), a living-people filter, and family books (the whole tree or one family's lines, for its readers, with a fan of every known ancestor) as a screen PDF and a print edition with page numbers. Static files, no server code; works offline and on phones. Add-on to pl-genealogy-record-search: use it when the user has a tree (GEDCOM, research notes, acts) and wants to show it to family, put it on a private page, print it, or asks for a tree 'like a website'. Trigger phrases: 'drzewo na stronę', 'drzewo genealogiczne online', 'pokaż drzewo rodzinie', 'strona z drzewem', 'księga rodzinna', 'księga dla rodziny', 'księga do druku', 'wersja do druku', 'wydrukuj drzewo', 'wachlarz przodków', 'oś czasu przodków', 'obraz przodków', 'family tree website', 'family book PDF', 'print the family book', 'ancestor chart picture', 'publish my family tree privately'."
+description: "Turn a GEDCOM and the research behind it into a private family-tree website and a printable family book: a family view with couples side by side, each grandparent's line on its own background, a whole-tree map, an ancestor fan, a timeline, a list, kinship between any two people and a path bar from the reader to whoever is in the centre, search by every spelling of a surname, by place and by years, the evidence for each fact (a transcribed act with its scan crop next to a date or a parent), walls with the next step, hypotheses and conflicting sources side by side, a downloadable ancestor picture (fan or tree, PNG/JPG/SVG), an Atlas 3D of everyone with the connection between any two people, a poster configurator (a tree illustration with the ancestors on cartouches, PDF/SVG for print), a living-people filter, and family books (the whole tree or one family's lines, for its readers, with a fan of every known ancestor) as a screen PDF and a print edition with page numbers. Static files, no server code; works offline and on phones. Add-on to pl-genealogy-record-search: use it when the user has a tree (GEDCOM, research notes, acts) and wants to show it to family, put it on a private page, print it, or asks for a tree 'like a website'. Trigger phrases: 'drzewo na stronę', 'drzewo genealogiczne online', 'pokaż drzewo rodzinie', 'strona z drzewem', 'księga rodzinna', 'księga dla rodziny', 'księga do druku', 'wersja do druku', 'wydrukuj drzewo', 'wachlarz przodków', 'oś czasu przodków', 'obraz przodków', 'family tree website', 'family book PDF', 'print the family book', 'ancestor chart picture', 'publish my family tree privately', 'plakat z drzewem', 'plakat genealogiczny', 'drzewo 3D', 'family tree poster'. Made by Applied AI (https://appliedai.dev)."
 license: MIT
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # Family tree page and family book
@@ -15,16 +15,21 @@ Paths in this file (`scripts/`, `templates/`, `references/`) are relative to the
 `SKILL.md`. It pairs with `pl-genealogy-record-search`, which finds and grades the records; this skill
 shows them. The interface and the book are in Polish.
 
+Made by Applied AI (https://appliedai.dev), https://github.com/plrojek/agent-skills. Every page the
+skill builds (the tree, every view in it, the poster configurator) has a footer "Made by" with the
+Applied AI wordmark, and every family book ends with a page that says the same. Posters and exported
+pictures carry nothing.
+
 ```
 tree.ged  +  tree_data.py (me, lines, tiers, walls, acts, hypotheses, conflicts, variants)
-        │  scripts/build_tree.py      (Pillow only for scan pages and photos)
+        │  scripts/build_tree.py      (Pillow only for scan pages and photos; --no-atlas)
         ▼
-out/tree.html + out/scans/             one page, data and photos inside, scans beside it
+out/tree.html + out/scans/             one page, data, photos and the Atlas 3D inside, scans beside it
         │  scripts/check_tree.py      (headless Chrome: every card, every layout)
-        │  scripts/publish.py         (noindex, 11-digit numbers masked, --living YEAR)
+        │  scripts/publish.py         (noindex, 11-digit numbers masked, --living YEAR, poster/; --no-posters)
         ▼
-publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzinna.pdf   (screen: links)
-                                                       --print →  Ksiega-rodzinna-druk.pdf  (paper: page numbers)
+publication/index.html + scans/ + poster/  →  scripts/build_book.py  →  Ksiega-rodzinna.pdf   (screen: links)
+                                                              --print →  Ksiega-rodzinna-druk.pdf  (paper: page numbers)
 ```
 
 ## What the page does
@@ -44,8 +49,11 @@ publication/index.html + scans/   →  scripts/build_book.py  →  Ksiega-rodzin
 | Kinship | between any two people, and "this is me" for every card |
 | Obraz przodków | a picture of one person's ancestors to download or share: fan or tree, 1–7 generations, dates, places, photos, empty fields for unknown ancestors, certainty colours, light, print or dark theme, PNG/JPG (2000–4000 px) or SVG; no dates or places of people presumed living by default |
 | Tiers | the left edge of a tile: act, probable, hypothesis; (?) after the surname only for research-level doubt |
+| Atlas 3D | everyone at once as a 3D graph you can turn and fly through; the connection between any two people step by step; scope (all, one line), hypotheses on or off, a flat mode; the card opens next to it. Inline in the page (about 0.7 MB with three.js), no network |
+| Posters | `poster/` from `publish.py`: a configurator page ("Plakaty do druku" in the header, "Ułóż plakat" on the start screen) that puts the ancestors of any person on one of three tree illustrations, 2–9 generations, siblings, titles, fonts, colours, labels you drag onto the branches; downloads a one-page PDF in the paper size (A1, panorama, A2, A3, own) or an SVG with vector text, all in the browser. The poster itself carries no credit |
+| Footer | "Made by" + the Applied AI wordmark (light or dark with the theme) on every view, the Atlas included, and on the poster page |
 | Phone | bottom sheet, tab bar, pinch zoom, back gesture through the browser history |
-| Book | the whole tree or chosen lines (`--lines`); a contents page; a fan of every known ancestor at the front (`--fan`) and at each chapter; a chapter per line in pedigree numbering, its generation headers also counted from the reader (`--reader`); act marks, walls, hypotheses; every act (scan crop, transcription, translation) right under the entry of the person it is about, a marriage act after both spouses, the others in the act pointing to it, acts naming nobody in the chapters at the end; an index; a print edition (`--print`) |
+| Book | the whole tree or chosen lines (`--lines`); a contents page; a fan of every known ancestor at the front (`--fan`) and at each chapter; a chapter per line in pedigree numbering, its generation headers also counted from the reader (`--reader`); act marks, walls, hypotheses; every act (scan crop, transcription, translation) right under the entry of the person it is about, a marriage act after both spouses, the others in the act pointing to it, acts naming nobody in the chapters at the end; an index; a last page "Made by" with the Applied AI wordmark; a print edition (`--print`) |
 
 ## Phase 0: what to collect
 
@@ -110,9 +118,11 @@ python3 scripts/publish.py out/tree.html publication/ --living 1926
 uv run --with pillow==11.3.0 python3 scripts/build_book.py publication/index.html
 ```
 
-`publish.py` adds noindex, masks every 11-digit number (a PESEL copied into a note) and, with
-`--living`, redacts people presumed living (it prints them, and any line whose label you may want to
-change; read the list). Build the book from the
+`publish.py` adds noindex, masks every 11-digit number in the tree's data (a PESEL copied into a note)
+and, with `--living`, redacts people presumed living (it prints them, and any line whose label you may
+want to change; read the list). It also writes `publication/poster/`, the poster configurator, from the
+same published data, so the redacted people stay redacted on posters; `--no-posters` leaves it out (the
+illustrations are about 14 MB). Build the book from the
 published page: a PDF can't be filtered afterwards. Set `BOOK = "Ksiega-rodzinna.pdf"` in
 `tree_data.py` to put the link on the start screen ("O drzewie"). Hosting it privately (access control, caching,
 checks): **`references/publishing.md`**.
@@ -178,10 +188,19 @@ Rebuild, check, publish, book, in that order, every time.
 The reasons behind each of these, and the layout and phone rules the viewer follows:
 **`references/lessons.md`**.
 
+## Credits
+
+Made by Applied AI (https://appliedai.dev) · https://github.com/plrojek/agent-skills. The footer and the
+book's last page carry the Applied AI wordmark (`templates/brand/`); the wordmark and the poster
+illustrations (`templates/poster/assets/`) are Applied AI's and not covered by the MIT licence. The
+Atlas 3D bundles three.js (MIT, licence kept inline); its source is in `templates/atlas/src/`.
+
 ## Requirements
 
 Python 3.10+. Pillow only for scan pages and photos (`uv run --with pillow==11.3.0 …`); pypdf only for
 the print edition's page numbers (`--with pypdf==6.20.1`). Google Chrome or
 Chromium for `check_tree.py` and the book PDF (`CHROME=/path` if it isn't on the usual paths; inside a
 Linux container Chrome may also need `--no-sandbox`, which the scripts don't add for you). The
-page itself needs nothing: no server code, no external requests, no fonts or scripts from the web.
+page itself needs nothing: no server code, no external requests, no fonts or scripts from the web. The
+Atlas comes prebuilt (`templates/atlas/atlas.bundle.js`); Node is needed only to rebuild it after
+editing `templates/atlas/src/` (`npm install && npm run build` there).

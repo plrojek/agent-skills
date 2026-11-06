@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Municipal cemeteries of Przemyśl (cmentarzeprzemysl.pl): Główny, Zasanie, Wojskowy,
 Przekopana, Kruhel Mały. Reads every result page and every grave card, because the
 birth date is only on the card.

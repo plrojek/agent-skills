@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Part of pl-genealogy-tree-viewer (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Family book (printable HTML + PDF) built from the tree page.
 
     python3 build_book.py publication/index.html               # every line, HTML + PDF next to the page
@@ -39,7 +40,11 @@ in the act point to it. Acts naming nobody in the chapters go to "Pozostałe dok
                     pypdf), the front fans on landscape pages.
 
 The PDF is printed by Chrome without a window: CHROME=/path/to/chrome, or Google Chrome / Chromium on the
-usual paths. The text of the book is Polish, like the viewer.
+usual paths. The text of the book is Polish, like the viewer. The last page says "Made by" with the
+Applied AI wordmark.
+
+Part of pl-genealogy-tree-viewer. Made by Applied AI (https://appliedai.dev),
+https://github.com/plrojek/agent-skills
 """
 import argparse, datetime, html, io, json, math, os, re, shutil, subprocess, sys, unicodedata
 
@@ -93,6 +98,16 @@ for line in PAGE.split("\n"):
 if not DB: raise SystemExit("no `const DB` line in " + SRC)
 P, F, A, LINES = DB["people"], DB["fams"], DB.get("acts", {}), DB.get("lines", {})
 IMG = IMG or {"t": {}, "b": {}}
+CREDIT = "pl-genealogy-tree-viewer · Made by Applied AI (https://appliedai.dev) · https://github.com/plrojek/agent-skills"
+
+
+def wordmark():
+    """The Applied AI wordmark for the last page: from the page (build_tree.py puts it in IMG), else from the skill."""
+    if (IMG.get("brand") or {}).get("light"): return IMG["brand"]["light"]
+    import base64
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates", "brand", "applied-ai-wordmark-light.png")
+    with open(path, "rb") as fh:
+        return "data:image/png;base64," + base64.b64encode(fh.read()).decode()
 e = lambda s: html.escape(s or "", quote=True)
 
 def fold(s):
@@ -607,6 +622,11 @@ h3 { font-size: 9pt; text-transform: uppercase; letter-spacing: 1.2px; color: #8
 .idx p { margin: 0 0 .6mm; break-inside: avoid; }
 .idx .h { font-weight: 700; margin-top: 2.5mm; }
 .legend p { margin: 0 0 2mm; }
+/* last page: "Made by" + the Applied AI wordmark, at the bottom */
+.madeby { break-before: page; height: 255mm; display: flex; align-items: flex-end; justify-content: center; gap: 2.2mm;
+  padding-bottom: 4mm; font-size: 9.5pt; color: #6b6b6b; }
+.madeby a { border-bottom: none; display: inline-flex; }
+.madeby img { height: 5.2mm; width: auto; display: block; }
 """
 # print edition: the wider margin on the binding side, landscape pages for the front fans, no link underlines
 CSS_PRINT = """
@@ -639,7 +659,8 @@ def tp(i):
 
 def render():
     FANS.clear()
-    out = [f'<!doctype html><html lang="pl"><head><meta charset="utf-8">{ROBOTS}<title>{e(o.title)}</title><style>'
+    out = [f'<!doctype html>\n<!-- Family book built by pl-genealogy-tree-viewer. Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills -->\n'
+           f'<html lang="pl"><head><meta charset="utf-8">{ROBOTS}<meta name="generator" content="{e(CREDIT)}"><title>{e(o.title)}</title><style>'
            + CSS + (CSS_PRINT if PRINT else "") + "</style></head><body>",
            f'<div class="title"><h1>{e(o.title)}</h1><div class="rody">{e(rody)}</div>'
            f'<div class="stan">{n_people} {pl(n_people, "osoba", "osoby", "osób")} · {n_fams} {pl(n_fams, "rodzina", "rodziny", "rodzin")} · '
@@ -710,7 +731,9 @@ wyżej jej rodzice, dziadkowie i dalsze pokolenia; kolor mówi, z której linii 
             out.append(f"<p>{e(nm(pid))} {e(life(P[pid]))} — " + ", ".join(
                 f'<a href="#r{a}-{b}">{a}/§{b}{(" s." + chr(160) + str(PG[f"r{a}-{b}"])) if PRINT and f"r{a}-{b}" in PG else ""}</a>'
                 for a, b in where[pid]) + "</p>")
-    out.append("</div></body></html>")
+    out.append("</div>")
+    out.append('<div class="madeby">Made by <a href="https://appliedai.dev"><img src="' + wordmark() + '" alt="Applied AI"></a></div>')
+    out.append("</body></html>")
     return "\n".join(out)
 
 def write_html():

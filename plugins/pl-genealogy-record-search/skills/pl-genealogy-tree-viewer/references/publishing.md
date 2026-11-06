@@ -1,11 +1,18 @@
 # Putting the tree on a private page
 
-The output is static: `index.html`, `scans/`, and the book PDF if you made one. It works from a
-folder on disk, from a USB stick, or from any web server. The hard part is keeping it private.
+The output is static: `index.html`, `scans/`, `poster/` (the poster configurator) and the book PDF if
+you made one. It works from a folder on disk, from a USB stick, or from any web server. The hard part is
+keeping it private. Sizes: the page is the data and photos plus about 0.7 MB of Atlas 3D (three.js);
+`poster/` is about 14 MB, almost all of it the three tree illustrations (`--no-posters` leaves it out).
+The poster page reads `people.json` with `fetch`, so it needs a web server (or a local one, e.g.
+`python3 -m http.server`); opened straight from disk it shows an error. The tree page itself works
+from disk.
 
 ## Before anything leaves your computer
 
-1. `publish.py out/tree.html publication/` — noindex, 11-digit numbers masked, scans copied.
+1. `publish.py out/tree.html publication/` — noindex, 11-digit numbers in the tree's data masked, scans
+   copied, `poster/` written from the same published data (its `people.json` holds only names, surnames,
+   years and parents).
    Add `--living 1926` (or another year) when the page will be seen by anyone outside the family the
    tree is about. Read the printed list of redacted people: someone with no birth year and no death
    counts as living only when a child or spouse does, so a childless person with no dates stays visible.
@@ -14,7 +21,7 @@ folder on disk, from a USB stick, or from any web server. The hard part is keepi
    book (one family's lines, the print edition) from the same page. The print edition (`--print`,
    `…-druk.pdf`) goes to the printer, not on the page: its page numbers replace the links.
 4. Open `publication/index.html` and search for a few living people, a PESEL-like number and a note
-   you know is sensitive.
+   you know is sensitive. Open `poster/` and look for the same living people there.
 
 ## Access control
 
@@ -66,4 +73,9 @@ curl -sI https://example.org/drzewo/scans/x.jpg       # 401 or 404 too, also on 
 
 Rebuild, publish and copy the folder in one go (`build_tree.py` → `publish.py` → `build_book.py` →
 `rsync -a --delete publication/ server:/…/drzewo/`). After a deploy, load the page logged in and check
-that the new build is the one served: CSS and JS are inline, so one file decides it.
+that the new build is the one served: CSS and JS are inline, so one file decides it. The poster page
+is several files (`poster/index.html`, `editor.js`, `poster.js`, `style.css`); a CDN that rewrites
+cache headers on CSS and JS can serve an old one for a while after a deploy.
+
+The access control above covers the whole folder, `poster/` included: its `people.json` is the
+family's names.

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """GEDCOM -> JSON: {people, fams}. Usage: parse_ged.py tree.ged [out.json]
 
 Reads UTF-8 (with or without BOM), then falls back to cp1250 and latin-1. ANSEL files

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Grobonet cemetery search. Many Polish parishes and towns run an instance at
 <name>.grobonet.com; find the one for your cemetery on grobonet.com first.
 

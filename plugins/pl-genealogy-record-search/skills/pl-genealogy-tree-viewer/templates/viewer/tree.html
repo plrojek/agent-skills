@@ -1,5 +1,7 @@
 <!doctype html>
+<!-- Family-tree page built by pl-genealogy-tree-viewer. Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills -->
 <html lang="pl"><head><meta charset="utf-8">
+<meta name="generator" content="pl-genealogy-tree-viewer · Made by Applied AI (https://appliedai.dev) · https://github.com/plrojek/agent-skills">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>__TITLE__</title>
 <style id="aimg-style">
@@ -541,6 +543,23 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
    font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #mini.on ~ #fback{top:94px}
 }
+/* --- link „Plakaty do druku” w grupie Przeglądaj (publish.py odkrywa go, gdy zapisze poster/) --- */
+.grp .nav-link{padding:5px 10px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-decoration:none;white-space:nowrap}
+.grp .nav-link:hover{border-color:var(--acc);color:var(--acc)}
+.grp .nav-link:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hposter{display:inline-block;margin:16px 0 8px;padding:10px 16px;border-radius:10px;background:var(--acc);
+ color:var(--panel);text-decoration:none;font-weight:600;font-size:14px}
+.hposter:hover{filter:brightness(1.08)}
+.hposter:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+/* --- stopka „Made by Applied AI”: na każdym widoku strony (także w Atlasie), nie na obrazach i plakatach --- */
+#madeby{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 12px;
+ font-size:11px;line-height:1;color:var(--dim);background:var(--panel);border-top:1px solid var(--line);z-index:6}
+#madeby a{display:inline-flex;align-items:center}
+#madeby img{display:block;height:12px;width:auto}
+#madeby .dk{display:none}
+@media (prefers-color-scheme:dark){ #madeby .lt{display:none} #madeby .dk{display:block} }
+body.atlas-mode #madeby{background:#0a101f;border-top-color:#ffffff14;color:#a0adc5}
+body.atlas-mode #madeby .lt{display:none} body.atlas-mode #madeby .dk{display:block}
 </style></head><body>
 <header>
   <h1>__H1__<small id="cnt"></small></h1>
@@ -556,7 +575,9 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
       <button id="all" title="Wszystkie osoby na jednej mapie">Mapa całości</button>
       <button id="fan" title="Przodkowie osoby w środku na półkolu: linia ojca po lewej, matki po prawej">Wachlarz</button>
       <button id="time" title="Życie przodków i potomków osoby w środku jako paski na osi lat">Oś czasu</button>
+      <button id="atlasbtn" title="Przestrzenny atlas i połączenia między osobami">Atlas 3D</button>
       <button id="list" title="Spis wszystkich osób według nazwisk">Lista</button>
+      <a id="poster-link" href="poster/" hidden class="nav-link">Plakaty do druku</a>
     </nav>
     <nav class="grp" aria-label="Badania"><span class="gl">Badania</span>
       <label id="brwrap" title="Ustaw w środku drzewa jedną z osób, od których liczą się gałęzie — z całą jej rodziną">Przejdź do
@@ -588,6 +609,7 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
 <nav id="crumbs" aria-label="Droga od osoby startowej do osoby w środku"></nav>
 <main>
   <div id="stage"><div id="grid"></div><svg id="svg" class="lod2"><g id="vp"></g></svg>
+    <section id="atlas3d" aria-label="Atlas rodzinny 3D" hidden></section>
     <svg id="mini" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g id="mini-n"></g><rect id="mini-v" class="v" x="0" y="0" width="0" height="0"/></svg>
     <button id="ptr" type="button"></button>
     <button id="fback" type="button" aria-label="Wstecz"><svg class="barr" viewBox="0 0 16 16" aria-hidden="true"><path d="M14.5 8H3.6M8.2 3.2 3.4 8l4.8 4.8" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Wstecz</span></button>
@@ -615,6 +637,7 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
   </div>
   <aside id="side"></aside>
 </main>
+<footer id="madeby">Made by <a href="https://appliedai.dev" target="_blank" rel="noopener" title="Applied AI · pl-genealogy-tree-viewer · github.com/plrojek/agent-skills"><img class="lt" src="__BRAND_LIGHT__" alt="Applied AI"><img class="dk" src="__BRAND_DARK__" alt="Applied AI"></a></footer>
 <nav id="tabbar" aria-label="Nawigacja">
   <button type="button" id="tb-home"><span>&#8962;</span>Start</button>
   <button type="button" id="tb-tree"><span>&#127795;</span>Drzewo</button>
@@ -629,6 +652,9 @@ svg.lod0 .node.hit rect{fill:var(--acc);opacity:1}
   <div class="cr"><span>&#8617;</span><span>Gest „wstecz” telefonu albo przycisk <b>&larr;</b> w lewym górnym rogu wraca do poprzedniej osoby i poprzedniego widoku.</span></div>
   <button type="button" id="coachok">Rozumiem</button></div></div>
 <script>
+/* pl-genealogy-tree-viewer — Made by Applied AI (https://appliedai.dev) · https://github.com/plrojek/agent-skills */
+const MADE_BY = Object.freeze({by:"Applied AI", url:"https://appliedai.dev", repo:"https://github.com/plrojek/agent-skills", tool:"pl-genealogy-tree-viewer"});
+try{ console.info("Drzewo zbudowane przez "+MADE_BY.tool+" · Made by "+MADE_BY.by+" · "+MADE_BY.url+" · "+MADE_BY.repo); }catch(e){}
 const DB = __DB__;
 const IMG = __IMG__;
 const P = DB.people, F = DB.fams, A = DB.acts || {}, LINES = DB.lines || {}, LND = DB.lnd || {};
@@ -1169,8 +1195,10 @@ function crumbsUpdate(){
     else if(id!==focusId) go(id); else side(id); });
   bar.scrollLeft=bar.scrollWidth;
 }
+let ATLAS=null;
 function render(){
   crumbsUpdate();
+  if(MODE==="atlas"){ ATLAS?.refresh(); return; }
   if(MODE==="fan"){ renderFan(); return; }
   if(MODE==="time"){ renderTime(); return; }
   const all = MODE==="all";
@@ -1992,7 +2020,7 @@ function focusFit(){
   const cx=((b.x1-b.x0)*k<=r.w-36) ? (b.x0+b.x1)/2 : (mate?(fx.x+mate.x)/2:fx.x);
   T.k=k; T.x=r.w/2-cx*k; T.y=r.h/2-(b.y0+b.y1)/2*k; apply();
 }
-function view(){ if(MODE==="all" || MODE==="fan") fitAll(); else if(MODE==="time") fitTime(); else focusFit(); }
+function view(){ if(MODE==="atlas"){ ATLAS?.fit(); return; } if(MODE==="all" || MODE==="fan") fitAll(); else if(MODE==="time") fitTime(); else focusFit(); }
 function panTo(id){ const n=POS[id]; if(!n) return; const r=visRect(); T.x=r.w/2-n.x*T.k; T.y=r.h/2-n.y*T.k; apply(); }
 function zoomTo(id,k){ const n=POS[id]; if(!n) return; const r=visRect();
   T.k=Math.min(KMAX,Math.max(KMIN,k)); T.x=r.w/2-n.x*T.k; T.y=r.h/2-n.y*T.k; apply(); }
@@ -2010,9 +2038,9 @@ function nodeDbl(id){
    nav(fn): saves the current view in the current step, runs fn and, if the view changed, adds a step.
    Nested calls (go inside setMode etc.) and replaying a step (NAVQ) add nothing. */
 let NAVSEQ=0, NAVD=0, NAVQ=true;
-const navKey=()=>[HOME?1:0, MODE, focusId, BRF||""].join("|");
+const navKey=()=>[HOME?1:0, MODE, focusId, BRF||"", MODE==="atlas" ? ATLAS?.key() : ""].join("|");
 function navState(){ return {dz:1, seq:NAVSEQ, home:HOME, mode:MODE, id:focusId, sel:selId, br:BRF||"",
-  t:{x:T.x, y:T.y, k:T.k}}; }
+  t:{x:T.x, y:T.y, k:T.k}, atlas:MODE==="atlas" ? ATLAS?.state() : null}; }
 const navUrl=s=> s.home ? location.pathname+location.search : "#"+s.id.replace(/@/g,"");
 function navSave(){
   if(NAVQ) return;
@@ -2041,7 +2069,7 @@ function navUi(){
   if(pv){
     if(pv.home) lab="Start";
     else if(pv.mode==="grid") lab="Lista";
-    else if(pv.mode!==MODE) lab = {all:"Mapa całości", fan:"Wachlarz", time:"Oś czasu"}[pv.mode] || "Rodzina";
+    else if(pv.mode!==MODE) lab = {all:"Mapa całości", fan:"Wachlarz", time:"Oś czasu", atlas:"Atlas 3D"}[pv.mode] || "Rodzina";
     else if(pv.id!==focusId && P[pv.id]) lab=P[pv.id].n.replace(/^❓ /,"");
   }
   hb.title = can ? "Wróć: "+lab : "Wróć do poprzedniego widoku";
@@ -2065,12 +2093,16 @@ function navRestore(s){
     NAVSEQ=s.seq||0;
     closeMenu();
     BRF=s.br||null;                                   // narrowing of the list
-    const id=(P[s.id] && vis(s.id)) ? s.id : (anchorOf()||ROOT);
-    const mode=["all","grid","fan","time"].includes(s.mode) ? s.mode : "family";
+    const id=(P[s.id] && (s.mode==="atlas" || vis(s.id))) ? s.id : (anchorOf()||ROOT);
+    const mode=["all","grid","fan","time","atlas"].includes(s.mode) ? s.mode : "family";
     if(s.home){
-      if(MODE==="grid") setMode("family");
+      if(MODE==="grid" || MODE==="atlas") setMode("family");
       if(focusId!==id){ focusId=id; selId=id; render(); }
       homeView();
+    } else if(mode==="atlas"){
+      if(HOME) hideHome();
+      focusId=id; selId=(s.sel && P[s.sel]) ? s.sel : id;
+      setMode("atlas"); ATLAS.restore(s.atlas, selId);
     } else if(mode==="grid"){
       if(HOME) hideHome();
       focusId=id; selId=(s.sel && P[s.sel]) ? s.sel : null;
@@ -2095,6 +2127,11 @@ function go(id, nohist, tr){
   if(!P[id]) return;
   if(!nohist && !NAVQ && !NAVD) return nav(()=>go(id,true));
   if(HOME) hideHome();
+  if(MODE==="atlas"){
+    if(P[id].t==="luka"){ setMode("family"); return go(id,true,tr); }
+    focusId=id; selId=id; side(id); document.body.classList.add("atlas-details"); ATLAS.focus(id);
+    if(!NAVD) navSave(); return;
+  }
   const old = (MODE!=="all" && id!==focusId) ? snapPos() : null;
   focusId=id; selId=id; side(id);
   if(MODE==="all"){ if(HILITE) render(); else markSel(); if(!setT(tr,null)) zoomTo(id, Math.max(T.k,1)); }
@@ -2161,8 +2198,9 @@ const TIER={akt:["AKT","potwierdzone dokumentem: aktem, sygnaturą archiwalną, 
             luka:["ŚCIANA","tego nie wiemy — tutaj kończy się obecny stan wiedzy"]};
 let LASTV=null;
 function sheet(st){ const s=document.getElementById("side");
-  const w0=(!PHONE() && MODE!=="grid") ? svg.getBoundingClientRect().width : 0;
+  const w0=(!PHONE() && MODE!=="atlas" && MODE!=="grid") ? svg.getBoundingClientRect().width : 0;
   s.classList.remove("peek","full"); if(st!=="close") s.classList.add(st);
+  if(MODE==="atlas") document.body.classList.toggle("atlas-details",st!=="close");
   if(w0){ const dw=svg.getBoundingClientRect().width-w0; if(Math.abs(dw)>1){ T.x+=dw/2; apply();
     const n=selId && POS[selId]; if(n && st!=="close"){ const x=n.x*T.k+T.x, w=w0+dw; if(x<40 || x>w-40) panTo(selId); } } } }
 function closeMenu(){ const m=document.getElementById("menu"); m.classList.remove("on"); document.getElementById("menubtn").classList.remove("on"); }
@@ -2186,7 +2224,7 @@ function paint(h){
   s.querySelector("#closeside").onclick=()=>sheet("close");
   gripInit(s.querySelector(".grip"));
   s.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{ const id=e.dataset.go;
-    if(MODE==="family") go(id);
+    if(MODE==="family" || MODE==="atlas") go(id);
     else { selId=id; side(id); markSel(); if(MODE==="all"){ if(HILITE) render(); panTo(id); } } });
   s.querySelectorAll("[data-fam]").forEach(e=>e.onclick=()=>nav(()=>{ const id=e.dataset.fam;
     if(MODE!=="family") setMode("family"); go(id); }));
@@ -2209,7 +2247,7 @@ function paint(h){
 /* Esc closes the enlarged photo, then the card panel (on a computer) */
 document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return;
   const lb=document.getElementById("lb"); if(lb.classList.contains("on")){ lb.classList.remove("on"); return; }
-  if(PHONE() || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||"")) return;
+  if(PHONE() || MODE==="atlas" || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||"")) return;
   const s=document.getElementById("side"); if(s.classList.contains("full")||s.classList.contains("peek")) sheet("close"); });
 document.getElementById("lb").onclick=()=>document.getElementById("lb").classList.remove("on");
 
@@ -2380,6 +2418,7 @@ function branchFaces(br, anchor){
 }
 function homeView(){
   if(!NAVQ && !NAVD) return nav(()=>homeView());
+  if(MODE==="atlas") setMode("family");
   HOME=true; crumbsUpdate();
   const h=document.getElementById("homescr");
   const real=Object.values(P).filter(x=>x.t!=="luka");
@@ -2411,10 +2450,11 @@ function homeView(){
   h.querySelectorAll("#habout [data-docs]").forEach(e=>e.onclick=()=>nav(()=>{ hideHome(); docsView(); }));
   h.querySelectorAll("#habout [data-walls]").forEach(e=>e.onclick=()=>nav(()=>{ hideHome(); wallsView(); }));
   h.querySelectorAll("#habout [data-roster]").forEach(e=>e.onclick=()=>nav(()=>{ hideHome(); setMode("grid"); }));
+  h.querySelectorAll("#habout [data-atlas]").forEach(e=>e.onclick=()=>setMode("atlas"));
 }
 function hideHome(){ HOME=false; document.getElementById("homescr").classList.remove("on"); crumbsUpdate(); }
 function coach(){
-  if(!PHONE()) return;
+  if(MODE==="atlas" || !PHONE()) return;
   let seen=false; try{ seen=localStorage.getItem("drzewo.coach")==="1"; }catch(e){}
   if(seen) return;
   const c=document.getElementById("coach"); c.classList.add("on");
@@ -2435,10 +2475,14 @@ function aboutHtml(){
   const old  = real.filter(x=>x.by && +x.by>1500 && kids(x.id).length)
                    .sort((a,b)=>+a.by-+b.by).slice(0,10);
   const ls={}; for(const x of real) if(x.br) ls[x.br]=(ls[x.br]||0)+1;
-  let h=`<div class="rel" data-docs>Dokumenty <i>${Object.keys(A).length} aktów z transkrypcją i skanem</i></div>`
+  /* plakaty: publish.py zapisuje poster/ (konfigurator) i zdejmuje `hidden` z #poster-link */
+  const poster=!document.getElementById("poster-link").hidden;
+  let h=(poster?`<a class="hposter" href="poster/${DB.root?"?root="+encodeURIComponent(DB.root):""}">Ułóż plakat z drzewem rodziny</a>`:"")
+   +`<div class="rel" data-docs>Dokumenty <i>${Object.keys(A).length} aktów z transkrypcją i skanem</i></div>`
    +(META.book ? `<div class="rel"><a href="${esc(META.book)}" target="_blank" rel="noopener" style="color:inherit">Księga rodzinna</a> <i>do druku (PDF): przodkowie gałąź po gałęzi, akty pod wpisami osób, indeks osób</i></div>` : "")
    +`<div class="rel" data-walls>Ściany i luki <i>${lk} miejsc z opisem następnego kroku</i></div>`
    +`<div class="rel" data-roster>Spis wszystkich osób <i>alfabetycznie, po nazwiskach</i></div>`
+   +(typeof FamilyAtlas!=="undefined" ? `<div class="rel" data-atlas>Atlas 3D <i>wszyscy naraz w przestrzeni i połączenie między dowolnymi dwiema osobami</i></div>` : "")
    +`<h3>O drzewie</h3>`
    +`<div class="sub">${esc(META.subtitle || [...new Set(Object.values(LINES).filter(l=>l[0] && P[l[0]]).map(l=>plural(P[l[0]].sn)))].join(" · "))}</div>`
    +`<div class="big"><div><b>${real.length}</b><i>osób</i></div>`
@@ -2651,7 +2695,7 @@ function fitHits(){
   const k=Math.max(KMIN, Math.min(1, (r.w-60)/Math.max(x1-x0,1), (r.h-60)/Math.max(y1-y0,1)));
   T.k=k; T.x=r.w/2-(x0+x1)/2*k; T.y=r.h/2-(y0+y1)/2*k; apply();
 }
-document.addEventListener("keydown",e=>{ if(e.key==="/"&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)){e.preventDefault();q.focus();q.select();} });
+document.addEventListener("keydown",e=>{ if(e.key==="/"&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)){e.preventDefault();if(MODE==="atlas"){ATLAS.openConnection();return;}q.focus();q.select();} });
 document.addEventListener("click",e=>{ if(!sug.contains(e.target)&&e.target!==q) sug.style.display="none"; });
 
 /* ---------- pan / zoom (mouse, wheel, drag, pinch on touch, +/− buttons) ---------- */
@@ -2680,11 +2724,13 @@ function zoomStep(f){
 }
 /* mouse: a drag started on the tree must not start a text selection (also in the card, if the pointer gets there) */
 stage.addEventListener("mousedown",e=>{
+  if(MODE==="atlas") return;
   if(e.button!==0 || e.target.closest("#grid,#homescr,input,select,textarea")) return;
   e.preventDefault();
   const a=document.activeElement; if(a && a!==document.body && !stage.contains(a)) a.blur();   // e.g. the search field
 });
 stage.addEventListener("pointerdown",e=>{
+  if(MODE==="atlas") return;
   ZANIM=0;                                   // a drag interrupts the smooth zoom step
   PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(PTS.size===2){
@@ -2696,6 +2742,7 @@ stage.addEventListener("pointerdown",e=>{
   drag={x:e.clientX-T.x,y:e.clientY-T.y,sx:e.clientX,sy:e.clientY}; moved=false;
 });
 window.addEventListener("pointermove",e=>{
+  if(MODE==="atlas") return;
   if(PTS.has(e.pointerId)) PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch && PTS.size>=2){
     const [a,b]=[...PTS.values()]; const r=stage.getBoundingClientRect();
@@ -2713,6 +2760,7 @@ window.addEventListener("pointermove",e=>{
 });
 let lastTap=null, dblAt=0;
 function ptrEnd(e){
+  if(MODE==="atlas") return;
   PTS.delete(e.pointerId);
   if(pinch){
     if(PTS.size<2){ pinch=null; drag=null; stage.classList.remove("drag"); setTimeout(()=>{moved=false;},0); }
@@ -2733,6 +2781,7 @@ function ptrEnd(e){
   }
 }
 stage.addEventListener("dblclick",e=>{
+  if(MODE==="atlas") return;
   if(Date.now()-dblAt<600 || e.target.closest(".node,#zoomctl,#legend,#grid")) return;
   const r=stage.getBoundingClientRect(); zoomAt(T.k*2, e.clientX-r.left, e.clientY-r.top);
 });
@@ -2743,6 +2792,7 @@ window.addEventListener("pointercancel",ptrEnd);
    One wheel notch (~100 px) ≈ 7 %; trackpad pinch (wheel + ctrlKey, small deltas) has its own sensitivity. */
 const WHEEL_SENS=0.0007, PINCH_SENS=0.006;
 stage.addEventListener("wheel",e=>{
+  if(MODE==="atlas") return;
   /* the home screen and the List sit in #stage but scroll themselves: the wheel scrolls them, it does not zoom the tree */
   if(e.target.closest && e.target.closest("#homescr,#grid")) return;
   e.preventDefault(); ZANIM=0; const r=stage.getBoundingClientRect();
@@ -2754,7 +2804,7 @@ stage.addEventListener("wheel",e=>{
 document.addEventListener("keydown",e=>{
   if(e.metaKey || e.ctrlKey || e.altKey) return;
   const a=document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
-  if(HOME || MODE==="grid") return;
+  if(HOME || MODE==="grid" || MODE==="atlas") return;
   if(e.key==="+" || e.key==="="){ e.preventDefault(); zoomStep(1.25); }
   else if(e.key==="-" || e.key==="_"){ e.preventDefault(); zoomStep(1/1.25); }
 });
@@ -2830,14 +2880,26 @@ const $ = id => document.getElementById(id);
 
 function setMode(m){
   if(!NAVQ && !NAVD) return nav(()=>setMode(m));
+  if(m!=="atlas") ATLAS?.hide();
+  document.body.classList.toggle("atlas-mode",m==="atlas");
+  document.body.classList.remove("atlas-details");
+  document.getElementById("stage").classList.toggle("atlas-active",m==="atlas");
   MODE=m; if(HOME) hideHome();
   $("grid").classList.toggle("on", m==="grid");
   svg.style.display = m==="grid" ? "none" : "";
   $("zoomctl").style.display = m==="grid" ? "none" : "";
   if(m==="grid"){ $("legend").classList.remove("on"); $("help").classList.remove("on"); }
-  for(const [id,mm] of [["mode","family"],["all","all"],["list","grid"],["fan","fan"],["time","time"]]) $(id).classList.toggle("on", m===mm);
+  for(const [id,mm] of [["mode","family"],["all","all"],["list","grid"],["fan","fan"],["time","time"],["atlasbtn","atlas"]]) $(id).classList.toggle("on", m===mm);
   $("genwrap").style.display = (m==="family" || m==="fan") ? "" : "none";
   closeMenu();
+  if(m==="atlas"){
+    relClear(); $("pathbar").style.display="none";
+    if(!ATLAS) ATLAS=FamilyAtlas.createAtlas($("atlas3d"),{database:DB,portraits:IMG.t,
+      onSelect:id=>go(id),onExit:()=>setMode("family"),onChange:()=>{if(MODE==="atlas" && !NAVD) navSave();},
+      navigate:fn=>nav(()=>{fn();const id=ATLAS?.state().focused;if(id){focusId=id;selId=id;}})});
+    ATLAS.show();
+    sheet("close"); tabs(); return;
+  }
   if(m==="grid"){ if(PHONE()) sheet("close"); gridView(q.value); return; }
   render(); view();
 }
@@ -2856,6 +2918,8 @@ $("start").onclick=()=>nav(()=>{
   introView();
 });
 $("list").onclick=()=>nav(()=>{ if(MODE!=="grid") setMode("grid"); else closeMenu(); });
+/* Atlas 3D: bez paczki (build_tree.py --no-atlas) przycisku nie ma */
+if(typeof FamilyAtlas==="undefined") $("atlasbtn").hidden=true; else $("atlasbtn").onclick=()=>setMode("atlas");
 $("all").onclick=()=>nav(()=>{ if(MODE!=="all") setMode("all"); else { fitAll(); closeMenu(); } });
 /* the fan and the timeline start from the centre person — if nobody is chosen, from the default person */
 for(const m of ["fan","time"]) $(m).onclick=()=>nav(()=>{
@@ -2887,7 +2951,7 @@ $("menubtn").onclick=e=>{ e.stopPropagation();
 document.addEventListener("click",e=>{ const m=$("menu");
   if(m.classList.contains("on") && !m.contains(e.target) && !e.target.closest("#menubtn,#tb-more")) closeMenu(); });
 $("wallbtn").onclick=()=>wallsView();
-$("relbtn").onclick=relStart;
+$("relbtn").onclick=()=>{if(MODE==="atlas") ATLAS.openConnection(); else relStart();};
 
 const genlab=()=>$("gen").textContent=UP+" / "+DN;
 $("more").onclick=()=>{ if(UP<9){ UP++; DN++; genlab(); render(); view(); } };
@@ -2920,6 +2984,7 @@ function refilter(){
   $("filtbtn").classList.toggle("act", !SHOWL || !SHOWH || SIDEK);
   cnt();
   if(LASTV) LASTV();
+  if(MODE==="atlas"){ ATLAS.refresh(); if(!NAVD) navSave(); return; }
   if(MODE==="grid") gridView(q.value);
   else {
     if(!vis(focusId)){ const c=anchorOf(); if(c){ focusId=c;
@@ -2963,7 +3028,7 @@ const shortBr = s => (LINES[s] && LINES[s][1]) || s;
     o.value=k; o.title=k+" ("+ls[k]+" osób)"; o.textContent=P[a].n.replace(/^❓ /,""); sel.append(o); } }
 
 /* ---------- start ---------- */
-window.addEventListener("resize",()=>{ if(MODE!=="grid") view(); });
+window.addEventListener("resize",()=>{ if(MODE!=="grid" && MODE!=="atlas") view(); });
 const fromHash=()=>{ const h=location.hash.slice(1); return (h && P["@"+h+"@"]) ? "@"+h+"@" : null; };
 window.addEventListener("popstate",e=>{ const s=e.state;
   if(s && s.dz){ navRestore(s); return; }

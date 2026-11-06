@@ -306,6 +306,102 @@ class ExampleBuild(unittest.TestCase):
         self.assertNotIn('data-hact="about"', page)
         self.assertIn('e.target.closest("#homescr,#grid")', page)     # the wheel scrolls the start screen
 
+    # ---------------------------------------------------------- 1.5.0: made by, atlas, posters, undated deaths
+    def test_page_says_made_by_applied_ai(self):
+        page = read(self.r["out"])
+        foot = page.split('<footer id="madeby">')[1].split("</footer>")[0]
+        self.assertIn("Made by", foot)
+        self.assertIn('href="https://appliedai.dev"', foot)
+        self.assertEqual(foot.count('src="data:image/png;base64,'), 2)    # wordmark for light and dark
+        self.assertIn('<meta name="generator" content="pl-genealogy-tree-viewer · Made by Applied AI', page)
+        self.assertIn("https://github.com/plrojek/agent-skills", self.r["db"]["meta"]["generator"])
+        self.assertNotIn("__BRAND_", page)
+
+    def test_atlas_inline_and_optional(self):
+        page = read(self.r["out"])
+        self.assertIn('<script id="tree3d-bundle">', page)
+        self.assertIn('<style id="tree3d-style">', page)
+        self.assertIn('id="atlasbtn"', page)
+        self.assertLess(page.index('<script id="tree3d-bundle">'), page.index("const DB = "))
+        out = os.path.join(self.tmp, "no-atlas.html")
+        with redirect_stdout(io.StringIO()):
+            build_tree.build(self.cfg, out=out, atlas=False)
+        bare = read(out)
+        self.assertNotIn("tree3d-bundle", bare)
+        self.assertIn('<footer id="madeby">', bare)
+
+    def test_own_template_still_gets_the_footer(self):
+        tpl = read(os.path.join(SKILL, "templates", "viewer", "tree.html"))
+        tpl = tpl.split('<footer id="madeby">')[0] + tpl.split("</footer>", 1)[1]
+        tpl = tpl.replace('<meta name="generator"', '<meta name="x-removed"')
+        path = os.path.join(self.tmp, "own-template.html")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(tpl)
+        out = os.path.join(self.tmp, "own.html")
+        with redirect_stdout(io.StringIO()):
+            build_tree.build(self.cfg, template=path, out=out)
+        page = read(out)
+        self.assertEqual(page.count('<footer id="madeby">'), 1)
+        self.assertIn('<meta name="generator"', page)
+
+    def test_publish_writes_posters_from_published_data(self):
+        pub = os.path.join(self.tmp, "pub-posters")
+        with redirect_stdout(io.StringIO()):
+            res = publish.publish(self.r["out"], pub, living=1926)
+        idx = read(os.path.join(pub, "index.html"))
+        self.assertIn('id="poster-link" href="poster/" class', idx)            # the link is no longer hidden
+        poster = read(os.path.join(pub, "poster", "index.html"))
+        self.assertIn('<meta name="poster-root" content="%s">' % self.r["db"]["root"], poster)
+        self.assertIn('<footer class="madeby" id="madeby">Made by', poster)
+        for f in ("editor.js", "poster.js", "style.css", "assets/background1.jpg", "brand/applied-ai-wordmark-light.png"):
+            self.assertTrue(os.path.exists(os.path.join(pub, "poster", f)), f)
+        with open(os.path.join(pub, "poster", "people.json"), encoding="utf-8") as f:
+            people = json.load(f)
+        self.assertEqual(res["posters"], len(people))
+        tomasz = self.person("Tomasz Jaworski", "1985")["id"]
+        self.assertTrue(people[tomasz]["name"].startswith("Osoba żyjąca"))   # redacted in the posters too
+        self.assertEqual(people[tomasz]["born"], "")
+        bare = os.path.join(self.tmp, "pub-no-posters")
+        with redirect_stdout(io.StringIO()):
+            publish.publish(self.r["out"], bare, posters=False)
+        self.assertFalse(os.path.exists(os.path.join(bare, "poster")))
+        self.assertIn('id="poster-link" href="poster/" hidden', read(os.path.join(bare, "index.html")))
+
+    def test_publish_masks_only_the_data(self):
+        page = read(self.r["out"])
+        bundle = page.split('<script id="tree3d-bundle">')[1].split("</script>")[0]
+        self.assertIsNotNone(publish.PESEL.search(bundle))     # the atlas code holds digit runs that are not numbers
+        pub = os.path.join(self.tmp, "pub-code")
+        with redirect_stdout(io.StringIO()):
+            res = publish.publish(self.r["out"], pub, posters=False)
+        self.assertEqual(res["masked"], 0)
+        self.assertIn(bundle, read(os.path.join(pub, "index.html")))
+
+    def test_book_last_page_says_made_by(self):
+        r, book = self.book()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        tail = book.split('id="idx"')[1]
+        self.assertIn('<div class="madeby">Made by <a href="https://appliedai.dev"><img src="data:image/png;base64,', tail)
+        self.assertTrue(book.rstrip().endswith("</div>\n</body></html>") or book.rstrip().endswith("</body></html>"))
+        self.assertIn('<meta name="generator" content="pl-genealogy-tree-viewer · Made by Applied AI', book)
+
+    def test_undated_death_is_a_death(self):
+        ged = read(os.path.join(EXAMPLE, "example.ged"))
+        self.assertIn("0 @I10@ INDI", ged)
+        ged = ged.replace("0 @I10@ INDI\n", "0 @I10@ INDI\n1 DEAT Y\n", 1)
+        path = os.path.join(self.tmp, "undated-death.ged")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(ged)
+        cfg = self.config(f"GEDCOM = {path!r}", name="tree_data_undated.py")
+        out = os.path.join(self.tmp, "undated.html")
+        with redirect_stdout(io.StringIO()):
+            res = build_tree.build(cfg, out=out)
+        sys.modules.pop("tree_data", None)
+        P = res["db"]["people"]
+        self.assertEqual(P["@I10@"]["dd"], "data nieznana")
+        self.assertEqual(self.P["@I10@"]["dd"], "")                             # without DEAT: nothing
+        self.assertNotIn("@I10@", publish.presumed_living(P, res["db"]["fams"], 1926))
+
     def test_book_unknown_line_refused(self):
         r, _ = self.book("--lines", "Nikogo")
         self.assertNotEqual(r.returncode, 0)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Check a GEDCOM after patching it. Usage: validate_ged.py tree.ged   (exit 1 on errors)
 
 Checks:

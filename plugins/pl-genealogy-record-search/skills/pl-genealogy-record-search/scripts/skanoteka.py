@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Download parish-book scans from PTG's two scan hosts:
 skanoteka.genealodzy.pl (whole archive fonds) and metryki.genealodzy.pl.
 

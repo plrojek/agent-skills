@@ -215,5 +215,36 @@ follow them; they are here so a change to either doesn't undo one.
 - **A redacted name must go everywhere it is used.** A living person's name also labels a
   grandparent's line; the redaction replaces it there too, and lines whose anchor is presumed living
   are printed so their labels can be changed.
-- **Mask numbers in the data, not in the photos.** An 11-digit run can occur inside base64; masking it
-  breaks the photo. The photo line is left alone.
+- **Mask numbers in the data, nowhere else.** An 11-digit run can occur inside base64, and the Atlas
+  3D code (three.js) holds one too; masking line by line broke a photo once and would break the atlas.
+  Only the strings inside `const DB` are masked, which is where a PESEL in a note ends up.
+- **Posters read the published data.** The poster page's `people.json` is made from the page after
+  `--living`, so a person redacted on the tree is redacted on every poster too.
+
+## Atlas and posters
+
+- **One page that opens from disk.** The Atlas 3D needs three.js; loading it from a CDN would make the
+  page depend on the network and leak visits. It is bundled (about 0.7 MB) and inline, and the page
+  still works from a USB stick. The poster page is the exception: it is a module that fetches
+  `people.json`, so it needs a web server.
+- **A print window does not do posters.** Printing the poster SVG through the browser's print window
+  relied on `@page { size: … }`; Safari ignores it and cut an A1 poster onto two A4 pages (the left of
+  the tree on one, a strip on the other). The configurator draws the same SVG on a canvas and writes a
+  one-page PDF in the poster's size itself: up to 300 dpi, the canvas capped at about 40 million pixels
+  and 16384 px a side (an A1 comes out at about 227 dpi), half the pixels on retry when a phone's canvas
+  limit leaves it blank. The PDF's text is raster; the SVG keeps vector text.
+- **Safari draws an SVG image at its own size, then scales it.** Rasterising `width="841mm"` at
+  227 dpi gave blurred text; the SVG gets the target pixel size before it is drawn.
+- **Nothing that appears during a drag may change the preview's size.** The overlap warning sat under
+  the poster; dragging a cartouche onto another showed it, the preview lost height, the poster shrank and
+  jumped away from the cursor, and back again. Warnings now stand in the caption row, on one line.
+- **Keep the illustration element across redraws.** Every drag step rebuilds the SVG; reusing the same
+  `<image>` keeps a 5 MB JPEG from being decoded again on each pointer move.
+- **Credit where people look, not on what they hang.** The footer of every page and the book's last
+  page say "Made by" with the Applied AI wordmark; posters and exported pictures carry nothing.
+
+## Dates
+
+- **A death without a date is still a death.** Tree sites export "deceased" as `1 DEAT Y` with no date.
+  The builder dropped it, so dozens of the dead looked alive: no death on the card, and `--living`
+  would redact them. Such a death becomes "data nieznana".

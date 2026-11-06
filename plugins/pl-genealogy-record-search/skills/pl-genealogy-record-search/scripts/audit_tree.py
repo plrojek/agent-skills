@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 """Chronology check of a parsed tree. Usage: audit_tree.py tree.json
 
 Flags: parent younger than 15 at a child's birth, mother older than 55, child born after

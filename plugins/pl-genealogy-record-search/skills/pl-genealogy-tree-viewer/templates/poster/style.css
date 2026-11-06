@@ -1,0 +1,850 @@
+/* Poster configurator of pl-genealogy-tree-viewer. Made by Applied AI (https://appliedai.dev), https://github.com/plrojek/agent-skills
+   Konfigurator plakatów w wyglądzie strony drzewa: te same zmienne co w templates/viewer/tree.html
+   (--bg, --panel, --ink, --dim, --line, --acc, --hi, --shadow, tryb ciemny), jasny nagłówek z grupą
+   „Przeglądaj”, przyciski i pola jak w drzewie i w oknie „Obraz przodków”. Sam plakat (SVG) bez zmian. */
+:root {
+  --bg: #f6f4ef;
+  --panel: #fffdf8;
+  --ink: #241f1a;
+  --dim: #7b7268;
+  --line: #cfc6b8;
+  --acc: #9a6b2f;
+  --hi: #f3e2bd;
+  --ok: #2f7d3a;
+  --warn: #8a6417;
+  --shadow: 0 1px 3px rgba(0,0,0,.10),0 6px 18px rgba(0,0,0,.06);
+  font: 14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+  color: var(--ink);
+  color-scheme: light
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --bg: #16150f;
+    --panel: #211f18;
+    --ink: #ece5d8;
+    --dim: #9a9184;
+    --line: #3d382e;
+    --acc: #d6a85f;
+    --hi: #3a3018;
+    --ok: #6fc27f;
+    --warn: #d9a640;
+    --shadow: 0 1px 3px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35);
+    color-scheme: dark
+  }
+}
+* {
+  box-sizing: border-box
+}
+html,body {
+  height: 100%
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden
+}
+button,input,select,textarea {
+  font: inherit;
+  color: inherit
+}
+button,a,input,select,summary,.file-button {
+  -webkit-tap-highlight-color: transparent
+}
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  border-radius: 8px
+}
+button:disabled {
+  cursor: wait;
+  opacity: .5
+}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,textarea:focus-visible,.file-button:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px
+}
+a {
+  color: inherit;
+  text-decoration: none
+}
+[hidden] {
+  display: none!important
+}
+
+/* --- nagłówek: jak na stronie drzewa --- */
+.app-header {
+  position: relative;
+  z-index: 5;
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 9px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow)
+}
+.header-title {
+  margin-right: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0
+}
+.header-title h1 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  margin: 0;
+  white-space: nowrap
+}
+.header-title p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+.app-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel)
+}
+.app-nav .gl {
+  font-size: 10px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-right: 3px;
+  white-space: nowrap
+}
+.app-nav a {
+  padding: 5px 10px;
+  font-size: 12.5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  white-space: nowrap
+}
+.app-nav a:hover {
+  border-color: var(--acc);
+  color: var(--acc)
+}
+.app-nav a[aria-current=page] {
+  border-color: var(--acc);
+  color: var(--acc);
+  background: var(--hi)
+}
+
+/* --- przyciski --- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  white-space: nowrap
+}
+.button:hover {
+  border-color: var(--acc);
+  color: var(--acc)
+}
+.button-primary {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-color: var(--acc);
+  color: var(--acc);
+  background: var(--hi)
+}
+.button-primary:hover {
+  filter: brightness(1.04)
+}
+.button-secondary {
+  width: 100%;
+  margin-top: 10px
+}
+
+/* --- układ: ustawienia z lewej, podgląd z prawej --- */
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 325px minmax(0,1fr);
+  grid-template-rows: minmax(0,1fr)
+}
+.settings {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 16px 18px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent
+}
+fieldset {
+  padding: 0;
+  border: 0;
+  margin: 0 0 18px;
+  min-width: 0
+}
+/* linia między sekcjami na samej legendzie: na obramowaniu fieldsetu przeglądarka stawia legendę w linii,
+   co dawało w drugiej i dalszych sekcjach większą przerwę pod nagłówkiem niż w pierwszej */
+fieldset + fieldset legend {
+  border-top: 1px solid var(--line);
+  padding-top: 14px!important
+}
+legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--dim)
+}
+legend + * {
+  clear: both
+}
+label:not(.check) {
+  display: block;
+  margin: 12px 0 4px;
+  font-size: 11.5px;
+  color: var(--dim)
+}
+input:not([type=range],[type=checkbox],[type=color]),select,textarea {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px
+}
+input:not([type=range],[type=checkbox],[type=color]):focus-visible,select:focus-visible,textarea:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: -1px
+}
+textarea {
+  font-size: 12.5px;
+  line-height: 1.5;
+  resize: vertical
+}
+input[type=range] {
+  width: 100%;
+  accent-color: var(--acc);
+  margin: 3px 0 2px
+}
+input[type=checkbox] {
+  accent-color: var(--acc);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  flex: none
+}
+input:disabled {
+  opacity: .5;
+  cursor: not-allowed
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.35;
+  cursor: pointer
+}
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--dim)
+}
+.range-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1px;
+  font-size: 10.5px;
+  color: var(--dim)
+}
+.field-checks {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 0 8px
+}
+output {
+  float: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums
+}
+
+/* wybrany kartusz w podglądzie (rysowany w SVG plakatu) */
+.person-label.is-selected > rect[pointer-events=all] {
+  stroke: var(--acc);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4
+}
+
+/* --- ilustracje (tła) --- */
+.background-options {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-top: 6px
+}
+.background-option {
+  position: relative;
+  padding: 3px;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--bg)
+}
+.background-option:hover {
+  border-color: var(--acc)
+}
+.background-option img {
+  display: block;
+  width: 100%;
+  height: 53px;
+  object-fit: cover;
+  border-radius: 5px
+}
+.background-option span {
+  display: block;
+  padding: 6px 0 4px;
+  font-size: 11px;
+  text-align: center
+}
+.background-option[aria-pressed=true] {
+  border-color: var(--acc);
+  background: var(--hi);
+  box-shadow: 0 0 0 1px var(--acc)
+}
+.background-option[aria-pressed=true]:after {
+  content: '✓';
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--acc);
+  color: var(--panel);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center
+}
+
+/* --- osoba u korzeni --- */
+.selected-person {
+  margin-top: 8px;
+  padding: 8px 11px;
+  border-left: 2.5px solid var(--acc);
+  border-radius: 0 8px 8px 0;
+  background: var(--hi);
+  font-size: 12.5px;
+  line-height: 1.5
+}
+.selected-person strong {
+  font-weight: 650
+}
+.selected-person span {
+  display: block;
+  color: var(--dim);
+  font-size: 11px
+}
+.person-results {
+  max-height: 220px;
+  overflow: auto;
+  margin-top: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow)
+}
+.person-results button {
+  display: block;
+  width: 100%;
+  padding: 6px 11px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.45;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line)
+}
+.person-results button:last-child {
+  border-bottom: 0
+}
+.person-results button:hover,.person-results button:focus-visible {
+  background: var(--hi)
+}
+.person-results small {
+  display: block;
+  color: var(--dim);
+  font-size: 11px
+}
+.person-results p {
+  margin: 0;
+  padding: 6px 11px;
+  font-size: 12px;
+  color: var(--dim)
+}
+
+/* --- przełączniki: jak „Obraz przodków” w drzewie --- */
+.segmented {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px
+}
+.segmented button {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg)
+}
+.segmented button:hover {
+  border-color: var(--acc)
+}
+.segmented button[aria-pressed=true] {
+  border-color: var(--acc);
+  color: var(--acc);
+  background: var(--hi);
+  font-weight: 600
+}
+.generation-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 10px
+}
+.generation-chip {
+  min-width: 34px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--bg);
+  cursor: pointer
+}
+.generation-chip:hover {
+  border-color: var(--acc);
+  color: var(--acc)
+}
+.generation-chip[aria-pressed=true] {
+  border-color: var(--acc);
+  color: var(--acc);
+  background: var(--hi);
+  font-weight: 600
+}
+.color-options {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px
+}
+.color-options label {
+  display: flex!important;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1
+}
+input[type=color] {
+  width: 100%;
+  height: 31px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer
+}
+details {
+  margin: 0 0 18px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line)
+}
+summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600
+}
+summary:hover {
+  color: var(--acc)
+}
+.details-content {
+  padding-top: 4px
+}
+.dimensions {
+  display: flex;
+  gap: 10px
+}
+.dimensions label {
+  flex: 1;
+  min-width: 0
+}
+.dimensions input {
+  margin-top: 4px
+}
+.config-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line)
+}
+.config-actions button,.file-button {
+  margin: 0!important;
+  padding: 5px 10px;
+  font-size: 12px!important;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  cursor: pointer
+}
+.config-actions button:hover,.file-button:hover {
+  border-color: var(--acc);
+  color: var(--acc)
+}
+.reset-button {
+  display: block;
+  margin: 12px auto 0;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--dim)
+}
+.reset-button:hover {
+  color: var(--acc)
+}
+
+/* --- podgląd --- */
+.preview-area {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 24px 12px
+}
+.preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--dim)
+}
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  vertical-align: 1px
+}
+#save-state {
+  font-size: 11px
+}
+.zoom-tools {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel)
+}
+.zoom-tools button {
+  padding: 4px 10px;
+  font-size: 12.5px;
+  border: 1px solid var(--line);
+  background: var(--bg)
+}
+.zoom-tools button:hover {
+  border-color: var(--acc);
+  color: var(--acc)
+}
+.zoom-tools button:first-child,.zoom-tools button:last-child {
+  min-width: 30px;
+  padding: 2px 8px;
+  font-size: 17px;
+  line-height: 20px
+}
+.canvas-scroll {
+  flex: 1;
+  min-height: 300px;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  padding: 26px 17px 30px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent
+}
+.poster-sheet {
+  width: 100%;
+  flex-shrink: 0;
+  margin: auto;
+  background: #fcf5e3;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.12)
+}
+.poster-sheet svg {
+  display: block;
+  width: 100%;
+  height: auto
+}
+.poster-sheet .person-label {
+  cursor: grab;
+  touch-action: none
+}
+.poster-sheet .person-label.is-dragging {
+  cursor: grabbing
+}
+.poster-sheet .person-label:hover>g:first-of-type {
+  stroke-width: 2.5
+}
+.loading {
+  padding: 100px 20px;
+  text-align: center;
+  color: var(--dim)
+}
+.preview-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 0 16px 14px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--dim)
+}
+#poster-summary {
+  flex: none;
+  color: var(--ink);
+  font-weight: 600
+}
+.print-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px
+}
+.print-note svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 1.4
+}
+.print-note p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5
+}
+.print-note strong {
+  display: block;
+  font-weight: 600
+}
+.print-note p span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--dim)
+}
+.text-button {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  background: var(--bg)
+}
+.text-button:hover {
+  border-color: var(--acc);
+  color: var(--acc)
+}
+.text-button span {
+  margin-left: 6px
+}
+/* Uwagi o układzie stoją w wierszu podpisu, w jednej linii (pełna treść w dymku). Wcześniej była to ramka pod plakatem:
+   pojawiała się, gdy przeciągany kartusz najechał na inny, zabierała podglądowi wysokość i cały plakat skakał (06.11.2026). */
+.layout-warning {
+  min-width: 0;
+  color: var(--warn);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  max-width: calc(100% - 30px);
+  padding: 11px 16px;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--acc);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18)
+}
+/* --- stopka „Made by Applied AI” (każda strona zbudowana skillem; nie na samych plakatach) --- */
+.madeby {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--dim);
+  background: var(--panel);
+  border-top: 1px solid var(--line)
+}
+.madeby a {
+  display: inline-flex;
+  align-items: center
+}
+.madeby img {
+  display: block;
+  height: 13px;
+  width: auto
+}
+.madeby a:hover img {
+  filter: brightness(1.08)
+}
+@media(min-width:1600px) {
+  .workspace {
+    grid-template-columns: 350px minmax(0,1fr)
+  }
+  .settings {
+    padding-left: 24px;
+    padding-right: 24px
+  }
+  .preview-area {
+    padding: 18px 36px 14px
+  }
+}
+@media(max-width:1100px) {
+  .workspace {
+    grid-template-columns: 290px minmax(0,1fr)
+  }
+  .settings {
+    padding: 14px 14px 18px
+  }
+  .preview-area {
+    padding: 12px 16px
+  }
+  .header-title p,#save-state {
+    display: none
+  }
+  .preview-caption {
+    display: block;
+    margin: 0 0 12px
+  }
+  .preview-caption span {
+    display: block
+  }
+  .print-note {
+    flex-wrap: wrap
+  }
+  .print-note p {
+    flex: 1
+  }
+  .canvas-scroll {
+    padding: 18px 0 24px;
+    min-height: 240px
+  }
+}
+@media(max-width:760px) {
+  body {
+    display: block;
+    overflow: visible;
+    height: auto
+  }
+  .app-header {
+    padding: 8px 12px
+  }
+  .app-nav {
+    order: 3;
+    flex-basis: 100%
+  }
+  .app-nav a {
+    flex: 1;
+    text-align: center
+  }
+  .button-primary {
+    padding: 7px 11px;
+    font-size: 12.5px
+  }
+  .workspace {
+    display: flex;
+    flex-direction: column
+  }
+  .preview-area {
+    order: -1;
+    overflow: visible;
+    padding: 12px
+  }
+  .canvas-scroll {
+    flex: none;
+    min-height: 0;
+    padding: 6px 0 16px
+  }
+  .preview-toolbar {
+    margin-bottom: 6px;
+    font-size: 11px
+  }
+  .preview-caption {
+    font-size: 11px;
+    margin-bottom: 10px
+  }
+  .print-note p span {
+    display: none
+  }
+  .settings {
+    overflow: visible;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    padding: 18px 16px 24px
+  }
+  .background-option img {
+    height: 90px
+  }
+  input:not([type=range],[type=checkbox],[type=color]),select,textarea {
+    font-size: 16px
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  * {
+    transition: none!important
+  }
+}

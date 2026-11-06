@@ -1,3 +1,4 @@
+# Part of pl-genealogy-record-search (plugin pl-genealogy-record-search). Made by Applied AI · https://appliedai.dev · https://github.com/plrojek/agent-skills
 # /// script
 # requires-python = ">=3.10"
 # dependencies = ["pillow==11.3.0"]
